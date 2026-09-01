@@ -245,12 +245,122 @@ function FighterAvatar({ name }: { name: string }) {
   );
 }
 
+function EventCard({
+  e,
+  isFav,
+  isOpen,
+  onToggle,
+}: {
+  e: FightEvent;
+  isFav: boolean;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  const { weekday, day, month } = formatDate(e.date);
+  const dLeft = daysUntil(e.date);
+  const links = watchLinks(e.broadcaster);
+
+  return (
+    <div className="flex gap-3.5">
+      <div className="w-12 shrink-0 text-center pt-1">
+        <div className="text-[11px] text-dim uppercase">{weekday}</div>
+        <div className="font-display font-semibold text-[26px] leading-none text-text">
+          {day}
+        </div>
+        <div className="text-[11px] text-dim">{month}</div>
+      </div>
+      <div
+        onClick={onToggle}
+        className={`flex-1 rounded-[10px] border p-3.5 px-4 cursor-pointer ${
+          isFav ? "border-borderFav bg-panelFav" : "border-border bg-panel"
+        }`}
+      >
+        <div className="flex justify-between items-center mb-1.5">
+          <span className="text-[11px] font-semibold text-accent tracking-wide">
+            {e.sport}
+          </span>
+          <span className="text-[11px] text-dim">
+            {dLeft === 0 ? "today" : dLeft > 0 ? `in ${dLeft} days` : "past"}
+          </span>
+        </div>
+
+        {e.fighters && (
+          <div className="flex items-center justify-between mb-2 px-1">
+            <FighterAvatar name={e.fighters[0]} />
+            <span className="text-[11px] text-dim font-semibold">VS</span>
+            <FighterAvatar name={e.fighters[1]} />
+          </div>
+        )}
+
+        <h2 className="font-display font-semibold text-[18px] leading-tight text-text mb-1">
+          {e.main}
+        </h2>
+        <p className="text-[13px] text-muted mb-0.5">
+          {e.title} · {e.promotion}
+        </p>
+        <p className="text-[12px] text-faint mb-1.5">
+          {e.venue}
+          {e.broadcaster !== "-" ? ` · ${e.broadcaster}` : ""}
+        </p>
+
+        {isOpen ? (
+          <div onClick={(ev) => ev.stopPropagation()} className="cursor-auto">
+            {e.note && (
+              <p className="text-[12px] text-dim leading-relaxed mb-2">
+                {e.note}
+              </p>
+            )}
+            {links.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1 border-t border-[#2E2E30] mt-1.5">
+                {links.map((l) =>
+                  l.url ? (
+                    <a
+                      key={l.label}
+                      href={l.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[12px] font-medium px-2.5 py-1 rounded-md bg-accent text-white"
+                    >
+                      Watch on {l.label} ↗
+                    </a>
+                  ) : (
+                    <span
+                      key={l.label}
+                      className="text-[12px] px-2.5 py-1 rounded-md border border-[#2E2E30] text-faint"
+                    >
+                      {l.label}
+                    </span>
+                  )
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          (e.note || links.length > 0) && (
+            <p className="text-[11px] text-[#5A5A5E]">
+              Tap for details{links.length > 0 ? " & where to watch" : ""}
+            </p>
+          )
+        )}
+      </div>
+    </div>
+  );
+}
+
+const TABS = [
+  { id: "events", label: "Events" },
+  { id: "favorites", label: "Favorites" },
+  { id: "account", label: "Account" },
+] as const;
+type TabId = (typeof TABS)[number]["id"];
+
 export default function Home() {
+  const [tab, setTab] = useState<TabId>("events");
   const [filter, setFilter] = useState("All");
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
 
   useEffect(() => {
     try {
@@ -281,12 +391,16 @@ export default function Home() {
   );
 
   const filtered = useMemo(() => {
-    return EVENTS.filter((e) => {
-      if (filter !== "All" && e.sport !== filter) return false;
-      if (onlyFavorites && !favorites.includes(e.promotion)) return false;
-      return true;
-    }).sort((a, b) => (a.date > b.date ? 1 : -1));
-  }, [filter, onlyFavorites, favorites]);
+    return EVENTS.filter((e) => filter === "All" || e.sport === filter).sort(
+      (a, b) => (a.date > b.date ? 1 : -1)
+    );
+  }, [filter]);
+
+  const favoriteEvents = useMemo(() => {
+    return EVENTS.filter((e) => favorites.includes(e.promotion)).sort(
+      (a, b) => (a.date > b.date ? 1 : -1)
+    );
+  }, [favorites]);
 
   return (
     <div className="max-w-[480px] mx-auto min-h-screen pb-10">
@@ -310,177 +424,174 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Sport filter */}
-      <div className="flex gap-2 px-5 pt-4 flex-wrap">
-        {SPORTS.map((s) => (
+      {/* Tab bar */}
+      <div className="flex px-5 border-b border-border">
+        {TABS.map((t) => (
           <button
-            key={s}
-            onClick={() => setFilter(s)}
-            className={`text-[13px] font-medium px-3.5 py-1.5 rounded-full border transition-colors ${
-              filter === s
-                ? "bg-accent border-accent text-white"
-                : "border-[#3A3A3C] text-muted"
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`flex-1 text-[13px] font-semibold py-3 border-b-2 transition-colors ${
+              tab === t.id
+                ? "border-accent text-text"
+                : "border-transparent text-faint"
             }`}
           >
-            {s}
+            {t.label}
           </button>
         ))}
       </div>
 
-      {/* Favorites */}
-      <div className="px-5 pt-4 pb-4 border-b border-border">
-        <label className="flex items-center gap-2 text-[13px] text-muted mb-2.5 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={onlyFavorites}
-            onChange={(e) => setOnlyFavorites(e.target.checked)}
-            className="accent-accent w-[15px] h-[15px]"
-          />
-          Favorites only
-        </label>
-        <div className="flex gap-1.5 flex-wrap">
-          {allPromotions.map((p) => {
-            const isFav = favorites.includes(p);
-            return (
+      {tab === "events" && (
+        <>
+          {/* Sport filter */}
+          <div className="flex gap-2 px-5 pt-4 pb-4 flex-wrap border-b border-border">
+            {SPORTS.map((s) => (
               <button
-                key={p}
-                onClick={() => toggleFavorite(p)}
-                className={`text-[12px] px-2.5 py-1 rounded-md border transition-colors ${
-                  isFav
-                    ? "border-accent text-text"
-                    : "border-[#2E2E30] bg-panel text-faint"
+                key={s}
+                onClick={() => setFilter(s)}
+                className={`text-[13px] font-medium px-3.5 py-1.5 rounded-full border transition-colors ${
+                  filter === s
+                    ? "bg-accent border-accent text-white"
+                    : "border-[#3A3A3C] text-muted"
                 }`}
               >
-                {isFav ? "★" : "☆"} {p}
+                {s}
               </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Timeline */}
-      <main className="px-5 pt-5 flex flex-col gap-[18px]">
-        {filtered.length === 0 && (
-          <div className="text-center py-10">
-            <p className="text-[15px] text-text mb-1">No events.</p>
-            <p className="text-[13px] text-dim">
-              Adjust the filter or turn off &quot;Favorites only&quot;.
-            </p>
+            ))}
           </div>
-        )}
-        {filtered.map((e) => {
-          const { weekday, day, month } = formatDate(e.date);
-          const dLeft = daysUntil(e.date);
-          const isFav = favorites.includes(e.promotion);
-          const isOpen = expandedId === e.id;
-          const links = watchLinks(e.broadcaster);
-          return (
-            <div key={e.id} className="flex gap-3.5">
-              <div className="w-12 shrink-0 text-center pt-1">
-                <div className="text-[11px] text-dim uppercase">
-                  {weekday}
-                </div>
-                <div className="font-display font-semibold text-[26px] leading-none text-text">
-                  {day}
-                </div>
-                <div className="text-[11px] text-dim">{month}</div>
+
+          {/* Timeline */}
+          <main className="px-5 pt-5 flex flex-col gap-[18px]">
+            {filtered.length === 0 && (
+              <div className="text-center py-10">
+                <p className="text-[15px] text-text mb-1">No events.</p>
+                <p className="text-[13px] text-dim">Adjust the filter.</p>
               </div>
-              <div
-                onClick={() => setExpandedId(isOpen ? null : e.id)}
-                className={`flex-1 rounded-[10px] border p-3.5 px-4 cursor-pointer ${
-                  isFav
-                    ? "border-borderFav bg-panelFav"
-                    : "border-border bg-panel"
-                }`}
-              >
-                <div className="flex justify-between items-center mb-1.5">
-                  <span className="text-[11px] font-semibold text-accent tracking-wide">
-                    {e.sport}
-                  </span>
-                  <span className="text-[11px] text-dim">
-                    {dLeft === 0
-                      ? "today"
-                      : dLeft > 0
-                      ? `in ${dLeft} days`
-                      : "past"}
-                  </span>
-                </div>
+            )}
+            {filtered.map((e) => (
+              <EventCard
+                key={e.id}
+                e={e}
+                isFav={favorites.includes(e.promotion)}
+                isOpen={expandedId === e.id}
+                onToggle={() =>
+                  setExpandedId(expandedId === e.id ? null : e.id)
+                }
+              />
+            ))}
+          </main>
 
-                {e.fighters && (
-                  <div className="flex items-center justify-between mb-2 px-1">
-                    <FighterAvatar name={e.fighters[0]} />
-                    <span className="text-[11px] text-dim font-semibold">
-                      VS
-                    </span>
-                    <FighterAvatar name={e.fighters[1]} />
-                  </div>
-                )}
+          <footer className="px-5 pt-6">
+            <p className="text-[11px] text-[#4A4A4E] leading-relaxed">
+              Seed data researched manually, as of late Aug 2026. Cards and
+              cancellations change — always confirm with the promotion
+              directly.
+            </p>
+          </footer>
+        </>
+      )}
 
-                <h2 className="font-display font-semibold text-[18px] leading-tight text-text mb-1">
-                  {e.main}
-                </h2>
-                <p className="text-[13px] text-muted mb-0.5">
-                  {e.title} · {e.promotion}
-                </p>
-                <p className="text-[12px] text-faint mb-1.5">
-                  {e.venue}
-                  {e.broadcaster !== "-" ? ` · ${e.broadcaster}` : ""}
-                </p>
-
-                {isOpen ? (
-                  <div
-                    onClick={(ev) => ev.stopPropagation()}
-                    className="cursor-auto"
+      {tab === "favorites" && (
+        <>
+          <div className="px-5 pt-4 pb-4 border-b border-border">
+            <p className="text-[13px] text-muted mb-2.5">
+              Star a promotion to follow its events here.
+            </p>
+            <div className="flex gap-1.5 flex-wrap">
+              {allPromotions.map((p) => {
+                const isFav = favorites.includes(p);
+                return (
+                  <button
+                    key={p}
+                    onClick={() => toggleFavorite(p)}
+                    className={`text-[12px] px-2.5 py-1 rounded-md border transition-colors ${
+                      isFav
+                        ? "border-accent text-text"
+                        : "border-[#2E2E30] bg-panel text-faint"
+                    }`}
                   >
-                    {e.note && (
-                      <p className="text-[12px] text-dim leading-relaxed mb-2">
-                        {e.note}
-                      </p>
-                    )}
-                    {links.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 pt-1 border-t border-[#2E2E30] mt-1.5">
-                        {links.map((l) =>
-                          l.url ? (
-                            <a
-                              key={l.label}
-                              href={l.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[12px] font-medium px-2.5 py-1 rounded-md bg-accent text-white"
-                            >
-                              Watch on {l.label} ↗
-                            </a>
-                          ) : (
-                            <span
-                              key={l.label}
-                              className="text-[12px] px-2.5 py-1 rounded-md border border-[#2E2E30] text-faint"
-                            >
-                              {l.label}
-                            </span>
-                          )
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  (e.note || links.length > 0) && (
-                    <p className="text-[11px] text-[#5A5A5E]">
-                      Tap for details{links.length > 0 ? " & where to watch" : ""}
-                    </p>
-                  )
-                )}
-              </div>
+                    {isFav ? "★" : "☆"} {p}
+                  </button>
+                );
+              })}
             </div>
-          );
-        })}
-      </main>
+          </div>
 
-      <footer className="px-5 pt-6">
-        <p className="text-[11px] text-[#4A4A4E] leading-relaxed">
-          Seed data researched manually, as of late Aug 2026. Cards and
-          cancellations change — always confirm with the promotion directly.
-        </p>
-      </footer>
+          <main className="px-5 pt-5 flex flex-col gap-[18px] pb-6">
+            {favoriteEvents.length === 0 && (
+              <div className="text-center py-10">
+                <p className="text-[15px] text-text mb-1">
+                  No favorites yet.
+                </p>
+                <p className="text-[13px] text-dim">
+                  Star a promotion above to see its events here.
+                </p>
+              </div>
+            )}
+            {favoriteEvents.map((e) => (
+              <EventCard
+                key={e.id}
+                e={e}
+                isFav={true}
+                isOpen={expandedId === e.id}
+                onToggle={() =>
+                  setExpandedId(expandedId === e.id ? null : e.id)
+                }
+              />
+            ))}
+          </main>
+        </>
+      )}
+
+      {tab === "account" && (
+        <main className="px-5 pt-6 pb-10">
+          <h2 className="font-display font-semibold text-[20px] text-text mb-1">
+            {authMode === "signup" ? "Create account" : "Log in"}
+          </h2>
+          <p className="text-[13px] text-dim mb-5">
+            Sign up to sync your favorites across devices and get notified
+            before events start.
+          </p>
+
+          <form
+            onSubmit={(ev) => ev.preventDefault()}
+            className="flex flex-col gap-3"
+          >
+            <input
+              type="email"
+              placeholder="Email"
+              className="bg-panel border border-border rounded-md px-3.5 py-2.5 text-[14px] text-text placeholder:text-dim outline-none focus:border-accent"
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              className="bg-panel border border-border rounded-md px-3.5 py-2.5 text-[14px] text-text placeholder:text-dim outline-none focus:border-accent"
+            />
+            <button
+              type="submit"
+              disabled
+              className="bg-accent text-white text-[14px] font-semibold rounded-md py-2.5 opacity-50 cursor-not-allowed"
+            >
+              {authMode === "signup" ? "Sign up" : "Log in"}
+            </button>
+            <p className="text-[11px] text-dim text-center">
+              Account backend is being connected — this form isn&apos;t live
+              yet.
+            </p>
+          </form>
+
+          <button
+            onClick={() =>
+              setAuthMode(authMode === "signup" ? "login" : "signup")
+            }
+            className="text-[13px] text-accent mt-4"
+          >
+            {authMode === "signup"
+              ? "Already have an account? Log in"
+              : "New here? Create an account"}
+          </button>
+        </main>
+      )}
     </div>
   );
 }
