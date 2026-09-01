@@ -15,9 +15,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Fightbase — Boxing, MMA & Muay Thai events",
+  title: "Fightbase — Combat sports events calendar",
   description:
-    "Track every boxing, MMA and Muay Thai event that matters to you, all in one place.",
+    "Track every boxing, MMA, Muay Thai, kickboxing, jiu-jitsu, judo, wrestling, karate and taekwondo event that matters to you, all in one place.",
 };
 
 export default function RootLayout({

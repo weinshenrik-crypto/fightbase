@@ -1,6 +1,6 @@
 # Fightbase
 
-Track boxing, MMA and Muay Thai events in one place.
+Track boxing, MMA, Muay Thai, kickboxing, jiu-jitsu, judo, wrestling, karate and taekwondo events in one place.
 
 ## Run locally
 

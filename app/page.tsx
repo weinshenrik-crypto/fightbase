@@ -92,9 +92,86 @@ const EVENTS = [
     broadcaster: "TBA",
     note: "The Sauerland brothers are independent again and plan to promote in Germany again in 2026.",
   },
+  {
+    id: "glory-109",
+    date: "2026-09-05",
+    sport: "Kickboxing",
+    promotion: "GLORY",
+    title: "GLORY 109",
+    main: "Rotterdam fight card",
+    venue: "RTM Stage, Rotterdam",
+    broadcaster: "-",
+    note: "The world's leading kickboxing promotion returns to its Rotterdam home venue.",
+  },
+  {
+    id: "judo-grand-slam-hungary",
+    date: "2026-09-11",
+    sport: "Judo",
+    promotion: "IJF Judo Grand Slam",
+    title: "Judo Grand Slam Hungary",
+    main: "Elite -60kg to +100kg finals",
+    venue: "Budapest, Hungary",
+    broadcaster: "IJF TV",
+    note: "One of the IJF's premier annual Grand Slam stops, drawing Olympic medalists across all weight classes.",
+  },
+  {
+    id: "adcc-2026",
+    date: "2026-09-12",
+    sport: "Jiu-Jitsu",
+    promotion: "ADCC",
+    title: "ADCC World Championship 2026",
+    main: "No-gi grappling's biggest stage",
+    venue: "Krakow, Poland",
+    broadcaster: "FloGrappling",
+    note: "Held every two years; the top submission grapplers across weight classes plus the openweight superfight.",
+  },
+  {
+    id: "karate1-salzburg",
+    date: "2026-10-02",
+    sport: "Karate",
+    promotion: "WKF Karate 1",
+    title: "Karate 1 Series A Salzburg",
+    main: "Kumite & kata across all weight classes",
+    venue: "Salzburg, Austria",
+    broadcaster: "-",
+    note: "Part of the WKF's global qualification series toward the 2026 Karate World Cup.",
+  },
+  {
+    id: "uww-worlds-2026",
+    date: "2026-10-24",
+    sport: "Wrestling",
+    promotion: "UWW",
+    title: "World Wrestling Championships 2026",
+    main: "Freestyle, Greco-Roman & women's wrestling",
+    venue: "Astana, Kazakhstan",
+    broadcaster: "-",
+    note: "Relocated from Bahrain; wrestling's most important non-Olympic championship, running through Nov 1.",
+  },
+  {
+    id: "wt-grand-prix-final",
+    date: "2026-11-28",
+    sport: "Taekwondo",
+    promotion: "World Taekwondo",
+    title: "World Taekwondo Grand Prix Final",
+    main: "Season finale — top 8 ranked fighters per division",
+    venue: "Incheon, South Korea",
+    broadcaster: "-",
+    note: "Exact date still TBA at time of writing (World Taekwondo lists Nov/Dec) — check worldtaekwondo.org closer to the date.",
+  },
 ];
 
-const SPORTS = ["All", "MMA", "Boxing", "Muay Thai"];
+const SPORTS = [
+  "All",
+  "MMA",
+  "Boxing",
+  "Muay Thai",
+  "Kickboxing",
+  "Jiu-Jitsu",
+  "Judo",
+  "Wrestling",
+  "Karate",
+  "Taekwondo",
+];
 
 function formatDate(iso: string) {
   const d = new Date(iso + "T00:00:00");
@@ -161,7 +238,8 @@ export default function Home() {
           FIGHTBASE
         </h1>
         <p className="text-[13px] text-faint mt-1">
-          Boxing · MMA · Muay Thai
+          Boxing · MMA · Muay Thai · Kickboxing · Jiu-Jitsu · Judo · Wrestling
+          · Karate · Taekwondo
         </p>
       </header>
 
