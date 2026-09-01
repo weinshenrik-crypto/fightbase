@@ -391,10 +391,12 @@ function FighterModal({
   name,
   isAdmin,
   onClose,
+  onSaved,
 }: {
   name: string;
   isAdmin: boolean;
   onClose: () => void;
+  onSaved?: (fighter: FighterRow) => void;
 }) {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -429,12 +431,13 @@ function FighterModal({
   async function handleSave() {
     setSaving(true);
     const { data: userData } = await supabase.auth.getUser();
-    await supabase.from("fighters").upsert(
-      { ...fighter, name, updated_by: userData.user?.id },
-      { onConflict: "name" }
-    );
+    const updated = { ...fighter, name, updated_by: userData.user?.id };
+    await supabase
+      .from("fighters")
+      .upsert(updated, { onConflict: "name" });
     setSaving(false);
     setEditing(false);
+    onSaved?.(updated);
   }
 
   return (
@@ -685,6 +688,7 @@ function EventCard({
 const TABS = [
   { id: "events", label: "Events" },
   { id: "favorites", label: "Favorites" },
+  { id: "fighters", label: "Fighters" },
   { id: "forum", label: "Forum" },
   { id: "account", label: "Account" },
 ] as const;
@@ -731,6 +735,23 @@ export default function Home() {
   const [postsLoading, setPostsLoading] = useState(false);
   const [newPost, setNewPost] = useState("");
   const [forumError, setForumError] = useState<string | null>(null);
+  const [fightersData, setFightersData] = useState<
+    Record<string, FighterRow>
+  >({});
+  const [fightersLoaded, setFightersLoaded] = useState(false);
+
+  useEffect(() => {
+    if (tab !== "fighters" || fightersLoaded) return;
+    supabase
+      .from("fighters")
+      .select("*")
+      .then(({ data }) => {
+        const byName: Record<string, FighterRow> = {};
+        (data as FighterRow[] | null)?.forEach((f) => (byName[f.name] = f));
+        setFightersData(byName);
+        setFightersLoaded(true);
+      });
+  }, [tab, fightersLoaded]);
 
   useEffect(() => {
     try {
@@ -881,6 +902,18 @@ export default function Home() {
     );
   }, [favorites]);
 
+  const fighterList = useMemo(() => {
+    const names = Array.from(
+      new Set(EVENTS.flatMap((e) => e.fighters ?? []))
+    ).sort();
+    return names.map((name) => ({
+      name,
+      upcoming: EVENTS.filter(
+        (e) => e.fighters?.includes(name) && daysUntil(e.date) >= 0
+      ).sort((a, b) => (a.date > b.date ? 1 : -1)),
+    }));
+  }, []);
+
   return (
     <div className="max-w-[480px] md:max-w-3xl lg:max-w-5xl mx-auto min-h-screen pb-10">
       {/* Header */}
@@ -1022,6 +1055,58 @@ export default function Home() {
             ))}
           </main>
         </>
+      )}
+
+      {tab === "fighters" && (
+        <main className="px-5 pt-5 pb-10 flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-4 lg:grid-cols-3">
+          {fighterList.map(({ name, upcoming }) => {
+            const info = fightersData[name];
+            const next = upcoming[0];
+            return (
+              <button
+                key={name}
+                onClick={() => setSelectedFighter(name)}
+                className="text-left border border-border bg-panel rounded-[10px] p-3.5 hover:border-accent transition-colors"
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-11 h-11 rounded-full bg-[#2A2A2C] border border-[#3A3A3C] flex items-center justify-center text-[13px] font-semibold text-text shrink-0">
+                    {initials(name)}
+                  </div>
+                  <div>
+                    <p className="text-[15px] font-semibold text-text">
+                      {name}
+                    </p>
+                    {(info?.sport || info?.record) && (
+                      <p className="text-[12px] text-faint">
+                        {[info?.sport, info?.record]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {next ? (
+                  <p className="text-[12px] text-muted">
+                    Next:{" "}
+                    <span className="text-text">
+                      {next.main} · {next.promotion}
+                    </span>{" "}
+                    · in {daysUntil(next.date)} days
+                  </p>
+                ) : (
+                  <p className="text-[12px] text-dim">
+                    No upcoming fights listed.
+                  </p>
+                )}
+              </button>
+            );
+          })}
+          {fighterList.length === 0 && (
+            <p className="text-[13px] text-dim md:col-span-full">
+              No fighters listed yet.
+            </p>
+          )}
+        </main>
       )}
 
       {tab === "forum" && (
@@ -1252,6 +1337,9 @@ export default function Home() {
           name={selectedFighter}
           isAdmin={isAdmin}
           onClose={() => setSelectedFighter(null)}
+          onSaved={(f) =>
+            setFightersData((prev) => ({ ...prev, [f.name]: f }))
+          }
         />
       )}
     </div>
