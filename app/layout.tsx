@@ -18,6 +18,10 @@ export const metadata: Metadata = {
   title: "Fightbase — Combat sports events calendar",
   description:
     "Track every boxing, MMA, Muay Thai, kickboxing, jiu-jitsu, judo, wrestling, karate and taekwondo event that matters to you, all in one place.",
+  icons: {
+    icon: "/favicon-32.png",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({

@@ -1,9 +1,23 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 
 // ---- Seed data (researched Aug 2026, curated manually) -----------------
-const EVENTS = [
+type FightEvent = {
+  id: string;
+  date: string;
+  sport: string;
+  promotion: string;
+  title: string;
+  main: string;
+  fighters?: [string, string];
+  venue: string;
+  broadcaster: string;
+  note: string;
+};
+
+const EVENTS: FightEvent[] = [
   {
     id: "oktagon-93",
     date: "2026-09-12",
@@ -11,6 +25,7 @@ const EVENTS = [
     promotion: "OKTAGON",
     title: "OKTAGON 93",
     main: "Brito vs. Gogoladze",
+    fighters: ["Brito", "Gogoladze"],
     venue: "Winning Group Arena, Brno",
     broadcaster: "DAZN",
     note: "One of OKTAGON's most important cities — 17 events held here so far.",
@@ -55,6 +70,7 @@ const EVENTS = [
     promotion: "OKTAGON",
     title: "OKTAGON 95",
     main: "Kincl vs. Humburger",
+    fighters: ["Kincl", "Humburger"],
     venue: "KV Arena, Karlovy Vary",
     broadcaster: "DAZN",
     note: "Former champion Kincl against Humburger, a fight Humburger requested himself.",
@@ -188,11 +204,53 @@ function daysUntil(iso: string) {
   return Math.round((target.getTime() - now.getTime()) / 86400000);
 }
 
+function initials(name: string) {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+// Official homepages for broadcasters we know — never guessed, only real domains.
+const BROADCASTER_LINKS: Record<string, string> = {
+  DAZN: "https://www.dazn.com",
+  "RTL+": "https://plus.rtl.de",
+  "RTL (Free-TV)": "https://www.rtl.de",
+  FloGrappling: "https://www.flograppling.com",
+  "IJF TV": "https://www.ijf.org",
+};
+
+function watchLinks(broadcaster: string) {
+  if (broadcaster === "-" || broadcaster === "TBA") return [];
+  return broadcaster
+    .split("/")
+    .map((b) => b.trim())
+    .filter(Boolean)
+    .map((label) => ({ label, url: BROADCASTER_LINKS[label] }));
+}
+
+function FighterAvatar({ name }: { name: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1 w-16">
+      <div className="w-11 h-11 rounded-full bg-[#2A2A2C] border border-[#3A3A3C] flex items-center justify-center text-[13px] font-semibold text-text shrink-0">
+        {initials(name)}
+      </div>
+      <span className="text-[11px] text-muted text-center leading-tight">
+        {name}
+      </span>
+    </div>
+  );
+}
+
 export default function Home() {
   const [filter, setFilter] = useState("All");
   const [favorites, setFavorites] = useState<string[]>([]);
   const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -233,14 +291,23 @@ export default function Home() {
   return (
     <div className="max-w-[480px] mx-auto min-h-screen pb-10">
       {/* Header */}
-      <header className="px-5 pt-7 pb-4 border-b border-border">
-        <h1 className="font-display font-bold text-[28px] tracking-wide text-text">
-          FIGHTBASE
-        </h1>
-        <p className="text-[13px] text-faint mt-1">
-          Boxing · MMA · Muay Thai · Kickboxing · Jiu-Jitsu · Judo · Wrestling
-          · Karate · Taekwondo
-        </p>
+      <header className="px-5 pt-7 pb-4 border-b border-border flex items-center gap-3">
+        <Image
+          src="/logo-header.png"
+          alt="Fightbase logo"
+          width={40}
+          height={40}
+          className="rounded-[9px] shrink-0"
+        />
+        <div>
+          <h1 className="font-display font-bold text-[28px] tracking-wide text-text">
+            FIGHTBASE
+          </h1>
+          <p className="text-[13px] text-faint mt-1">
+            Boxing · MMA · Muay Thai · Kickboxing · Jiu-Jitsu · Judo ·
+            Wrestling · Karate · Taekwondo
+          </p>
+        </div>
       </header>
 
       {/* Sport filter */}
@@ -305,6 +372,8 @@ export default function Home() {
           const { weekday, day, month } = formatDate(e.date);
           const dLeft = daysUntil(e.date);
           const isFav = favorites.includes(e.promotion);
+          const isOpen = expandedId === e.id;
+          const links = watchLinks(e.broadcaster);
           return (
             <div key={e.id} className="flex gap-3.5">
               <div className="w-12 shrink-0 text-center pt-1">
@@ -317,7 +386,8 @@ export default function Home() {
                 <div className="text-[11px] text-dim">{month}</div>
               </div>
               <div
-                className={`flex-1 rounded-[10px] border p-3.5 px-4 ${
+                onClick={() => setExpandedId(isOpen ? null : e.id)}
+                className={`flex-1 rounded-[10px] border p-3.5 px-4 cursor-pointer ${
                   isFav
                     ? "border-borderFav bg-panelFav"
                     : "border-border bg-panel"
@@ -335,6 +405,17 @@ export default function Home() {
                       : "past"}
                   </span>
                 </div>
+
+                {e.fighters && (
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <FighterAvatar name={e.fighters[0]} />
+                    <span className="text-[11px] text-dim font-semibold">
+                      VS
+                    </span>
+                    <FighterAvatar name={e.fighters[1]} />
+                  </div>
+                )}
+
                 <h2 className="font-display font-semibold text-[18px] leading-tight text-text mb-1">
                   {e.main}
                 </h2>
@@ -345,10 +426,48 @@ export default function Home() {
                   {e.venue}
                   {e.broadcaster !== "-" ? ` · ${e.broadcaster}` : ""}
                 </p>
-                {e.note && (
-                  <p className="text-[12px] text-dim leading-relaxed">
-                    {e.note}
-                  </p>
+
+                {isOpen ? (
+                  <div
+                    onClick={(ev) => ev.stopPropagation()}
+                    className="cursor-auto"
+                  >
+                    {e.note && (
+                      <p className="text-[12px] text-dim leading-relaxed mb-2">
+                        {e.note}
+                      </p>
+                    )}
+                    {links.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pt-1 border-t border-[#2E2E30] mt-1.5">
+                        {links.map((l) =>
+                          l.url ? (
+                            <a
+                              key={l.label}
+                              href={l.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[12px] font-medium px-2.5 py-1 rounded-md bg-accent text-white"
+                            >
+                              Watch on {l.label} ↗
+                            </a>
+                          ) : (
+                            <span
+                              key={l.label}
+                              className="text-[12px] px-2.5 py-1 rounded-md border border-[#2E2E30] text-faint"
+                            >
+                              {l.label}
+                            </span>
+                          )
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  (e.note || links.length > 0) && (
+                    <p className="text-[11px] text-[#5A5A5E]">
+                      Tap for details{links.length > 0 ? " & where to watch" : ""}
+                    </p>
+                  )
                 )}
               </div>
             </div>
