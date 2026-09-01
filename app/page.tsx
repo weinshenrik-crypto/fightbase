@@ -558,7 +558,7 @@ export default function Home() {
   }, [favorites]);
 
   return (
-    <div className="max-w-[480px] mx-auto min-h-screen pb-10">
+    <div className="max-w-[480px] md:max-w-3xl lg:max-w-5xl mx-auto min-h-screen pb-10">
       {/* Header */}
       <header className="px-5 pt-7 pb-4 border-b border-border flex items-center gap-3">
         <Image
@@ -580,12 +580,12 @@ export default function Home() {
       </header>
 
       {/* Tab bar */}
-      <div className="flex px-5 border-b border-border">
+      <div className="flex px-5 border-b border-border md:justify-center md:gap-10">
         {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex-1 text-[13px] font-semibold py-3 border-b-2 transition-colors ${
+            className={`flex-1 md:flex-none text-[13px] font-semibold py-3 border-b-2 transition-colors ${
               tab === t.id
                 ? "border-accent text-text"
                 : "border-transparent text-faint"
@@ -616,9 +616,9 @@ export default function Home() {
           </div>
 
           {/* Timeline */}
-          <main className="px-5 pt-5 flex flex-col gap-[18px]">
+          <main className="px-5 pt-5 flex flex-col gap-[18px] md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
             {filtered.length === 0 && (
-              <div className="text-center py-10">
+              <div className="text-center py-10 md:col-span-full">
                 <p className="text-[15px] text-text mb-1">No events.</p>
                 <p className="text-[13px] text-dim">Adjust the filter.</p>
               </div>
@@ -672,9 +672,9 @@ export default function Home() {
             </div>
           </div>
 
-          <main className="px-5 pt-5 flex flex-col gap-[18px] pb-6">
+          <main className="px-5 pt-5 flex flex-col gap-[18px] pb-6 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
             {favoriteEvents.length === 0 && (
-              <div className="text-center py-10">
+              <div className="text-center py-10 md:col-span-full">
                 <p className="text-[15px] text-text mb-1">
                   No favorites yet.
                 </p>
@@ -699,7 +699,7 @@ export default function Home() {
       )}
 
       {tab === "account" && (
-        <main className="px-5 pt-6 pb-10">
+        <main className="px-5 pt-6 pb-10 md:max-w-sm md:mx-auto">
           {session ? (
             <>
               <h2 className="font-display font-semibold text-[20px] text-text mb-1">
