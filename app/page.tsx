@@ -882,6 +882,17 @@ export default function Home() {
     openThreadView(openThread);
   }
 
+  async function handleDeletePost(postId: string) {
+    await supabase.from("forum_posts").delete().eq("id", postId);
+    if (openThread) openThreadView(openThread);
+  }
+
+  async function handleDeleteThread(threadId: string) {
+    await supabase.from("forum_threads").delete().eq("id", threadId);
+    setOpenThread(null);
+    loadThreads();
+  }
+
   async function handleAuthSubmit(ev: React.FormEvent) {
     ev.preventDefault();
     setAuthError(null);
@@ -1148,9 +1159,20 @@ export default function Home() {
               >
                 ← Back to threads
               </button>
-              <h2 className="font-display font-semibold text-[19px] text-text mb-4">
-                {openThread.title}
-              </h2>
+              <div className="flex justify-between items-start mb-4">
+                <h2 className="font-display font-semibold text-[19px] text-text">
+                  {openThread.title}
+                </h2>
+                {session &&
+                  (isAdmin || session.user.id === openThread.created_by) && (
+                    <button
+                      onClick={() => handleDeleteThread(openThread.id)}
+                      className="text-[12px] text-accent shrink-0 ml-3"
+                    >
+                      Delete thread
+                    </button>
+                  )}
+              </div>
 
               {postsLoading ? (
                 <p className="text-[13px] text-dim">Loading…</p>
@@ -1161,9 +1183,20 @@ export default function Home() {
                       key={p.id}
                       className="border border-border bg-panel rounded-[10px] p-3"
                     >
-                      <p className="text-[12px] text-accent font-semibold mb-1">
-                        {p.profiles?.email ?? "Unknown"}
-                      </p>
+                      <div className="flex justify-between items-start mb-1">
+                        <p className="text-[12px] text-accent font-semibold">
+                          {p.profiles?.email ?? "Unknown"}
+                        </p>
+                        {session &&
+                          (isAdmin || session.user.id === p.user_id) && (
+                            <button
+                              onClick={() => handleDeletePost(p.id)}
+                              className="text-[11px] text-dim hover:text-accent"
+                            >
+                              Delete
+                            </button>
+                          )}
+                      </div>
                       <p className="text-[13px] text-muted whitespace-pre-wrap">
                         {p.content}
                       </p>

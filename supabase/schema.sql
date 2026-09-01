@@ -90,9 +90,10 @@ create policy "Threads are viewable by everyone"
   on forum_threads for select using (true);
 create policy "Logged-in users can create threads"
   on forum_threads for insert with check (auth.uid() = created_by);
-create policy "Admins can delete any thread"
+create policy "Users can delete their own threads, admins any"
   on forum_threads for delete using (
-    exists (select 1 from profiles where id = auth.uid() and role = 'admin')
+    auth.uid() = created_by
+    or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
   );
 
 create policy "Posts are viewable by everyone"
