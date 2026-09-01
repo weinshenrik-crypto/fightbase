@@ -352,15 +352,222 @@ function watchLinks(broadcaster: string) {
     .map((label) => ({ label, url: BROADCASTER_LINKS[label] }));
 }
 
-function FighterAvatar({ name }: { name: string }) {
+function FighterAvatar({
+  name,
+  onClick,
+}: {
+  name: string;
+  onClick: () => void;
+}) {
   return (
-    <div className="flex flex-col items-center gap-1 w-16">
+    <button
+      onClick={(ev) => {
+        ev.stopPropagation();
+        onClick();
+      }}
+      className="flex flex-col items-center gap-1 w-16"
+    >
       <div className="w-11 h-11 rounded-full bg-[#2A2A2C] border border-[#3A3A3C] flex items-center justify-center text-[13px] font-semibold text-text shrink-0">
         {initials(name)}
       </div>
       <span className="text-[11px] text-muted text-center leading-tight">
         {name}
       </span>
+    </button>
+  );
+}
+
+type FighterRow = {
+  name: string;
+  nickname: string | null;
+  sport: string | null;
+  record: string | null;
+  bio: string | null;
+  career: string | null;
+  photo_url: string | null;
+};
+
+function FighterModal({
+  name,
+  isAdmin,
+  onClose,
+}: {
+  name: string;
+  isAdmin: boolean;
+  onClose: () => void;
+}) {
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [fighter, setFighter] = useState<FighterRow>({
+    name,
+    nickname: "",
+    sport: "",
+    record: "",
+    bio: "",
+    career: "",
+    photo_url: "",
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase
+      .from("fighters")
+      .select("*")
+      .eq("name", name)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        if (data) setFighter(data as FighterRow);
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [name]);
+
+  async function handleSave() {
+    setSaving(true);
+    const { data: userData } = await supabase.auth.getUser();
+    await supabase.from("fighters").upsert(
+      { ...fighter, name, updated_by: userData.user?.id },
+      { onConflict: "name" }
+    );
+    setSaving(false);
+    setEditing(false);
+  }
+
+  return (
+    <div
+      onClick={onClose}
+      className="fixed inset-0 bg-black/70 flex items-end md:items-center justify-center z-50 p-0 md:p-5"
+    >
+      <div
+        onClick={(ev) => ev.stopPropagation()}
+        className="bg-panel border border-border rounded-t-2xl md:rounded-2xl w-full md:max-w-md max-h-[85vh] overflow-y-auto p-5"
+      >
+        <div className="flex justify-between items-start mb-3">
+          <h3 className="font-display font-semibold text-[20px] text-text">
+            {name}
+          </h3>
+          <button onClick={onClose} className="text-dim text-[20px] leading-none">
+            ×
+          </button>
+        </div>
+
+        {loading ? (
+          <p className="text-[13px] text-dim">Loading…</p>
+        ) : editing ? (
+          <div className="flex flex-col gap-2.5">
+            <input
+              placeholder="Nickname"
+              value={fighter.nickname ?? ""}
+              onChange={(e) =>
+                setFighter({ ...fighter, nickname: e.target.value })
+              }
+              className="bg-black/30 border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
+            />
+            <input
+              placeholder="Sport"
+              value={fighter.sport ?? ""}
+              onChange={(e) =>
+                setFighter({ ...fighter, sport: e.target.value })
+              }
+              className="bg-black/30 border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
+            />
+            <input
+              placeholder="Record (e.g. 18-3-0)"
+              value={fighter.record ?? ""}
+              onChange={(e) =>
+                setFighter({ ...fighter, record: e.target.value })
+              }
+              className="bg-black/30 border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
+            />
+            <input
+              placeholder="Photo URL"
+              value={fighter.photo_url ?? ""}
+              onChange={(e) =>
+                setFighter({ ...fighter, photo_url: e.target.value })
+              }
+              className="bg-black/30 border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
+            />
+            <textarea
+              placeholder="Bio"
+              rows={3}
+              value={fighter.bio ?? ""}
+              onChange={(e) => setFighter({ ...fighter, bio: e.target.value })}
+              className="bg-black/30 border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent resize-none"
+            />
+            <textarea
+              placeholder="Career history"
+              rows={4}
+              value={fighter.career ?? ""}
+              onChange={(e) =>
+                setFighter({ ...fighter, career: e.target.value })
+              }
+              className="bg-black/30 border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent resize-none"
+            />
+            <div className="flex gap-2 mt-1">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex-1 bg-accent text-white text-[13px] font-semibold rounded-md py-2 disabled:opacity-50"
+              >
+                {saving ? "Saving…" : "Save"}
+              </button>
+              <button
+                onClick={() => setEditing(false)}
+                className="text-[13px] text-dim px-3"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            {fighter.nickname && (
+              <p className="text-[13px] text-accent mb-1">
+                &quot;{fighter.nickname}&quot;
+              </p>
+            )}
+            {fighter.sport && (
+              <p className="text-[12px] text-faint mb-0.5">{fighter.sport}</p>
+            )}
+            {fighter.record && (
+              <p className="text-[12px] text-faint mb-3">
+                Record: {fighter.record}
+              </p>
+            )}
+            {fighter.bio ? (
+              <p className="text-[13px] text-muted leading-relaxed mb-3 whitespace-pre-wrap">
+                {fighter.bio}
+              </p>
+            ) : (
+              <p className="text-[13px] text-dim mb-3">
+                No profile yet for {name}.
+              </p>
+            )}
+            {fighter.career && (
+              <>
+                <h4 className="text-[12px] font-semibold text-text mb-1">
+                  Career
+                </h4>
+                <p className="text-[13px] text-muted leading-relaxed whitespace-pre-wrap">
+                  {fighter.career}
+                </p>
+              </>
+            )}
+            {isAdmin && (
+              <button
+                onClick={() => setEditing(true)}
+                className="text-[13px] text-accent mt-4"
+              >
+                {fighter.bio ? "Edit profile" : "Add profile"}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -370,11 +577,13 @@ function EventCard({
   isFav,
   isOpen,
   onToggle,
+  onSelectFighter,
 }: {
   e: FightEvent;
   isFav: boolean;
   isOpen: boolean;
   onToggle: () => void;
+  onSelectFighter: (name: string) => void;
 }) {
   const { weekday, day, month } = formatDate(e.date);
   const dLeft = daysUntil(e.date);
@@ -406,9 +615,15 @@ function EventCard({
 
         {e.fighters && (
           <div className="flex items-center justify-between mb-2 px-1">
-            <FighterAvatar name={e.fighters[0]} />
+            <FighterAvatar
+              name={e.fighters[0]}
+              onClick={() => onSelectFighter(e.fighters![0])}
+            />
             <span className="text-[11px] text-dim font-semibold">VS</span>
-            <FighterAvatar name={e.fighters[1]} />
+            <FighterAvatar
+              name={e.fighters[1]}
+              onClick={() => onSelectFighter(e.fighters![1])}
+            />
           </div>
         )}
 
@@ -470,9 +685,27 @@ function EventCard({
 const TABS = [
   { id: "events", label: "Events" },
   { id: "favorites", label: "Favorites" },
+  { id: "forum", label: "Forum" },
   { id: "account", label: "Account" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
+
+type ForumThread = {
+  id: string;
+  title: string;
+  created_at: string;
+  created_by: string | null;
+  profiles?: { email: string | null } | null;
+};
+
+type ForumPost = {
+  id: string;
+  thread_id: string;
+  content: string;
+  created_at: string;
+  user_id: string | null;
+  profiles?: { email: string | null } | null;
+};
 
 export default function Home() {
   const [tab, setTab] = useState<TabId>("events");
@@ -487,6 +720,17 @@ export default function Home() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [authNotice, setAuthNotice] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [selectedFighter, setSelectedFighter] = useState<string | null>(null);
+  const [threads, setThreads] = useState<ForumThread[]>([]);
+  const [threadsLoading, setThreadsLoading] = useState(true);
+  const [newThreadTitle, setNewThreadTitle] = useState("");
+  const [newThreadBody, setNewThreadBody] = useState("");
+  const [openThread, setOpenThread] = useState<ForumThread | null>(null);
+  const [posts, setPosts] = useState<ForumPost[]>([]);
+  const [postsLoading, setPostsLoading] = useState(false);
+  const [newPost, setNewPost] = useState("");
+  const [forumError, setForumError] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -505,6 +749,86 @@ export default function Home() {
     );
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!session) {
+      setIsAdmin(false);
+      return;
+    }
+    supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", session.user.id)
+      .maybeSingle()
+      .then(({ data }) => setIsAdmin(data?.role === "admin"));
+  }, [session]);
+
+  function loadThreads() {
+    setThreadsLoading(true);
+    supabase
+      .from("forum_threads")
+      .select("id, title, created_at, created_by, profiles(email)")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        setThreads((data as unknown as ForumThread[]) ?? []);
+        setThreadsLoading(false);
+      });
+  }
+
+  useEffect(() => {
+    if (tab === "forum" && !openThread) loadThreads();
+  }, [tab, openThread]);
+
+  async function handleCreateThread(ev: React.FormEvent) {
+    ev.preventDefault();
+    if (!session) return;
+    setForumError(null);
+    const { data: thread, error } = await supabase
+      .from("forum_threads")
+      .insert({ title: newThreadTitle, created_by: session.user.id })
+      .select()
+      .single();
+    if (error || !thread) {
+      setForumError(error?.message ?? "Could not create thread.");
+      return;
+    }
+    if (newThreadBody.trim()) {
+      await supabase.from("forum_posts").insert({
+        thread_id: thread.id,
+        user_id: session.user.id,
+        content: newThreadBody,
+      });
+    }
+    setNewThreadTitle("");
+    setNewThreadBody("");
+    loadThreads();
+  }
+
+  function openThreadView(t: ForumThread) {
+    setOpenThread(t);
+    setPostsLoading(true);
+    supabase
+      .from("forum_posts")
+      .select("id, thread_id, content, created_at, user_id, profiles(email)")
+      .eq("thread_id", t.id)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        setPosts((data as unknown as ForumPost[]) ?? []);
+        setPostsLoading(false);
+      });
+  }
+
+  async function handleReply(ev: React.FormEvent) {
+    ev.preventDefault();
+    if (!session || !openThread || !newPost.trim()) return;
+    await supabase.from("forum_posts").insert({
+      thread_id: openThread.id,
+      user_id: session.user.id,
+      content: newPost,
+    });
+    setNewPost("");
+    openThreadView(openThread);
+  }
 
   async function handleAuthSubmit(ev: React.FormEvent) {
     ev.preventDefault();
@@ -632,6 +956,7 @@ export default function Home() {
                 onToggle={() =>
                   setExpandedId(expandedId === e.id ? null : e.id)
                 }
+                onSelectFighter={setSelectedFighter}
               />
             ))}
           </main>
@@ -692,10 +1017,145 @@ export default function Home() {
                 onToggle={() =>
                   setExpandedId(expandedId === e.id ? null : e.id)
                 }
+                onSelectFighter={setSelectedFighter}
               />
             ))}
           </main>
         </>
+      )}
+
+      {tab === "forum" && (
+        <main className="px-5 pt-5 pb-10 md:max-w-2xl md:mx-auto">
+          {openThread ? (
+            <>
+              <button
+                onClick={() => setOpenThread(null)}
+                className="text-[13px] text-accent mb-3"
+              >
+                ← Back to threads
+              </button>
+              <h2 className="font-display font-semibold text-[19px] text-text mb-4">
+                {openThread.title}
+              </h2>
+
+              {postsLoading ? (
+                <p className="text-[13px] text-dim">Loading…</p>
+              ) : (
+                <div className="flex flex-col gap-3 mb-5">
+                  {posts.map((p) => (
+                    <div
+                      key={p.id}
+                      className="border border-border bg-panel rounded-[10px] p-3"
+                    >
+                      <p className="text-[12px] text-accent font-semibold mb-1">
+                        {p.profiles?.email ?? "Unknown"}
+                      </p>
+                      <p className="text-[13px] text-muted whitespace-pre-wrap">
+                        {p.content}
+                      </p>
+                    </div>
+                  ))}
+                  {posts.length === 0 && (
+                    <p className="text-[13px] text-dim">No replies yet.</p>
+                  )}
+                </div>
+              )}
+
+              {session ? (
+                <form onSubmit={handleReply} className="flex flex-col gap-2">
+                  <textarea
+                    required
+                    rows={3}
+                    placeholder="Write a reply…"
+                    value={newPost}
+                    onChange={(e) => setNewPost(e.target.value)}
+                    className="bg-panel border border-border rounded-md px-3.5 py-2.5 text-[14px] text-text placeholder:text-dim outline-none focus:border-accent resize-none"
+                  />
+                  <button
+                    type="submit"
+                    className="bg-accent text-white text-[14px] font-semibold rounded-md py-2.5 self-start px-5"
+                  >
+                    Reply
+                  </button>
+                </form>
+              ) : (
+                <p className="text-[13px] text-dim">
+                  Log in to reply to this thread.
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              <h2 className="font-display font-semibold text-[19px] text-text mb-1">
+                Forum
+              </h2>
+              <p className="text-[13px] text-dim mb-5">
+                Talk fights with other fans.
+              </p>
+
+              {session ? (
+                <form
+                  onSubmit={handleCreateThread}
+                  className="flex flex-col gap-2 mb-6 border-b border-border pb-6"
+                >
+                  <input
+                    required
+                    placeholder="Thread title"
+                    value={newThreadTitle}
+                    onChange={(e) => setNewThreadTitle(e.target.value)}
+                    className="bg-panel border border-border rounded-md px-3.5 py-2.5 text-[14px] text-text placeholder:text-dim outline-none focus:border-accent"
+                  />
+                  <textarea
+                    rows={2}
+                    placeholder="First message (optional)"
+                    value={newThreadBody}
+                    onChange={(e) => setNewThreadBody(e.target.value)}
+                    className="bg-panel border border-border rounded-md px-3.5 py-2.5 text-[14px] text-text placeholder:text-dim outline-none focus:border-accent resize-none"
+                  />
+                  <button
+                    type="submit"
+                    className="bg-accent text-white text-[14px] font-semibold rounded-md py-2.5 self-start px-5"
+                  >
+                    New thread
+                  </button>
+                  {forumError && (
+                    <p className="text-[12px] text-accent">{forumError}</p>
+                  )}
+                </form>
+              ) : (
+                <p className="text-[13px] text-dim mb-6 border-b border-border pb-6">
+                  Log in to start a new thread.
+                </p>
+              )}
+
+              {threadsLoading ? (
+                <p className="text-[13px] text-dim">Loading…</p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {threads.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => openThreadView(t)}
+                      className="text-left border border-border bg-panel rounded-[10px] p-3.5 hover:border-accent transition-colors"
+                    >
+                      <p className="text-[14px] font-semibold text-text">
+                        {t.title}
+                      </p>
+                      <p className="text-[12px] text-faint mt-0.5">
+                        by {t.profiles?.email ?? "Unknown"}
+                      </p>
+                    </button>
+                  ))}
+                  {threads.length === 0 && (
+                    <p className="text-[13px] text-dim">
+                      No threads yet — start the first one.
+                    </p>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </main>
       )}
 
       {tab === "account" && (
@@ -705,9 +1165,15 @@ export default function Home() {
               <h2 className="font-display font-semibold text-[20px] text-text mb-1">
                 Account
               </h2>
-              <p className="text-[13px] text-muted mb-5">
+              <p className="text-[13px] text-muted mb-1">
                 Logged in as {session.user.email}
               </p>
+              {isAdmin && (
+                <p className="text-[12px] text-accent font-semibold mb-4">
+                  ★ Admin — you can edit fighter profiles
+                </p>
+              )}
+              {!isAdmin && <div className="mb-5" />}
               <button
                 onClick={handleLogout}
                 className="text-[14px] font-semibold rounded-md py-2.5 px-4 border border-border text-text"
@@ -779,6 +1245,14 @@ export default function Home() {
             </>
           )}
         </main>
+      )}
+
+      {selectedFighter && (
+        <FighterModal
+          name={selectedFighter}
+          isAdmin={isAdmin}
+          onClose={() => setSelectedFighter(null)}
+        />
       )}
     </div>
   );
