@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabaseClient";
 
 // ---- Seed data (researched Aug 2026, curated manually) -----------------
 type FightEvent = {
@@ -479,6 +481,12 @@ export default function Home() {
   const [loaded, setLoaded] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
+  const [session, setSession] = useState<Session | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authNotice, setAuthNotice] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
 
   useEffect(() => {
     try {
@@ -489,6 +497,35 @@ export default function Home() {
     }
     setLoaded(true);
   }, []);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, newSession) => setSession(newSession)
+    );
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  async function handleAuthSubmit(ev: React.FormEvent) {
+    ev.preventDefault();
+    setAuthError(null);
+    setAuthNotice(null);
+    setAuthLoading(true);
+    const { error } =
+      authMode === "signup"
+        ? await supabase.auth.signUp({ email, password })
+        : await supabase.auth.signInWithPassword({ email, password });
+    setAuthLoading(false);
+    if (error) {
+      setAuthError(error.message);
+    } else if (authMode === "signup") {
+      setAuthNotice("Check your email to confirm your account.");
+    }
+  }
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+  }
 
   useEffect(() => {
     if (!loaded) return;
@@ -663,51 +700,84 @@ export default function Home() {
 
       {tab === "account" && (
         <main className="px-5 pt-6 pb-10">
-          <h2 className="font-display font-semibold text-[20px] text-text mb-1">
-            {authMode === "signup" ? "Create account" : "Log in"}
-          </h2>
-          <p className="text-[13px] text-dim mb-5">
-            Sign up to sync your favorites across devices and get notified
-            before events start.
-          </p>
+          {session ? (
+            <>
+              <h2 className="font-display font-semibold text-[20px] text-text mb-1">
+                Account
+              </h2>
+              <p className="text-[13px] text-muted mb-5">
+                Logged in as {session.user.email}
+              </p>
+              <button
+                onClick={handleLogout}
+                className="text-[14px] font-semibold rounded-md py-2.5 px-4 border border-border text-text"
+              >
+                Log out
+              </button>
+            </>
+          ) : (
+            <>
+              <h2 className="font-display font-semibold text-[20px] text-text mb-1">
+                {authMode === "signup" ? "Create account" : "Log in"}
+              </h2>
+              <p className="text-[13px] text-dim mb-5">
+                Sign up to sync your favorites across devices and get
+                notified before events start.
+              </p>
 
-          <form
-            onSubmit={(ev) => ev.preventDefault()}
-            className="flex flex-col gap-3"
-          >
-            <input
-              type="email"
-              placeholder="Email"
-              className="bg-panel border border-border rounded-md px-3.5 py-2.5 text-[14px] text-text placeholder:text-dim outline-none focus:border-accent"
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              className="bg-panel border border-border rounded-md px-3.5 py-2.5 text-[14px] text-text placeholder:text-dim outline-none focus:border-accent"
-            />
-            <button
-              type="submit"
-              disabled
-              className="bg-accent text-white text-[14px] font-semibold rounded-md py-2.5 opacity-50 cursor-not-allowed"
-            >
-              {authMode === "signup" ? "Sign up" : "Log in"}
-            </button>
-            <p className="text-[11px] text-dim text-center">
-              Account backend is being connected — this form isn&apos;t live
-              yet.
-            </p>
-          </form>
+              <form onSubmit={handleAuthSubmit} className="flex flex-col gap-3">
+                <input
+                  type="email"
+                  required
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-panel border border-border rounded-md px-3.5 py-2.5 text-[14px] text-text placeholder:text-dim outline-none focus:border-accent"
+                />
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-panel border border-border rounded-md px-3.5 py-2.5 text-[14px] text-text placeholder:text-dim outline-none focus:border-accent"
+                />
+                <button
+                  type="submit"
+                  disabled={authLoading}
+                  className="bg-accent text-white text-[14px] font-semibold rounded-md py-2.5 disabled:opacity-50"
+                >
+                  {authLoading
+                    ? "Please wait…"
+                    : authMode === "signup"
+                    ? "Sign up"
+                    : "Log in"}
+                </button>
+                {authError && (
+                  <p className="text-[12px] text-accent text-center">
+                    {authError}
+                  </p>
+                )}
+                {authNotice && (
+                  <p className="text-[12px] text-dim text-center">
+                    {authNotice}
+                  </p>
+                )}
+              </form>
 
-          <button
-            onClick={() =>
-              setAuthMode(authMode === "signup" ? "login" : "signup")
-            }
-            className="text-[13px] text-accent mt-4"
-          >
-            {authMode === "signup"
-              ? "Already have an account? Log in"
-              : "New here? Create an account"}
-          </button>
+              <button
+                onClick={() =>
+                  setAuthMode(authMode === "signup" ? "login" : "signup")
+                }
+                className="text-[13px] text-accent mt-4"
+              >
+                {authMode === "signup"
+                  ? "Already have an account? Log in"
+                  : "New here? Create an account"}
+              </button>
+            </>
+          )}
         </main>
       )}
     </div>
