@@ -323,14 +323,44 @@ function daysUntil(iso: string) {
   return Math.round((target.getTime() - now.getTime()) / 86400000);
 }
 
-function initials(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .map((p) => p[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+// Deterministic hue per fighter name — original illustration, not a photo.
+function nameHue(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash) % 360;
+}
+
+function FighterIllustration({
+  name,
+  size = 44,
+}: {
+  name: string;
+  size?: number;
+}) {
+  const hue = nameHue(name);
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        background: `hsl(${hue}, 40%, 20%)`,
+        border: `1px solid hsl(${hue}, 40%, 32%)`,
+      }}
+      className="rounded-full flex items-center justify-center shrink-0"
+    >
+      <svg width={size * 0.62} height={size * 0.62} viewBox="0 0 24 24">
+        <circle cx="12" cy="5.5" r="2.6" fill={`hsl(${hue}, 65%, 72%)`} />
+        <path
+          d="M8.2 9 L15.8 9 L14.8 19.5 L9.2 19.5 Z"
+          fill={`hsl(${hue}, 55%, 55%)`}
+        />
+        <circle cx="6.8" cy="8.4" r="1.9" fill={`hsl(${hue}, 65%, 72%)`} />
+        <circle cx="17.2" cy="8.4" r="1.9" fill={`hsl(${hue}, 65%, 72%)`} />
+      </svg>
+    </div>
+  );
 }
 
 // Official homepages for broadcasters we know — never guessed, only real domains.
@@ -367,9 +397,7 @@ function FighterAvatar({
       }}
       className="flex flex-col items-center gap-1 w-16"
     >
-      <div className="w-11 h-11 rounded-full bg-[#2A2A2C] border border-[#3A3A3C] flex items-center justify-center text-[13px] font-semibold text-text shrink-0">
-        {initials(name)}
-      </div>
+      <FighterIllustration name={name} size={44} />
       <span className="text-[11px] text-muted text-center leading-tight">
         {name}
       </span>
@@ -450,9 +478,12 @@ function FighterModal({
         className="bg-panel border border-border rounded-t-2xl md:rounded-2xl w-full md:max-w-md max-h-[85vh] overflow-y-auto p-5"
       >
         <div className="flex justify-between items-start mb-3">
-          <h3 className="font-display font-semibold text-[20px] text-text">
-            {name}
-          </h3>
+          <div className="flex items-center gap-3">
+            <FighterIllustration name={name} size={48} />
+            <h3 className="font-display font-semibold text-[20px] text-text">
+              {name}
+            </h3>
+          </div>
           <button onClick={onClose} className="text-dim text-[20px] leading-none">
             ×
           </button>
@@ -1069,9 +1100,7 @@ export default function Home() {
                 className="text-left border border-border bg-panel rounded-[10px] p-3.5 hover:border-accent transition-colors"
               >
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-11 h-11 rounded-full bg-[#2A2A2C] border border-[#3A3A3C] flex items-center justify-center text-[13px] font-semibold text-text shrink-0">
-                    {initials(name)}
-                  </div>
+                  <FighterIllustration name={name} size={44} />
                   <div>
                     <p className="text-[15px] font-semibold text-text">
                       {name}
