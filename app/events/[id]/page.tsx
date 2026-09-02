@@ -126,6 +126,19 @@ export default function EventPage({ params }: { params: { id: string } }) {
         </p>
       )}
 
+      {event.undercard && event.undercard.length > 0 && (
+        <div className="mb-5">
+          <h2 className="text-[13px] font-semibold text-text mb-1.5">
+            Fight card
+          </h2>
+          {event.undercard.map((fight, i) => (
+            <p key={i} className="text-[13px] text-muted">
+              Pre Card {i + 1}: {fight}
+            </p>
+          ))}
+        </div>
+      )}
+
       {links.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-8">
           {links.map((l) =>

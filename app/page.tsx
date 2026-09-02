@@ -330,6 +330,15 @@ function EventCard({
                 {e.note}
               </p>
             )}
+            {e.undercard && e.undercard.length > 0 && (
+              <div className="mb-2">
+                {e.undercard.map((fight, i) => (
+                  <p key={i} className="text-[12px] text-muted">
+                    Pre Card {i + 1}: {fight}
+                  </p>
+                ))}
+              </div>
+            )}
             {links.length > 0 && (
               <div className="flex flex-wrap gap-1.5 pt-1 border-t border-[#2E2E30] mt-1.5">
                 {links.map((l) =>

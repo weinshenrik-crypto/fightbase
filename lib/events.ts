@@ -10,6 +10,9 @@ export type FightEvent = {
   venue: string;
   broadcaster: string;
   note: string;
+  // Undercard bouts announced so far — only added once officially confirmed
+  // by the promotion, never guessed. Most cards this far out aren't full yet.
+  undercard?: string[];
 };
 
 export const EVENTS: FightEvent[] = [
@@ -191,6 +194,7 @@ export const EVENTS: FightEvent[] = [
     venue: "Delta Center, Salt Lake City",
     broadcaster: "ESPN+/PPV",
     note: "Two-time women's flyweight champion Valentina Shevchenko defends against Natália Silva in the co-main.",
+    undercard: ["Shevchenko vs. Silva"],
   },
   {
     id: "ufc-333",
@@ -203,6 +207,7 @@ export const EVENTS: FightEvent[] = [
     venue: "Etihad Arena, Abu Dhabi",
     broadcaster: "ESPN+/PPV",
     note: "Featherweight title fight; Yan vs. Dvalishvili bantamweight trilogy co-headlines.",
+    undercard: ["Yan vs. Dvalishvili"],
   },
   {
     id: "ufc-334",
