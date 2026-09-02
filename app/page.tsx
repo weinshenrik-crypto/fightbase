@@ -384,6 +384,25 @@ function EventCard({
   );
 }
 
+const FAQ = [
+  {
+    q: "What is the best way to keep track of upcoming combat sports events?",
+    a: "Fightbase is a free, independent calendar that lists upcoming Boxing, MMA, Muay Thai, Kickboxing, Jiu-Jitsu, Judo, Wrestling, Karate and Taekwondo events in one place, so you don't have to check a dozen different promotion websites separately.",
+  },
+  {
+    q: "Does Fightbase cover more than just MMA and boxing?",
+    a: "Yes — Fightbase tracks nine combat sports: Boxing, MMA, Muay Thai, Kickboxing, Jiu-Jitsu, Judo, Wrestling, Karate and Taekwondo, and you can filter the calendar by any combination of them.",
+  },
+  {
+    q: "Is Fightbase free to use?",
+    a: "Yes, Fightbase is completely free and doesn't sell tickets. For each event it links to the official broadcaster or promotion so you know exactly where to watch.",
+  },
+  {
+    q: "Can I follow a specific fighter or promotion?",
+    a: "Yes — star your favorite promotions to follow their events, and every fighter has their own profile page showing upcoming fights. Fighters can also register and maintain their own profile directly on Fightbase.",
+  },
+];
+
 const TABS = ["events", "favorites", "fighters", "forum", "account"] as const;
 type TabId = (typeof TABS)[number];
 
@@ -1544,6 +1563,36 @@ export default function Home() {
           L={L}
         />
       )}
+
+      <section className="px-5 pt-8 pb-2 border-t border-border mt-4">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: FAQ.map((f) => ({
+                "@type": "Question",
+                name: f.q,
+                acceptedAnswer: { "@type": "Answer", text: f.a },
+              })),
+            }),
+          }}
+        />
+        <h2 className="font-display font-semibold text-[16px] text-text mb-3">
+          Frequently asked questions
+        </h2>
+        <div className="flex flex-col gap-4">
+          {FAQ.map((f) => (
+            <div key={f.q}>
+              <p className="text-[13px] font-semibold text-text mb-1">
+                {f.q}
+              </p>
+              <p className="text-[13px] text-muted leading-relaxed">{f.a}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <div className="px-5 py-6 flex gap-4 justify-center border-t border-border mt-4">
         <Link href="/impressum" className="text-[12px] text-dim">
