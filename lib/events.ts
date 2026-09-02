@@ -340,6 +340,27 @@ export const BROADCASTER_LINKS: Record<string, string> = {
   "ESPN+/PPV": "https://plus.espn.com",
 };
 
+// Official promotion homepages we're confident about — never guessed.
+export const PROMOTION_LINKS: Record<string, string> = {
+  ADCC: "https://adcombat.com",
+  GLORY: "https://glorykickboxing.com",
+  "IJF Judo Grand Slam": "https://www.ijf.org",
+  OKTAGON: "https://oktagonmma.com",
+  UFC: "https://www.ufc.com",
+  UWW: "https://uww.org",
+  "WKF Karate 1": "https://www.wkf.net",
+  "World Taekwondo": "https://www.worldtaekwondo.org",
+  "Queensberry Promotions": "https://queensberry.co.uk",
+  "Riyadh Season": "https://riyadhseason.sa",
+};
+
+// Best-effort city/locality extracted from a "Venue, City" style string,
+// used for optional structured-data address fields.
+export function venueLocality(venue: string) {
+  const parts = venue.split(",").map((p) => p.trim());
+  return parts.length > 1 ? parts[parts.length - 1] : null;
+}
+
 export function watchLinks(broadcaster: string) {
   if (broadcaster === "-" || broadcaster === "TBA") return [];
   return broadcaster

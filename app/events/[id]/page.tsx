@@ -7,6 +7,8 @@ import {
   daysUntil,
   watchLinks,
   fighterSlug,
+  PROMOTION_LINKS,
+  venueLocality,
 } from "@/lib/events";
 import FighterIllustration from "@/components/FighterIllustration";
 
@@ -39,18 +41,28 @@ export default function EventPage({ params }: { params: { id: string } }) {
   const dLeft = daysUntil(event.date);
   const links = watchLinks(event.broadcaster);
 
+  const locality = venueLocality(event.venue);
+  const organizerUrl = PROMOTION_LINKS[event.promotion];
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SportsEvent",
     name: event.main,
     startDate: event.date,
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    image: ["https://fightbase.io/og-image.png"],
     location: {
       "@type": "Place",
       name: event.venue,
+      ...(locality
+        ? { address: { "@type": "PostalAddress", addressLocality: locality } }
+        : {}),
     },
     organizer: {
       "@type": "Organization",
       name: event.promotion,
+      ...(organizerUrl ? { url: organizerUrl } : {}),
     },
     description: event.note,
     ...(event.fighters
