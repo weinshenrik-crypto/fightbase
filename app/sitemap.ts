@@ -1,5 +1,5 @@
 import { MetadataRoute } from "next";
-import { EVENTS, allFighterNames, fighterSlug } from "@/lib/events";
+import { EVENTS, SPORTS, allFighterNames, fighterSlug, sportSlug } from "@/lib/events";
 import { supabase } from "@/lib/supabaseClient";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -19,6 +19,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  const sportPages: MetadataRoute.Sitemap = SPORTS.filter(
+    (s) => s !== "All"
+  ).map((s) => ({
+    url: `${base}/sport/${sportSlug(s)}`,
+    lastModified: now,
+    changeFrequency: "daily",
+    priority: 0.9,
+  }));
+
   const { data } = await supabase.from("fighters").select("slug");
   const dbSlugs = (data ?? []).map((f) => f.slug).filter(Boolean) as string[];
   const eventSlugs = allFighterNames().map((name) => fighterSlug(name));
@@ -31,5 +40,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticPages, ...eventPages, ...fighterPages];
+  return [...staticPages, ...sportPages, ...eventPages, ...fighterPages];
 }

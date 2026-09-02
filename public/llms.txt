@@ -10,11 +10,15 @@
 - Lists upcoming combat sports events with date, promotion, venue, main
   fight/matchup, and where to legally watch each one.
 - Lets users filter by sport (multi-select), search by event/fighter/
-  promotion name, and star favorite promotions to follow.
-- Provides a dedicated page per event and per fighter, each with a stable
-  URL, for easy linking and citation.
+  promotion name, and favorite any sport, fighter, promotion, or individual
+  event.
+- Provides a dedicated page per event, per fighter, and per sport, each with
+  a stable URL, for easy linking and citation.
 - Fighter profiles include a short bio and career history, either curated
   by site admins or self-registered by the fighters themselves.
+- Registered users can opt into email notifications: a reminder a few days
+  before a favorited event, or an alert when a new event matching their
+  favorites is added.
 - Includes a public forum where fans discuss upcoming fights.
 - Available in English and German (UI language toggle; event data is in
   English).
@@ -22,6 +26,8 @@
 ## Key pages
 
 - Home / events calendar: https://fightbase.io/
+- Per-sport calendars: https://fightbase.io/sport/{sport-slug} (mma, boxing,
+  muay-thai, kickboxing, jiu-jitsu, judo, wrestling, karate, taekwondo)
 - Individual events: https://fightbase.io/events/{event-id}
 - Individual fighters: https://fightbase.io/fighters/{fighter-slug}
 - Sitemap (full list of pages): https://fightbase.io/sitemap.xml

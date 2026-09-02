@@ -595,6 +595,33 @@ export function fighterSlug(name: string) {
     .replace(/(^-|-$)/g, "");
 }
 
+export function sportSlug(sport: string) {
+  return sport.toLowerCase().replace(/\s+/g, "-");
+}
+
+export function sportBySlug(slug: string) {
+  return SPORTS.find((s) => s !== "All" && sportSlug(s) === slug) ?? null;
+}
+
+export const SPORT_DESCRIPTIONS: Record<string, string> = {
+  MMA: "Every upcoming UFC, ONE Championship, OKTAGON and other major MMA card in one place — dates, fight cards and where to watch.",
+  Boxing:
+    "Every upcoming world title fight and major boxing card — dates, matchups and where to watch, with no fabricated fights or fake ticket links.",
+  "Muay Thai":
+    "Upcoming Muay Thai events from the world's top promotions, with fight cards and streaming info.",
+  Kickboxing:
+    "Every upcoming GLORY, ONE Championship and K-1 kickboxing card, including title fights and Grand Prix events.",
+  "Jiu-Jitsu":
+    "Upcoming IBJJF, ADCC and other major Brazilian Jiu-Jitsu tournaments and no-gi grappling events.",
+  Judo: "Upcoming IJF Judo Grand Slam, Grand Prix and World Championship events.",
+  Wrestling:
+    "Upcoming United World Wrestling (UWW) Ranking Series events and major freestyle, Greco-Roman and women's wrestling tournaments.",
+  Karate:
+    "Upcoming WKF Karate 1 Premier League events feeding the Olympic-cycle world rankings.",
+  Taekwondo:
+    "Upcoming World Taekwondo Grand Prix events and the season-ending Grand Prix Final.",
+};
+
 export function allFighterNames() {
   return Array.from(
     new Set(EVENTS.flatMap((e) => e.fighters ?? []))

@@ -13,6 +13,7 @@ import {
   daysUntil,
   watchLinks,
   fighterSlug,
+  sportSlug,
   allFighterNames,
   upcomingFightsFor,
   type FightEvent,
@@ -450,7 +451,15 @@ const FAQ = [
   },
   {
     q: "Can I follow a specific fighter or promotion?",
-    a: "Yes — star your favorite promotions to follow their events, and every fighter has their own profile page showing upcoming fights. Fighters can also register and maintain their own profile directly on Fightbase.",
+    a: "Yes — you can favorite any sport, fighter, promotion or individual event, and every fighter has their own profile page showing upcoming fights. Fighters can also register and maintain their own profile directly on Fightbase.",
+  },
+  {
+    q: "Does Fightbase have a dedicated MMA, boxing or kickboxing calendar?",
+    a: "Yes — every sport Fightbase tracks has its own calendar page listing just that sport's upcoming events, in addition to the combined calendar on the homepage.",
+  },
+  {
+    q: "Will I get notified before an event I'm following happens?",
+    a: "If you create a free account and turn on email notifications, Fightbase can email you a reminder a few days before a favorited event, or when a new event matching your favorites gets added to the calendar.",
   },
 ];
 
@@ -1905,6 +1914,23 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      <div className="px-5 pt-6 border-t border-border mt-4">
+        <p className="text-[11px] font-semibold text-dim uppercase tracking-wide mb-2">
+          Browse by sport
+        </p>
+        <div className="flex gap-2 flex-wrap">
+          {SPORTS.filter((s) => s !== "All").map((s) => (
+            <Link
+              key={s}
+              href={`/sport/${sportSlug(s)}`}
+              className="text-[12px] px-2.5 py-1 rounded-md border border-[#2E2E30] text-faint hover:border-accent hover:text-text transition-colors"
+            >
+              {s}
+            </Link>
+          ))}
+        </div>
+      </div>
 
       <div className="px-5 py-6 flex gap-4 justify-center border-t border-border mt-4">
         <Link href="/impressum" className="text-[12px] text-dim">
