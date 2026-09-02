@@ -483,6 +483,28 @@ export const EVENTS: FightEvent[] = [
     broadcaster: "-",
     note: "A top-tier Premier League leg feeding Olympic-cycle world rankings.",
   },
+  {
+    id: "wt-grand-prix-paris-2027",
+    date: "2027-08-29",
+    sport: "Taekwondo",
+    promotion: "World Taekwondo",
+    title: "World Taekwondo Grand Prix II — Paris",
+    main: "Finals across all Olympic weight divisions",
+    venue: "Paris, France",
+    broadcaster: "-",
+    note: "Second leg of the 2027 Grand Prix series, running August 26-29, 2027; date shown is the finals day.",
+  },
+  {
+    id: "wt-grand-prix-final-2027",
+    date: "2027-12-05",
+    sport: "Taekwondo",
+    promotion: "World Taekwondo",
+    title: "World Taekwondo Grand Prix Final",
+    main: "Season finale — top ranked fighters per division",
+    venue: "Tai'an, China",
+    broadcaster: "-",
+    note: "Caps the 2027 Grand Prix series, running December 3-5, 2027; date shown is the finals day.",
+  },
 ];
 
 export const SPORTS = [
