@@ -569,7 +569,8 @@ type ForumPost = {
 export default function Home() {
   const [tab, setTab] = useState<TabId>("events");
   const [lang, setLang] = useState<Lang>("en");
-  const [filter, setFilter] = useState("All");
+  const [filter, setFilter] = useState<string[]>([]);
+  const [fighterSportFilter, setFighterSportFilter] = useState<string[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -846,6 +847,22 @@ export default function Home() {
     );
   }
 
+  function toggleSport(
+    sport: string,
+    current: string[],
+    setter: (v: string[]) => void
+  ) {
+    if (sport === "All") {
+      setter([]);
+      return;
+    }
+    setter(
+      current.includes(sport)
+        ? current.filter((s) => s !== sport)
+        : [...current, sport]
+    );
+  }
+
   const allPromotions = useMemo(
     () => Array.from(new Set(EVENTS.map((e) => e.promotion))),
     []
@@ -854,7 +871,7 @@ export default function Home() {
   const filtered = useMemo(() => {
     const q = eventSearch.trim().toLowerCase();
     return EVENTS.filter((e) => {
-      if (filter !== "All" && e.sport !== filter) return false;
+      if (filter.length > 0 && !filter.includes(e.sport)) return false;
       if (!q) return true;
       const haystack = [
         e.title,
@@ -887,9 +904,15 @@ export default function Home() {
 
   const visibleFighters = useMemo(() => {
     const q = fighterSearch.trim().toLowerCase();
-    if (!q) return fighterList;
-    return fighterList.filter(({ name }) => name.toLowerCase().includes(q));
-  }, [fighterList, fighterSearch]);
+    return fighterList.filter(({ name }) => {
+      if (q && !name.toLowerCase().includes(q)) return false;
+      if (fighterSportFilter.length > 0) {
+        const sport = fightersData[name]?.sport;
+        if (!sport || !fighterSportFilter.includes(sport)) return false;
+      }
+      return true;
+    });
+  }, [fighterList, fighterSearch, fighterSportFilter, fightersData]);
 
   return (
     <div className="max-w-[480px] md:max-w-3xl lg:max-w-5xl mx-auto min-h-screen pb-10">
@@ -966,19 +989,22 @@ export default function Home() {
 
           {/* Sport filter */}
           <div className="flex gap-2 px-5 pt-4 pb-4 flex-wrap border-b border-border">
-            {SPORTS.map((s) => (
-              <button
-                key={s}
-                onClick={() => setFilter(s)}
-                className={`text-[13px] font-medium px-3.5 py-1.5 rounded-full border transition-colors ${
-                  filter === s
-                    ? "bg-accent border-accent text-white"
-                    : "border-[#3A3A3C] text-muted"
-                }`}
-              >
-                {s}
-              </button>
-            ))}
+            {SPORTS.map((s) => {
+              const active = s === "All" ? filter.length === 0 : filter.includes(s);
+              return (
+                <button
+                  key={s}
+                  onClick={() => toggleSport(s, filter, setFilter)}
+                  className={`text-[13px] font-medium px-3.5 py-1.5 rounded-full border transition-colors ${
+                    active
+                      ? "bg-accent border-accent text-white"
+                      : "border-[#3A3A3C] text-muted"
+                  }`}
+                >
+                  {s}
+                </button>
+              );
+            })}
           </div>
 
           {/* Timeline */}
@@ -1080,6 +1106,30 @@ export default function Home() {
                 {showRegisterForm ? "Cancel" : "+ Register as a fighter"}
               </button>
             )}
+          </div>
+
+          <div className="flex gap-2 px-5 pt-4 pb-4 flex-wrap border-b border-border">
+            {SPORTS.map((s) => {
+              const active =
+                s === "All"
+                  ? fighterSportFilter.length === 0
+                  : fighterSportFilter.includes(s);
+              return (
+                <button
+                  key={s}
+                  onClick={() =>
+                    toggleSport(s, fighterSportFilter, setFighterSportFilter)
+                  }
+                  className={`text-[13px] font-medium px-3.5 py-1.5 rounded-full border transition-colors ${
+                    active
+                      ? "bg-accent border-accent text-white"
+                      : "border-[#3A3A3C] text-muted"
+                  }`}
+                >
+                  {s}
+                </button>
+              );
+            })}
           </div>
 
           {showRegisterForm && session && (
