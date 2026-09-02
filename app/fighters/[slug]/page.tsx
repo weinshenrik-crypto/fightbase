@@ -11,6 +11,10 @@ import {
 } from "@/lib/events";
 import FighterIllustration from "@/components/FighterIllustration";
 
+// Fighter bios/records can change any time (admin edits, self-registration),
+// so revalidate frequently instead of freezing content at build time.
+export const revalidate = 60;
+
 export async function generateStaticParams() {
   const eventSlugs = allFighterNames().map((name) => fighterSlug(name));
   const { data } = await supabase.from("fighters").select("slug");
