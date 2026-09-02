@@ -1,0 +1,29 @@
+<!--
+  Paste this into: Supabase Dashboard -> Authentication -> Email Templates -> Confirm signup
+  Supabase variables used: {{ .ConfirmationURL }}
+-->
+<div style="background-color:#0A0A0B;padding:40px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" style="max-width:420px;margin:0 auto;background-color:#161617;border-radius:14px;overflow:hidden;border:1px solid #2E2E30;">
+    <tr>
+      <td style="padding:32px 32px 24px 32px;text-align:center;">
+        <img src="https://fightbase.io/apple-touch-icon.png" width="56" height="56" alt="Fightbase" style="border-radius:14px;margin-bottom:20px;" />
+        <h1 style="color:#FFFFFF;font-size:22px;font-weight:700;letter-spacing:0.5px;margin:0 0 8px 0;">
+          Welcome to Fightbase
+        </h1>
+        <p style="color:#9A9A9E;font-size:14px;line-height:1.5;margin:0 0 28px 0;">
+          Confirm your email to start tracking boxing, MMA, Muay Thai and every other combat sport in one place.
+        </p>
+        <a href="{{ .ConfirmationURL }}"
+           style="display:inline-block;background-color:#D62828;color:#FFFFFF;font-size:15px;font-weight:600;text-decoration:none;padding:13px 32px;border-radius:8px;">
+          Confirm email
+        </a>
+        <p style="color:#5A5A5E;font-size:12px;line-height:1.6;margin:28px 0 0 0;">
+          If you didn't create a Fightbase account, you can safely ignore this email.
+        </p>
+      </td>
+    </tr>
+  </table>
+  <p style="color:#4A4A4E;font-size:11px;text-align:center;margin-top:20px;">
+    Fightbase · fightbase.io
+  </p>
+</div>

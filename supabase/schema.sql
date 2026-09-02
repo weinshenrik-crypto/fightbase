@@ -5,9 +5,13 @@
 create table if not exists profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text,
+  username text unique,
   role text not null default 'user' check (role in ('user', 'admin')),
   created_at timestamptz not null default now()
 );
+
+-- if the table already existed before this column was added:
+alter table profiles add column if not exists username text unique;
 
 alter table profiles enable row level security;
 

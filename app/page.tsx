@@ -730,7 +730,7 @@ type ForumThread = {
   title: string;
   created_at: string;
   created_by: string | null;
-  profiles?: { email: string | null } | null;
+  profiles?: { username: string | null } | null;
 };
 
 type ForumPost = {
@@ -739,7 +739,7 @@ type ForumPost = {
   content: string;
   created_at: string;
   user_id: string | null;
-  profiles?: { email: string | null } | null;
+  profiles?: { username: string | null } | null;
 };
 
 export default function Home() {
@@ -756,6 +756,10 @@ export default function Home() {
   const [authNotice, setAuthNotice] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
+  const [usernameInput, setUsernameInput] = useState("");
+  const [usernameSaving, setUsernameSaving] = useState(false);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
   const [selectedFighter, setSelectedFighter] = useState<string | null>(null);
   const [threads, setThreads] = useState<ForumThread[]>([]);
   const [threadsLoading, setThreadsLoading] = useState(true);
@@ -805,21 +809,46 @@ export default function Home() {
   useEffect(() => {
     if (!session) {
       setIsAdmin(false);
+      setUsername(null);
       return;
     }
     supabase
       .from("profiles")
-      .select("role")
+      .select("role, username")
       .eq("id", session.user.id)
       .maybeSingle()
-      .then(({ data }) => setIsAdmin(data?.role === "admin"));
+      .then(({ data }) => {
+        setIsAdmin(data?.role === "admin");
+        setUsername(data?.username ?? null);
+      });
   }, [session]);
+
+  async function handleSaveUsername(ev: React.FormEvent) {
+    ev.preventDefault();
+    if (!session || !usernameInput.trim()) return;
+    setUsernameSaving(true);
+    setUsernameError(null);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ username: usernameInput.trim() })
+      .eq("id", session.user.id);
+    setUsernameSaving(false);
+    if (error) {
+      setUsernameError(
+        error.message.includes("duplicate")
+          ? "Username is already taken."
+          : error.message
+      );
+    } else {
+      setUsername(usernameInput.trim());
+    }
+  }
 
   function loadThreads() {
     setThreadsLoading(true);
     supabase
       .from("forum_threads")
-      .select("id, title, created_at, created_by, profiles(email)")
+      .select("id, title, created_at, created_by, profiles(username)")
       .order("created_at", { ascending: false })
       .then(({ data }) => {
         setThreads((data as unknown as ForumThread[]) ?? []);
@@ -861,7 +890,7 @@ export default function Home() {
     setPostsLoading(true);
     supabase
       .from("forum_posts")
-      .select("id, thread_id, content, created_at, user_id, profiles(email)")
+      .select("id, thread_id, content, created_at, user_id, profiles(username)")
       .eq("thread_id", t.id)
       .order("created_at", { ascending: true })
       .then(({ data }) => {
@@ -1185,7 +1214,7 @@ export default function Home() {
                     >
                       <div className="flex justify-between items-start mb-1">
                         <p className="text-[12px] text-accent font-semibold">
-                          {p.profiles?.email ?? "Unknown"}
+                          {p.profiles?.username ?? "Anonymous"}
                         </p>
                         {session &&
                           (isAdmin || session.user.id === p.user_id) && (
@@ -1289,7 +1318,7 @@ export default function Home() {
                         {t.title}
                       </p>
                       <p className="text-[12px] text-faint mt-0.5">
-                        by {t.profiles?.email ?? "Unknown"}
+                        by {t.profiles?.username ?? "Anonymous"}
                       </p>
                     </button>
                   ))}
@@ -1320,7 +1349,47 @@ export default function Home() {
                   ★ Admin — you can edit fighter profiles
                 </p>
               )}
-              {!isAdmin && <div className="mb-5" />}
+              {!isAdmin && <div className="mb-4" />}
+
+              <div className="mb-5">
+                {username ? (
+                  <p className="text-[13px] text-muted">
+                    Forum username: <span className="text-text">{username}</span>
+                  </p>
+                ) : (
+                  <form
+                    onSubmit={handleSaveUsername}
+                    className="flex flex-col gap-2"
+                  >
+                    <label className="text-[12px] text-dim">
+                      Choose a forum username (your email stays private):
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        required
+                        minLength={3}
+                        placeholder="Username"
+                        value={usernameInput}
+                        onChange={(e) => setUsernameInput(e.target.value)}
+                        className="flex-1 bg-panel border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
+                      />
+                      <button
+                        type="submit"
+                        disabled={usernameSaving}
+                        className="bg-accent text-white text-[13px] font-semibold rounded-md px-4 disabled:opacity-50"
+                      >
+                        Save
+                      </button>
+                    </div>
+                    {usernameError && (
+                      <p className="text-[12px] text-accent">
+                        {usernameError}
+                      </p>
+                    )}
+                  </form>
+                )}
+              </div>
+
               <button
                 onClick={handleLogout}
                 className="text-[14px] font-semibold rounded-md py-2.5 px-4 border border-border text-text"
