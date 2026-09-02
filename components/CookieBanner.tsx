@@ -21,15 +21,16 @@ export default function CookieBanner() {
   const [lang, setLang] = useState<"en" | "de">("en");
 
   useEffect(() => {
+    let alreadyConsented = false;
     try {
-      if (!localStorage.getItem("fightbase:cookie-consent")) {
-        setVisible(true);
-      }
+      alreadyConsented = !!localStorage.getItem("fightbase:cookie-consent");
       const storedLang = localStorage.getItem("fightbase:lang");
       if (storedLang === "de" || storedLang === "en") setLang(storedLang);
     } catch (e) {
-      // ignore
+      // localStorage inaccessible (e.g. strict privacy settings) —
+      // fall through and show the banner rather than hiding it forever.
     }
+    if (!alreadyConsented) setVisible(true);
   }, []);
 
   function accept() {

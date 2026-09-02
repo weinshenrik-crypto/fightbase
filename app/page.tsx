@@ -805,6 +805,8 @@ const STRINGS = {
       "We only store technically necessary data in your browser (login status, favorites) — no advertising or tracking cookies. More in our",
     cookieLink: "Privacy Policy",
     cookieAccept: "Got it",
+    legalImprint: "Legal Notice",
+    legalPrivacy: "Privacy Policy",
   },
   de: {
     tabEvents: "Events",
@@ -881,6 +883,8 @@ const STRINGS = {
       "Wir speichern nur technisch notwendige Daten in deinem Browser (Login-Status, Favoriten) — keine Werbe- oder Tracking-Cookies. Mehr dazu in unserer",
     cookieLink: "Datenschutzerklärung",
     cookieAccept: "Verstanden",
+    legalImprint: "Impressum",
+    legalPrivacy: "Datenschutz",
   },
 } as const;
 
@@ -1659,10 +1663,10 @@ export default function Home() {
 
       <div className="px-5 py-6 flex gap-4 justify-center border-t border-border mt-4">
         <Link href="/impressum" className="text-[12px] text-dim">
-          Impressum
+          {L.legalImprint}
         </Link>
         <Link href="/datenschutz" className="text-[12px] text-dim">
-          Datenschutz
+          {L.legalPrivacy}
         </Link>
       </div>
     </div>
