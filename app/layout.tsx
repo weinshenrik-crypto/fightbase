@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Oswald, Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import CookieBanner from "@/components/CookieBanner";
 
@@ -69,6 +70,7 @@ export default function RootLayout({
         />
         {children}
         <CookieBanner />
+        <Analytics />
       </body>
     </html>
   );
