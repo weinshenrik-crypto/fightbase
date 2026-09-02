@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import { supabase } from "@/lib/supabaseClient";
 import {
   allFighterNames,
-  fighterBySlug,
   fighterSlug,
   upcomingFightsFor,
   formatDate,
@@ -12,19 +11,33 @@ import {
 } from "@/lib/events";
 import FighterIllustration from "@/components/FighterIllustration";
 
-export function generateStaticParams() {
-  return allFighterNames().map((name) => ({
-    slug: fighterSlug(name),
+export async function generateStaticParams() {
+  const eventSlugs = allFighterNames().map((name) => fighterSlug(name));
+  const { data } = await supabase.from("fighters").select("slug");
+  const dbSlugs = (data ?? []).map((f) => f.slug).filter(Boolean) as string[];
+  return Array.from(new Set([...eventSlugs, ...dbSlugs])).map((slug) => ({
+    slug,
   }));
 }
 
-async function getFighter(name: string) {
+async function getFighterBySlug(slug: string) {
   const { data } = await supabase
     .from("fighters")
     .select("*")
-    .eq("name", name)
+    .eq("slug", slug)
     .maybeSingle();
-  return data;
+  if (data) return data;
+
+  // Fallback for rows created before the slug column was backfilled,
+  // or for event-only fighters that don't have a DB row yet.
+  const eventName = allFighterNames().find((n) => fighterSlug(n) === slug);
+  if (!eventName) return null;
+  const { data: byName } = await supabase
+    .from("fighters")
+    .select("*")
+    .eq("name", eventName)
+    .maybeSingle();
+  return byName ?? { name: eventName };
 }
 
 export async function generateMetadata({
@@ -32,13 +45,12 @@ export async function generateMetadata({
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const name = fighterBySlug(params.slug);
-  if (!name) return {};
-  const fighter = await getFighter(name);
-  const title = `${name}${fighter?.nickname ? ` "${fighter.nickname}"` : ""} — Fightbase`;
+  const fighter = await getFighterBySlug(params.slug);
+  if (!fighter) return {};
+  const title = `${fighter.name}${fighter.nickname ? ` "${fighter.nickname}"` : ""} — Fightbase`;
   const description =
-    fighter?.bio ??
-    `Upcoming fights, results and profile for ${name} on Fightbase.`;
+    fighter.bio ??
+    `Upcoming fights, results and profile for ${fighter.name} on Fightbase.`;
   return {
     title,
     description,
@@ -52,18 +64,18 @@ export default async function FighterPage({
 }: {
   params: { slug: string };
 }) {
-  const name = fighterBySlug(params.slug);
-  if (!name) notFound();
+  const fighter = await getFighterBySlug(params.slug);
+  if (!fighter) notFound();
 
-  const fighter = await getFighter(name);
+  const name = fighter.name as string;
   const upcoming = upcomingFightsFor(name);
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",
     name,
-    ...(fighter?.nickname ? { alternateName: fighter.nickname } : {}),
-    ...(fighter?.sport ? { jobTitle: `${fighter.sport} athlete` } : {}),
+    ...(fighter.nickname ? { alternateName: fighter.nickname } : {}),
+    ...(fighter.sport ? { jobTitle: `${fighter.sport} athlete` } : {}),
   };
 
   return (
@@ -82,7 +94,7 @@ export default async function FighterPage({
           <h1 className="font-display font-bold text-[24px] text-text">
             {name}
           </h1>
-          {fighter?.nickname && (
+          {fighter.nickname && (
             <p className="text-[13px] text-accent">
               &quot;{fighter.nickname}&quot;
             </p>
@@ -90,13 +102,13 @@ export default async function FighterPage({
         </div>
       </div>
 
-      {(fighter?.sport || fighter?.record) && (
+      {(fighter.sport || fighter.record) && (
         <p className="text-[13px] text-faint mb-5">
-          {[fighter?.sport, fighter?.record].filter(Boolean).join(" · ")}
+          {[fighter.sport, fighter.record].filter(Boolean).join(" · ")}
         </p>
       )}
 
-      {fighter?.bio ? (
+      {fighter.bio ? (
         <p className="text-[14px] text-muted leading-relaxed mb-6 whitespace-pre-wrap">
           {fighter.bio}
         </p>
@@ -106,7 +118,7 @@ export default async function FighterPage({
         </p>
       )}
 
-      {fighter?.career && (
+      {fighter.career && (
         <>
           <h2 className="text-[13px] font-semibold text-text mb-1.5">
             Career

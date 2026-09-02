@@ -44,23 +44,25 @@ function FighterAvatar({
 
 type FighterRow = {
   name: string;
+  slug?: string | null;
   nickname: string | null;
   sport: string | null;
   record: string | null;
   bio: string | null;
   career: string | null;
   photo_url: string | null;
+  claimed_by?: string | null;
 };
 
 function FighterModal({
   name,
-  isAdmin,
+  canEdit,
   onClose,
   onSaved,
   L,
 }: {
   name: string;
-  isAdmin: boolean;
+  canEdit: boolean;
   onClose: () => void;
   onSaved?: (fighter: FighterRow) => void;
   L: Strings;
@@ -236,7 +238,7 @@ function FighterModal({
             >
               View full profile page ↗
             </Link>
-            {isAdmin && (
+            {canEdit && (
               <button
                 onClick={() => setEditing(true)}
                 className="text-[13px] text-accent mt-2"
@@ -597,6 +599,17 @@ export default function Home() {
     Record<string, FighterRow>
   >({});
   const [fightersLoaded, setFightersLoaded] = useState(false);
+  const [showRegisterForm, setShowRegisterForm] = useState(false);
+  const [regName, setRegName] = useState("");
+  const [regNickname, setRegNickname] = useState("");
+  const [regSport, setRegSport] = useState("");
+  const [regRecord, setRegRecord] = useState("");
+  const [regBio, setRegBio] = useState("");
+  const [regCareer, setRegCareer] = useState("");
+  const [regError, setRegError] = useState<string | null>(null);
+  const [regSaving, setRegSaving] = useState(false);
+  const [fighterSearch, setFighterSearch] = useState("");
+  const [eventSearch, setEventSearch] = useState("");
 
   useEffect(() => {
     if (tab !== "fighters" || fightersLoaded) return;
@@ -678,6 +691,47 @@ export default function Home() {
     } else {
       setUsername(usernameInput.trim());
     }
+  }
+
+  async function handleRegisterFighter(ev: React.FormEvent) {
+    ev.preventDefault();
+    if (!session || !regName.trim()) return;
+    setRegSaving(true);
+    setRegError(null);
+    const name = regName.trim();
+    const slug = fighterSlug(name);
+    const { data, error } = await supabase
+      .from("fighters")
+      .insert({
+        name,
+        slug,
+        nickname: regNickname.trim() || null,
+        sport: regSport.trim() || null,
+        record: regRecord.trim() || null,
+        bio: regBio.trim() || null,
+        career: regCareer.trim() || null,
+        claimed_by: session.user.id,
+      })
+      .select()
+      .single();
+    setRegSaving(false);
+    if (error) {
+      setRegError(
+        error.message.includes("duplicate")
+          ? "A fighter with that name already exists."
+          : error.message
+      );
+      return;
+    }
+    setFightersData((prev) => ({ ...prev, [name]: data as FighterRow }));
+    setShowRegisterForm(false);
+    setRegName("");
+    setRegNickname("");
+    setRegSport("");
+    setRegRecord("");
+    setRegBio("");
+    setRegCareer("");
+    setSelectedFighter(name);
   }
 
   function loadThreads() {
@@ -798,10 +852,22 @@ export default function Home() {
   );
 
   const filtered = useMemo(() => {
-    return EVENTS.filter((e) => filter === "All" || e.sport === filter).sort(
-      (a, b) => (a.date > b.date ? 1 : -1)
-    );
-  }, [filter]);
+    const q = eventSearch.trim().toLowerCase();
+    return EVENTS.filter((e) => {
+      if (filter !== "All" && e.sport !== filter) return false;
+      if (!q) return true;
+      const haystack = [
+        e.title,
+        e.main,
+        e.promotion,
+        e.venue,
+        ...(e.fighters ?? []),
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
+    }).sort((a, b) => (a.date > b.date ? 1 : -1));
+  }, [filter, eventSearch]);
 
   const favoriteEvents = useMemo(() => {
     return EVENTS.filter((e) => favorites.includes(e.promotion)).sort(
@@ -810,11 +876,20 @@ export default function Home() {
   }, [favorites]);
 
   const fighterList = useMemo(() => {
-    return allFighterNames().map((name) => ({
+    const names = Array.from(
+      new Set([...allFighterNames(), ...Object.keys(fightersData)])
+    ).sort();
+    return names.map((name) => ({
       name,
       upcoming: upcomingFightsFor(name),
     }));
-  }, []);
+  }, [fightersData]);
+
+  const visibleFighters = useMemo(() => {
+    const q = fighterSearch.trim().toLowerCase();
+    if (!q) return fighterList;
+    return fighterList.filter(({ name }) => name.toLowerCase().includes(q));
+  }, [fighterList, fighterSearch]);
 
   return (
     <div className="max-w-[480px] md:max-w-3xl lg:max-w-5xl mx-auto min-h-screen pb-10">
@@ -878,6 +953,17 @@ export default function Home() {
 
       {tab === "events" && (
         <>
+          {/* Search */}
+          <div className="px-5 pt-4">
+            <input
+              type="text"
+              placeholder="Search events, fighters, promotions…"
+              value={eventSearch}
+              onChange={(e) => setEventSearch(e.target.value)}
+              className="w-full bg-panel border border-border rounded-md px-3.5 py-2 text-[14px] text-text placeholder:text-dim outline-none focus:border-accent"
+            />
+          </div>
+
           {/* Sport filter */}
           <div className="flex gap-2 px-5 pt-4 pb-4 flex-wrap border-b border-border">
             {SPORTS.map((s) => (
@@ -977,8 +1063,90 @@ export default function Home() {
       )}
 
       {tab === "fighters" && (
-        <main className="px-5 pt-5 pb-10 flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-4 lg:grid-cols-3">
-          {fighterList.map(({ name, upcoming }) => {
+        <>
+          <div className="px-5 pt-4 pb-4 border-b border-border flex flex-col gap-3 md:flex-row md:items-center">
+            <input
+              type="text"
+              placeholder="Search fighters…"
+              value={fighterSearch}
+              onChange={(e) => setFighterSearch(e.target.value)}
+              className="flex-1 bg-panel border border-border rounded-md px-3.5 py-2 text-[14px] text-text placeholder:text-dim outline-none focus:border-accent"
+            />
+            {session && (
+              <button
+                onClick={() => setShowRegisterForm((v) => !v)}
+                className="text-[13px] font-semibold text-accent shrink-0"
+              >
+                {showRegisterForm ? "Cancel" : "+ Register as a fighter"}
+              </button>
+            )}
+          </div>
+
+          {showRegisterForm && session && (
+            <form
+              onSubmit={handleRegisterFighter}
+              className="px-5 py-4 border-b border-border flex flex-col gap-2 md:max-w-md"
+            >
+              <input
+                required
+                placeholder="Full name"
+                value={regName}
+                onChange={(e) => setRegName(e.target.value)}
+                className="bg-panel border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
+              />
+              <input
+                placeholder="Nickname"
+                value={regNickname}
+                onChange={(e) => setRegNickname(e.target.value)}
+                className="bg-panel border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
+              />
+              <input
+                placeholder="Sport (e.g. MMA, Boxing)"
+                value={regSport}
+                onChange={(e) => setRegSport(e.target.value)}
+                className="bg-panel border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
+              />
+              <input
+                placeholder="Record (e.g. 5-1-0)"
+                value={regRecord}
+                onChange={(e) => setRegRecord(e.target.value)}
+                className="bg-panel border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
+              />
+              <textarea
+                placeholder="Short bio"
+                rows={3}
+                value={regBio}
+                onChange={(e) => setRegBio(e.target.value)}
+                className="bg-panel border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent resize-none"
+              />
+              <textarea
+                placeholder="Career history"
+                rows={3}
+                value={regCareer}
+                onChange={(e) => setRegCareer(e.target.value)}
+                className="bg-panel border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent resize-none"
+              />
+              <button
+                type="submit"
+                disabled={regSaving}
+                className="bg-accent text-white text-[13px] font-semibold rounded-md py-2.5 disabled:opacity-50"
+              >
+                {regSaving ? "Creating…" : "Create my fighter profile"}
+              </button>
+              {regError && (
+                <p className="text-[12px] text-accent">{regError}</p>
+              )}
+            </form>
+          )}
+
+          {!session && (
+            <p className="px-5 pt-4 text-[13px] text-dim border-b border-border pb-4">
+              Log in to register your own fighter profile.
+            </p>
+          )}
+
+          <main className="px-5 pt-5 pb-10 flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-4 lg:grid-cols-3">
+          {visibleFighters.map(({ name, upcoming }) => {
             const info = fightersData[name];
             const next = upcoming[0];
             return (
@@ -1025,12 +1193,15 @@ export default function Home() {
               </div>
             );
           })}
-          {fighterList.length === 0 && (
+          {visibleFighters.length === 0 && (
             <p className="text-[13px] text-dim md:col-span-full">
-              {L.noFightersYet}
+              {fighterList.length === 0
+                ? L.noFightersYet
+                : "No fighters match your search."}
             </p>
           )}
-        </main>
+          </main>
+        </>
       )}
 
       {tab === "forum" && (
@@ -1311,7 +1482,11 @@ export default function Home() {
       {selectedFighter && (
         <FighterModal
           name={selectedFighter}
-          isAdmin={isAdmin}
+          canEdit={
+            isAdmin ||
+            (!!session &&
+              fightersData[selectedFighter]?.claimed_by === session.user.id)
+          }
           onClose={() => setSelectedFighter(null)}
           onSaved={(f) =>
             setFightersData((prev) => ({ ...prev, [f.name]: f }))
