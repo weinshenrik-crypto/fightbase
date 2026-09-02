@@ -496,6 +496,11 @@ const STRINGS = {
     favUpcomingLabel: "Upcoming",
     emailNotifLabel:
       "Email me about new events and reminders for my favorites",
+    notifPromptTitle: "Stay in the loop?",
+    notifPromptBody:
+      "Get an email when a new event matches your favorites, or when one you're following is coming up in a few days.",
+    notifPromptYes: "Yes, notify me",
+    notifPromptNo: "No thanks",
     nextFight: "Next:",
     noUpcoming: "No upcoming fights listed.",
     noFightersYet: "No fighters listed yet.",
@@ -587,6 +592,11 @@ const STRINGS = {
     favUpcomingLabel: "Anstehend",
     emailNotifLabel:
       "Per E-Mail über neue Events und Erinnerungen zu meinen Favoriten informieren",
+    notifPromptTitle: "Auf dem Laufenden bleiben?",
+    notifPromptBody:
+      "Bekomm eine E-Mail, wenn ein neues Event zu deinen Favoriten passt oder eins davon in ein paar Tagen ansteht.",
+    notifPromptYes: "Ja, benachrichtigen",
+    notifPromptNo: "Nein danke",
     nextFight: "Nächster Fight:",
     noUpcoming: "Keine anstehenden Fights gelistet.",
     noFightersYet: "Noch keine Fighter gelistet.",
@@ -671,6 +681,7 @@ export default function Home() {
   const [fighterSportFilter, setFighterSportFilter] = useState<string[]>([]);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [emailNotifications, setEmailNotifications] = useState(false);
+  const [showNotifPrompt, setShowNotifPrompt] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
@@ -761,12 +772,14 @@ export default function Home() {
     }
     supabase
       .from("profiles")
-      .select("role, username")
+      .select("role, username, email_notifications, notif_prompt_seen")
       .eq("id", session.user.id)
       .maybeSingle()
       .then(({ data }) => {
         setIsAdmin(data?.role === "admin");
         setUsername(data?.username ?? null);
+        setEmailNotifications(!!data?.email_notifications);
+        if (data && !data.notif_prompt_seen) setShowNotifPrompt(true);
       });
   }, [session]);
 
@@ -943,14 +956,6 @@ export default function Home() {
       .then(({ data }) => {
         setFavorites((data as Favorite[] | null) ?? []);
       });
-    supabase
-      .from("profiles")
-      .select("email_notifications")
-      .eq("id", session.user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        setEmailNotifications(!!data?.email_notifications);
-      });
   }, [session]);
 
   function isFavorited(type: FavoriteType, value: string) {
@@ -986,6 +991,16 @@ export default function Home() {
     await supabase
       .from("profiles")
       .update({ email_notifications: next })
+      .eq("id", session.user.id);
+  }
+
+  async function handleNotifPromptChoice(enable: boolean) {
+    if (!session) return;
+    setEmailNotifications(enable);
+    setShowNotifPrompt(false);
+    await supabase
+      .from("profiles")
+      .update({ email_notifications: enable, notif_prompt_seen: true })
       .eq("id", session.user.id);
   }
 
@@ -1832,6 +1847,33 @@ export default function Home() {
           }
           L={L}
         />
+      )}
+
+      {showNotifPrompt && session && (
+        <div className="fixed inset-0 bg-black/70 flex items-end md:items-center justify-center z-50 p-0 md:p-5">
+          <div className="bg-panel border border-border rounded-t-2xl md:rounded-2xl w-full md:max-w-sm p-6">
+            <h3 className="font-display font-semibold text-[18px] text-text mb-2">
+              {L.notifPromptTitle}
+            </h3>
+            <p className="text-[13px] text-muted leading-relaxed mb-5">
+              {L.notifPromptBody}
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => handleNotifPromptChoice(true)}
+                className="bg-accent text-white text-[14px] font-semibold rounded-md py-2.5"
+              >
+                {L.notifPromptYes}
+              </button>
+              <button
+                onClick={() => handleNotifPromptChoice(false)}
+                className="text-[13px] text-dim py-1"
+              >
+                {L.notifPromptNo}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <section className="px-5 pt-8 pb-2 border-t border-border mt-4">
