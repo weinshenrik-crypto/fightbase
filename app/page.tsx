@@ -421,11 +421,13 @@ function FighterModal({
   isAdmin,
   onClose,
   onSaved,
+  L,
 }: {
   name: string;
   isAdmin: boolean;
   onClose: () => void;
   onSaved?: (fighter: FighterRow) => void;
+  L: Strings;
 }) {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -491,11 +493,11 @@ function FighterModal({
         </div>
 
         {loading ? (
-          <p className="text-[13px] text-dim">Loading…</p>
+          <p className="text-[13px] text-dim">{L.loading}</p>
         ) : editing ? (
           <div className="flex flex-col gap-2.5">
             <input
-              placeholder="Nickname"
+              placeholder={L.nicknamePlaceholder}
               value={fighter.nickname ?? ""}
               onChange={(e) =>
                 setFighter({ ...fighter, nickname: e.target.value })
@@ -503,7 +505,7 @@ function FighterModal({
               className="bg-black/30 border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
             />
             <input
-              placeholder="Sport"
+              placeholder={L.sportPlaceholder}
               value={fighter.sport ?? ""}
               onChange={(e) =>
                 setFighter({ ...fighter, sport: e.target.value })
@@ -511,7 +513,7 @@ function FighterModal({
               className="bg-black/30 border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
             />
             <input
-              placeholder="Record (e.g. 18-3-0)"
+              placeholder={L.recordPlaceholder}
               value={fighter.record ?? ""}
               onChange={(e) =>
                 setFighter({ ...fighter, record: e.target.value })
@@ -519,7 +521,7 @@ function FighterModal({
               className="bg-black/30 border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
             />
             <input
-              placeholder="Photo URL"
+              placeholder={L.photoUrlPlaceholder}
               value={fighter.photo_url ?? ""}
               onChange={(e) =>
                 setFighter({ ...fighter, photo_url: e.target.value })
@@ -527,14 +529,14 @@ function FighterModal({
               className="bg-black/30 border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
             />
             <textarea
-              placeholder="Bio"
+              placeholder={L.bioPlaceholder}
               rows={3}
               value={fighter.bio ?? ""}
               onChange={(e) => setFighter({ ...fighter, bio: e.target.value })}
               className="bg-black/30 border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent resize-none"
             />
             <textarea
-              placeholder="Career history"
+              placeholder={L.careerPlaceholder}
               rows={4}
               value={fighter.career ?? ""}
               onChange={(e) =>
@@ -548,13 +550,13 @@ function FighterModal({
                 disabled={saving}
                 className="flex-1 bg-accent text-white text-[13px] font-semibold rounded-md py-2 disabled:opacity-50"
               >
-                {saving ? "Saving…" : "Save"}
+                {saving ? L.saving : L.save}
               </button>
               <button
                 onClick={() => setEditing(false)}
                 className="text-[13px] text-dim px-3"
               >
-                Cancel
+                {L.cancel}
               </button>
             </div>
           </div>
@@ -570,7 +572,7 @@ function FighterModal({
             )}
             {fighter.record && (
               <p className="text-[12px] text-faint mb-3">
-                Record: {fighter.record}
+                {L.recordPlaceholder.split(" (")[0]}: {fighter.record}
               </p>
             )}
             {fighter.bio ? (
@@ -579,13 +581,13 @@ function FighterModal({
               </p>
             ) : (
               <p className="text-[13px] text-dim mb-3">
-                No profile yet for {name}.
+                {L.noProfileYet} {name}.
               </p>
             )}
             {fighter.career && (
               <>
                 <h4 className="text-[12px] font-semibold text-text mb-1">
-                  Career
+                  {L.career}
                 </h4>
                 <p className="text-[13px] text-muted leading-relaxed whitespace-pre-wrap">
                   {fighter.career}
@@ -597,7 +599,7 @@ function FighterModal({
                 onClick={() => setEditing(true)}
                 className="text-[13px] text-accent mt-4"
               >
-                {fighter.bio ? "Edit profile" : "Add profile"}
+                {fighter.bio ? L.editProfile : L.addProfile}
               </button>
             )}
           </div>
@@ -613,12 +615,14 @@ function EventCard({
   isOpen,
   onToggle,
   onSelectFighter,
+  L,
 }: {
   e: FightEvent;
   isFav: boolean;
   isOpen: boolean;
   onToggle: () => void;
   onSelectFighter: (name: string) => void;
+  L: Strings;
 }) {
   const { weekday, day, month } = formatDate(e.date);
   const dLeft = daysUntil(e.date);
@@ -644,7 +648,11 @@ function EventCard({
             {e.sport}
           </span>
           <span className="text-[11px] text-dim">
-            {dLeft === 0 ? "today" : dLeft > 0 ? `in ${dLeft} days` : "past"}
+            {dLeft === 0
+              ? L.today
+              : dLeft > 0
+              ? `${L.daysPrefix}${dLeft}${L.daysSuffix}`
+              : L.past}
           </span>
         </div>
 
@@ -691,7 +699,7 @@ function EventCard({
                       rel="noopener noreferrer"
                       className="text-[12px] font-medium px-2.5 py-1 rounded-md bg-accent text-white"
                     >
-                      Watch on {l.label} ↗
+                      {L.watchOn} {l.label} ↗
                     </a>
                   ) : (
                     <span
@@ -708,7 +716,7 @@ function EventCard({
         ) : (
           (e.note || links.length > 0) && (
             <p className="text-[11px] text-[#5A5A5E]">
-              Tap for details{links.length > 0 ? " & where to watch" : ""}
+              {links.length > 0 ? L.tapForDetailsWatch : L.tapForDetails}
             </p>
           )
         )}
@@ -717,14 +725,166 @@ function EventCard({
   );
 }
 
-const TABS = [
-  { id: "events", label: "Events" },
-  { id: "favorites", label: "Favorites" },
-  { id: "fighters", label: "Fighters" },
-  { id: "forum", label: "Forum" },
-  { id: "account", label: "Account" },
-] as const;
-type TabId = (typeof TABS)[number]["id"];
+const TABS = ["events", "favorites", "fighters", "forum", "account"] as const;
+type TabId = (typeof TABS)[number];
+
+type Lang = "en" | "de";
+
+const STRINGS = {
+  en: {
+    tabEvents: "Events",
+    tabFavorites: "Favorites",
+    tabFighters: "Fighters",
+    tabForum: "Forum",
+    tabAccount: "Account",
+    noEvents: "No events.",
+    adjustFilter: "Adjust the filter.",
+    tapForDetails: "Tap for details",
+    tapForDetailsWatch: "Tap for details & where to watch",
+    watchOn: "Watch on",
+    today: "today",
+    past: "past",
+    daysPrefix: "in ",
+    daysSuffix: " days",
+    anonymous: "Anonymous",
+    by: "by",
+    footerNote:
+      "Seed data researched manually, as of late Aug 2026. Cards and cancellations change — always confirm with the promotion directly.",
+    favStarPrompt: "Star a promotion to follow its events here.",
+    noFavYet: "No favorites yet.",
+    noFavHint: "Star a promotion above to see its events here.",
+    nextFight: "Next:",
+    noUpcoming: "No upcoming fights listed.",
+    noFightersYet: "No fighters listed yet.",
+    forumTitle: "Forum",
+    forumSubtitle: "Talk fights with other fans.",
+    forumLoginToPost: "Log in to start a new thread.",
+    threadTitlePlaceholder: "Thread title",
+    firstMessagePlaceholder: "First message (optional)",
+    newThread: "New thread",
+    noThreadsYet: "No threads yet — start the first one.",
+    backToThreads: "← Back to threads",
+    deleteThread: "Delete thread",
+    delete: "Delete",
+    noRepliesYet: "No replies yet.",
+    replyPlaceholder: "Write a reply…",
+    reply: "Reply",
+    forumLoginToReply: "Log in to reply to this thread.",
+    createAccount: "Create account",
+    logIn: "Log in",
+    signupSubtitle:
+      "Sign up to sync your favorites across devices and get notified before events start.",
+    email: "Email",
+    password: "Password",
+    signUp: "Sign up",
+    pleaseWait: "Please wait…",
+    haveAccount: "Already have an account? Log in",
+    newHere: "New here? Create an account",
+    loggedInAs: "Logged in as",
+    adminBadge: "★ Admin — you can edit fighter profiles",
+    forumUsername: "Forum username:",
+    chooseUsername: "Choose a forum username (your email stays private):",
+    usernamePlaceholder: "Username",
+    save: "Save",
+    logOut: "Log out",
+    confirmEmailNotice: "Check your email to confirm your account.",
+    loading: "Loading…",
+    noProfileYet: "No profile yet for",
+    career: "Career",
+    editProfile: "Edit profile",
+    addProfile: "Add profile",
+    cancel: "Cancel",
+    saving: "Saving…",
+    nicknamePlaceholder: "Nickname",
+    sportPlaceholder: "Sport",
+    recordPlaceholder: "Record (e.g. 18-3-0)",
+    photoUrlPlaceholder: "Photo URL",
+    bioPlaceholder: "Bio",
+    careerPlaceholder: "Career history",
+    cookieText:
+      "We only store technically necessary data in your browser (login status, favorites) — no advertising or tracking cookies. More in our",
+    cookieLink: "Privacy Policy",
+    cookieAccept: "Got it",
+  },
+  de: {
+    tabEvents: "Events",
+    tabFavorites: "Favoriten",
+    tabFighters: "Kämpfer",
+    tabForum: "Forum",
+    tabAccount: "Konto",
+    noEvents: "Keine Events.",
+    adjustFilter: "Filter anpassen.",
+    tapForDetails: "Antippen für Details",
+    tapForDetailsWatch: "Antippen für Details & wo man's schauen kann",
+    watchOn: "Schauen auf",
+    today: "heute",
+    past: "vergangen",
+    daysPrefix: "in ",
+    daysSuffix: " Tagen",
+    anonymous: "Anonym",
+    by: "von",
+    footerNote:
+      "Daten manuell recherchiert, Stand Ende Aug 2026. Termine und Absagen ändern sich — bitte immer bei der Promotion direkt bestätigen lassen.",
+    favStarPrompt: "Markiere eine Promotion, um ihre Events hier zu sehen.",
+    noFavYet: "Noch keine Favoriten.",
+    noFavHint: "Markiere oben eine Promotion, um ihre Events hier zu sehen.",
+    nextFight: "Nächster Fight:",
+    noUpcoming: "Keine anstehenden Fights gelistet.",
+    noFightersYet: "Noch keine Fighter gelistet.",
+    forumTitle: "Forum",
+    forumSubtitle: "Sprich mit anderen Fans über Fights.",
+    forumLoginToPost: "Melde dich an, um einen neuen Thread zu starten.",
+    threadTitlePlaceholder: "Thread-Titel",
+    firstMessagePlaceholder: "Erste Nachricht (optional)",
+    newThread: "Neuer Thread",
+    noThreadsYet: "Noch keine Threads — starte den ersten.",
+    backToThreads: "← Zurück zu den Threads",
+    deleteThread: "Thread löschen",
+    delete: "Löschen",
+    noRepliesYet: "Noch keine Antworten.",
+    replyPlaceholder: "Antwort schreiben…",
+    reply: "Antworten",
+    forumLoginToReply: "Melde dich an, um auf diesen Thread zu antworten.",
+    createAccount: "Konto erstellen",
+    logIn: "Anmelden",
+    signupSubtitle:
+      "Registrier dich, um deine Favoriten geräteübergreifend zu synchronisieren und vor Events benachrichtigt zu werden.",
+    email: "E-Mail",
+    password: "Passwort",
+    signUp: "Registrieren",
+    pleaseWait: "Einen Moment…",
+    haveAccount: "Schon ein Konto? Anmelden",
+    newHere: "Neu hier? Konto erstellen",
+    loggedInAs: "Angemeldet als",
+    adminBadge: "★ Admin — du kannst Fighter-Profile bearbeiten",
+    forumUsername: "Forum-Username:",
+    chooseUsername:
+      "Wähle einen Forum-Usernamen (deine E-Mail bleibt privat):",
+    usernamePlaceholder: "Username",
+    save: "Speichern",
+    logOut: "Abmelden",
+    confirmEmailNotice: "Bestätige dein Konto über den Link in deiner E-Mail.",
+    loading: "Lädt…",
+    noProfileYet: "Noch kein Profil für",
+    career: "Werdegang",
+    editProfile: "Profil bearbeiten",
+    addProfile: "Profil hinzufügen",
+    cancel: "Abbrechen",
+    saving: "Speichert…",
+    nicknamePlaceholder: "Spitzname",
+    sportPlaceholder: "Sportart",
+    recordPlaceholder: "Bilanz (z.B. 18-3-0)",
+    photoUrlPlaceholder: "Foto-URL",
+    bioPlaceholder: "Bio",
+    careerPlaceholder: "Werdegang",
+    cookieText:
+      "Wir speichern nur technisch notwendige Daten in deinem Browser (Login-Status, Favoriten) — keine Werbe- oder Tracking-Cookies. Mehr dazu in unserer",
+    cookieLink: "Datenschutzerklärung",
+    cookieAccept: "Verstanden",
+  },
+} as const;
+
+type Strings = { [K in keyof (typeof STRINGS)["en"]]: string };
 
 type ForumThread = {
   id: string;
@@ -745,6 +905,7 @@ type ForumPost = {
 
 export default function Home() {
   const [tab, setTab] = useState<TabId>("events");
+  const [lang, setLang] = useState<Lang>("en");
   const [filter, setFilter] = useState("All");
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -793,11 +954,24 @@ export default function Home() {
     try {
       const stored = localStorage.getItem("fightbase:favorites");
       if (stored) setFavorites(JSON.parse(stored));
+      const storedLang = localStorage.getItem("fightbase:lang");
+      if (storedLang === "de" || storedLang === "en") setLang(storedLang);
     } catch (e) {
       // ignore
     }
     setLoaded(true);
   }, []);
+
+  function changeLang(next: Lang) {
+    setLang(next);
+    try {
+      localStorage.setItem("fightbase:lang", next);
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  const L = STRINGS[lang];
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -936,7 +1110,7 @@ export default function Home() {
     if (error) {
       setAuthError(error.message);
     } else if (authMode === "signup") {
-      setAuthNotice("Check your email to confirm your account.");
+      setAuthNotice(L.confirmEmailNotice);
     }
   }
 
@@ -997,7 +1171,7 @@ export default function Home() {
           height={40}
           className="rounded-[9px] shrink-0"
         />
-        <div>
+        <div className="flex-1">
           <h1 className="font-display font-bold text-[28px] tracking-wide text-text">
             FIGHTBASE
           </h1>
@@ -1006,21 +1180,42 @@ export default function Home() {
             Wrestling · Karate · Taekwondo
           </p>
         </div>
+        <div className="flex gap-1 shrink-0 border border-border rounded-md p-0.5">
+          {(["en", "de"] as Lang[]).map((l) => (
+            <button
+              key={l}
+              onClick={() => changeLang(l)}
+              className={`text-[11px] font-semibold px-2 py-1 rounded ${
+                lang === l ? "bg-accent text-white" : "text-dim"
+              }`}
+            >
+              {l.toUpperCase()}
+            </button>
+          ))}
+        </div>
       </header>
 
       {/* Tab bar */}
       <div className="flex px-5 border-b border-border md:justify-center md:gap-10">
-        {TABS.map((t) => (
+        {TABS.map((id) => (
           <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
+            key={id}
+            onClick={() => setTab(id)}
             className={`flex-1 md:flex-none text-[13px] font-semibold py-3 border-b-2 transition-colors ${
-              tab === t.id
+              tab === id
                 ? "border-accent text-text"
                 : "border-transparent text-faint"
             }`}
           >
-            {t.label}
+            {
+              {
+                events: L.tabEvents,
+                favorites: L.tabFavorites,
+                fighters: L.tabFighters,
+                forum: L.tabForum,
+                account: L.tabAccount,
+              }[id]
+            }
           </button>
         ))}
       </div>
@@ -1048,8 +1243,8 @@ export default function Home() {
           <main className="px-5 pt-5 flex flex-col gap-[18px] md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
             {filtered.length === 0 && (
               <div className="text-center py-10 md:col-span-full">
-                <p className="text-[15px] text-text mb-1">No events.</p>
-                <p className="text-[13px] text-dim">Adjust the filter.</p>
+                <p className="text-[15px] text-text mb-1">{L.noEvents}</p>
+                <p className="text-[13px] text-dim">{L.adjustFilter}</p>
               </div>
             )}
             {filtered.map((e) => (
@@ -1062,15 +1257,14 @@ export default function Home() {
                   setExpandedId(expandedId === e.id ? null : e.id)
                 }
                 onSelectFighter={setSelectedFighter}
+                L={L}
               />
             ))}
           </main>
 
           <footer className="px-5 pt-6">
             <p className="text-[11px] text-[#4A4A4E] leading-relaxed">
-              Seed data researched manually, as of late Aug 2026. Cards and
-              cancellations change — always confirm with the promotion
-              directly.
+              {L.footerNote}
             </p>
           </footer>
         </>
@@ -1080,7 +1274,7 @@ export default function Home() {
         <>
           <div className="px-5 pt-4 pb-4 border-b border-border">
             <p className="text-[13px] text-muted mb-2.5">
-              Star a promotion to follow its events here.
+              {L.favStarPrompt}
             </p>
             <div className="flex gap-1.5 flex-wrap">
               {allPromotions.map((p) => {
@@ -1105,12 +1299,8 @@ export default function Home() {
           <main className="px-5 pt-5 flex flex-col gap-[18px] pb-6 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
             {favoriteEvents.length === 0 && (
               <div className="text-center py-10 md:col-span-full">
-                <p className="text-[15px] text-text mb-1">
-                  No favorites yet.
-                </p>
-                <p className="text-[13px] text-dim">
-                  Star a promotion above to see its events here.
-                </p>
+                <p className="text-[15px] text-text mb-1">{L.noFavYet}</p>
+                <p className="text-[13px] text-dim">{L.noFavHint}</p>
               </div>
             )}
             {favoriteEvents.map((e) => (
@@ -1123,6 +1313,7 @@ export default function Home() {
                   setExpandedId(expandedId === e.id ? null : e.id)
                 }
                 onSelectFighter={setSelectedFighter}
+                L={L}
               />
             ))}
           </main>
@@ -1157,23 +1348,23 @@ export default function Home() {
                 </div>
                 {next ? (
                   <p className="text-[12px] text-muted">
-                    Next:{" "}
+                    {L.nextFight}{" "}
                     <span className="text-text">
                       {next.main} · {next.promotion}
                     </span>{" "}
-                    · in {daysUntil(next.date)} days
+                    · {L.daysPrefix}
+                    {daysUntil(next.date)}
+                    {L.daysSuffix}
                   </p>
                 ) : (
-                  <p className="text-[12px] text-dim">
-                    No upcoming fights listed.
-                  </p>
+                  <p className="text-[12px] text-dim">{L.noUpcoming}</p>
                 )}
               </button>
             );
           })}
           {fighterList.length === 0 && (
             <p className="text-[13px] text-dim md:col-span-full">
-              No fighters listed yet.
+              {L.noFightersYet}
             </p>
           )}
         </main>
@@ -1187,7 +1378,7 @@ export default function Home() {
                 onClick={() => setOpenThread(null)}
                 className="text-[13px] text-accent mb-3"
               >
-                ← Back to threads
+                {L.backToThreads}
               </button>
               <div className="flex justify-between items-start mb-4">
                 <h2 className="font-display font-semibold text-[19px] text-text">
@@ -1199,13 +1390,13 @@ export default function Home() {
                       onClick={() => handleDeleteThread(openThread.id)}
                       className="text-[12px] text-accent shrink-0 ml-3"
                     >
-                      Delete thread
+                      {L.deleteThread}
                     </button>
                   )}
               </div>
 
               {postsLoading ? (
-                <p className="text-[13px] text-dim">Loading…</p>
+                <p className="text-[13px] text-dim">{L.loading}</p>
               ) : (
                 <div className="flex flex-col gap-3 mb-5">
                   {posts.map((p) => (
@@ -1215,7 +1406,7 @@ export default function Home() {
                     >
                       <div className="flex justify-between items-start mb-1">
                         <p className="text-[12px] text-accent font-semibold">
-                          {p.profiles?.username ?? "Anonymous"}
+                          {p.profiles?.username ?? L.anonymous}
                         </p>
                         {session &&
                           (isAdmin || session.user.id === p.user_id) && (
@@ -1223,7 +1414,7 @@ export default function Home() {
                               onClick={() => handleDeletePost(p.id)}
                               className="text-[11px] text-dim hover:text-accent"
                             >
-                              Delete
+                              {L.delete}
                             </button>
                           )}
                       </div>
@@ -1233,7 +1424,7 @@ export default function Home() {
                     </div>
                   ))}
                   {posts.length === 0 && (
-                    <p className="text-[13px] text-dim">No replies yet.</p>
+                    <p className="text-[13px] text-dim">{L.noRepliesYet}</p>
                   )}
                 </div>
               )}
@@ -1243,7 +1434,7 @@ export default function Home() {
                   <textarea
                     required
                     rows={3}
-                    placeholder="Write a reply…"
+                    placeholder={L.replyPlaceholder}
                     value={newPost}
                     onChange={(e) => setNewPost(e.target.value)}
                     className="bg-panel border border-border rounded-md px-3.5 py-2.5 text-[14px] text-text placeholder:text-dim outline-none focus:border-accent resize-none"
@@ -1252,23 +1443,19 @@ export default function Home() {
                     type="submit"
                     className="bg-accent text-white text-[14px] font-semibold rounded-md py-2.5 self-start px-5"
                   >
-                    Reply
+                    {L.reply}
                   </button>
                 </form>
               ) : (
-                <p className="text-[13px] text-dim">
-                  Log in to reply to this thread.
-                </p>
+                <p className="text-[13px] text-dim">{L.forumLoginToReply}</p>
               )}
             </>
           ) : (
             <>
               <h2 className="font-display font-semibold text-[19px] text-text mb-1">
-                Forum
+                {L.forumTitle}
               </h2>
-              <p className="text-[13px] text-dim mb-5">
-                Talk fights with other fans.
-              </p>
+              <p className="text-[13px] text-dim mb-5">{L.forumSubtitle}</p>
 
               {session ? (
                 <form
@@ -1277,14 +1464,14 @@ export default function Home() {
                 >
                   <input
                     required
-                    placeholder="Thread title"
+                    placeholder={L.threadTitlePlaceholder}
                     value={newThreadTitle}
                     onChange={(e) => setNewThreadTitle(e.target.value)}
                     className="bg-panel border border-border rounded-md px-3.5 py-2.5 text-[14px] text-text placeholder:text-dim outline-none focus:border-accent"
                   />
                   <textarea
                     rows={2}
-                    placeholder="First message (optional)"
+                    placeholder={L.firstMessagePlaceholder}
                     value={newThreadBody}
                     onChange={(e) => setNewThreadBody(e.target.value)}
                     className="bg-panel border border-border rounded-md px-3.5 py-2.5 text-[14px] text-text placeholder:text-dim outline-none focus:border-accent resize-none"
@@ -1293,7 +1480,7 @@ export default function Home() {
                     type="submit"
                     className="bg-accent text-white text-[14px] font-semibold rounded-md py-2.5 self-start px-5"
                   >
-                    New thread
+                    {L.newThread}
                   </button>
                   {forumError && (
                     <p className="text-[12px] text-accent">{forumError}</p>
@@ -1301,12 +1488,12 @@ export default function Home() {
                 </form>
               ) : (
                 <p className="text-[13px] text-dim mb-6 border-b border-border pb-6">
-                  Log in to start a new thread.
+                  {L.forumLoginToPost}
                 </p>
               )}
 
               {threadsLoading ? (
-                <p className="text-[13px] text-dim">Loading…</p>
+                <p className="text-[13px] text-dim">{L.loading}</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {threads.map((t) => (
@@ -1319,14 +1506,12 @@ export default function Home() {
                         {t.title}
                       </p>
                       <p className="text-[12px] text-faint mt-0.5">
-                        by {t.profiles?.username ?? "Anonymous"}
+                        {L.by} {t.profiles?.username ?? L.anonymous}
                       </p>
                     </button>
                   ))}
                   {threads.length === 0 && (
-                    <p className="text-[13px] text-dim">
-                      No threads yet — start the first one.
-                    </p>
+                    <p className="text-[13px] text-dim">{L.noThreadsYet}</p>
                   )}
                 </div>
               )}
@@ -1340,14 +1525,14 @@ export default function Home() {
           {session ? (
             <>
               <h2 className="font-display font-semibold text-[20px] text-text mb-1">
-                Account
+                {L.tabAccount}
               </h2>
               <p className="text-[13px] text-muted mb-1">
-                Logged in as {session.user.email}
+                {L.loggedInAs} {session.user.email}
               </p>
               {isAdmin && (
                 <p className="text-[12px] text-accent font-semibold mb-4">
-                  ★ Admin — you can edit fighter profiles
+                  {L.adminBadge}
                 </p>
               )}
               {!isAdmin && <div className="mb-4" />}
@@ -1355,7 +1540,8 @@ export default function Home() {
               <div className="mb-5">
                 {username ? (
                   <p className="text-[13px] text-muted">
-                    Forum username: <span className="text-text">{username}</span>
+                    {L.forumUsername}{" "}
+                    <span className="text-text">{username}</span>
                   </p>
                 ) : (
                   <form
@@ -1363,13 +1549,13 @@ export default function Home() {
                     className="flex flex-col gap-2"
                   >
                     <label className="text-[12px] text-dim">
-                      Choose a forum username (your email stays private):
+                      {L.chooseUsername}
                     </label>
                     <div className="flex gap-2">
                       <input
                         required
                         minLength={3}
-                        placeholder="Username"
+                        placeholder={L.usernamePlaceholder}
                         value={usernameInput}
                         onChange={(e) => setUsernameInput(e.target.value)}
                         className="flex-1 bg-panel border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
@@ -1379,7 +1565,7 @@ export default function Home() {
                         disabled={usernameSaving}
                         className="bg-accent text-white text-[13px] font-semibold rounded-md px-4 disabled:opacity-50"
                       >
-                        Save
+                        {L.save}
                       </button>
                     </div>
                     {usernameError && (
@@ -1395,24 +1581,21 @@ export default function Home() {
                 onClick={handleLogout}
                 className="text-[14px] font-semibold rounded-md py-2.5 px-4 border border-border text-text"
               >
-                Log out
+                {L.logOut}
               </button>
             </>
           ) : (
             <>
               <h2 className="font-display font-semibold text-[20px] text-text mb-1">
-                {authMode === "signup" ? "Create account" : "Log in"}
+                {authMode === "signup" ? L.createAccount : L.logIn}
               </h2>
-              <p className="text-[13px] text-dim mb-5">
-                Sign up to sync your favorites across devices and get
-                notified before events start.
-              </p>
+              <p className="text-[13px] text-dim mb-5">{L.signupSubtitle}</p>
 
               <form onSubmit={handleAuthSubmit} className="flex flex-col gap-3">
                 <input
                   type="email"
                   required
-                  placeholder="Email"
+                  placeholder={L.email}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="bg-panel border border-border rounded-md px-3.5 py-2.5 text-[14px] text-text placeholder:text-dim outline-none focus:border-accent"
@@ -1421,7 +1604,7 @@ export default function Home() {
                   type="password"
                   required
                   minLength={6}
-                  placeholder="Password"
+                  placeholder={L.password}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="bg-panel border border-border rounded-md px-3.5 py-2.5 text-[14px] text-text placeholder:text-dim outline-none focus:border-accent"
@@ -1432,10 +1615,10 @@ export default function Home() {
                   className="bg-accent text-white text-[14px] font-semibold rounded-md py-2.5 disabled:opacity-50"
                 >
                   {authLoading
-                    ? "Please wait…"
+                    ? L.pleaseWait
                     : authMode === "signup"
-                    ? "Sign up"
-                    : "Log in"}
+                    ? L.signUp
+                    : L.logIn}
                 </button>
                 {authError && (
                   <p className="text-[12px] text-accent text-center">
@@ -1455,9 +1638,7 @@ export default function Home() {
                 }
                 className="text-[13px] text-accent mt-4"
               >
-                {authMode === "signup"
-                  ? "Already have an account? Log in"
-                  : "New here? Create an account"}
+                {authMode === "signup" ? L.haveAccount : L.newHere}
               </button>
             </>
           )}
@@ -1472,6 +1653,7 @@ export default function Home() {
           onSaved={(f) =>
             setFightersData((prev) => ({ ...prev, [f.name]: f }))
           }
+          L={L}
         />
       )}
 
