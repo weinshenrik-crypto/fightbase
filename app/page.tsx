@@ -14,6 +14,8 @@ import {
   watchLinks,
   fighterSlug,
   sportSlug,
+  promotionSlug,
+  promotionsWithPage,
   allFighterNames,
   upcomingFightsFor,
   type FightEvent,
@@ -1927,6 +1929,23 @@ export default function Home() {
               className="text-[12px] px-2.5 py-1 rounded-md border border-[#2E2E30] text-faint hover:border-accent hover:text-text transition-colors"
             >
               {s}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <div className="px-5 pt-5 border-t border-border mt-4">
+        <p className="text-[11px] font-semibold text-dim uppercase tracking-wide mb-2">
+          Browse by promotion
+        </p>
+        <div className="flex gap-2 flex-wrap">
+          {promotionsWithPage().map((p) => (
+            <Link
+              key={p}
+              href={`/promotion/${promotionSlug(p)}`}
+              className="text-[12px] px-2.5 py-1 rounded-md border border-[#2E2E30] text-faint hover:border-accent hover:text-text transition-colors"
+            >
+              {p}
             </Link>
           ))}
         </div>

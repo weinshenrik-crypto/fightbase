@@ -603,6 +603,37 @@ export function sportBySlug(slug: string) {
   return SPORTS.find((s) => s !== "All" && sportSlug(s) === slug) ?? null;
 }
 
+export function promotionSlug(promotion: string) {
+  return promotion
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+function allPromotionNames() {
+  return Array.from(new Set(EVENTS.map((e) => e.promotion)));
+}
+
+export function promotionBySlug(slug: string) {
+  return allPromotionNames().find((p) => promotionSlug(p) === slug) ?? null;
+}
+
+// Promotions with too few events would just duplicate their one event
+// page's content with no real added value, so only list ones with enough
+// events to justify a standalone calendar page.
+export function promotionsWithPage(minEvents = 2) {
+  const counts = new Map<string, number>();
+  EVENTS.forEach((e) =>
+    counts.set(e.promotion, (counts.get(e.promotion) ?? 0) + 1)
+  );
+  return Array.from(counts.entries())
+    .filter(([, count]) => count >= minEvents)
+    .map(([promotion]) => promotion)
+    .sort();
+}
+
 export const SPORT_DESCRIPTIONS: Record<string, string> = {
   MMA: "Every upcoming UFC, ONE Championship, OKTAGON and other major MMA card in one place — dates, fight cards and where to watch.",
   Boxing:

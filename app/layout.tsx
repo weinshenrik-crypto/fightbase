@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Oswald, Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
@@ -28,6 +28,12 @@ export const metadata: Metadata = {
     icon: "/favicon-32.png",
     apple: "/apple-touch-icon.png",
   },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Fightbase",
+  },
   openGraph: {
     title,
     description,
@@ -46,6 +52,10 @@ export const metadata: Metadata = {
   verification: {
     google: "TwhOwpttMqJxwt2xy7Z9MGB8T6VfTvTH6GR1zMT4cXs",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0A0A0B",
 };
 
 export default function RootLayout({
