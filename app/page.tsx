@@ -60,12 +60,16 @@ type FighterRow = {
 function FighterModal({
   name,
   canEdit,
+  isFav,
+  onToggleFav,
   onClose,
   onSaved,
   L,
 }: {
   name: string;
   canEdit: boolean;
+  isFav: boolean;
+  onToggleFav?: () => void;
   onClose: () => void;
   onSaved?: (fighter: FighterRow) => void;
   L: Strings;
@@ -131,6 +135,17 @@ function FighterModal({
             <h3 className="font-display font-semibold text-[20px] text-text">
               {name}
             </h3>
+            {onToggleFav && (
+              <button
+                onClick={onToggleFav}
+                className={`text-[17px] leading-none ${
+                  isFav ? "text-accent" : "text-dim"
+                }`}
+                aria-label="Favorite this fighter"
+              >
+                {isFav ? "★" : "☆"}
+              </button>
+            )}
           </div>
           <button onClick={onClose} className="text-dim text-[20px] leading-none">
             ×
@@ -268,6 +283,8 @@ function FighterModal({
 function EventCard({
   e,
   isFav,
+  isEventFav,
+  onToggleEventFav,
   isOpen,
   onToggle,
   onSelectFighter,
@@ -276,6 +293,8 @@ function EventCard({
 }: {
   e: FightEvent;
   isFav: boolean;
+  isEventFav: boolean;
+  onToggleEventFav?: () => void;
   isOpen: boolean;
   onToggle: () => void;
   onSelectFighter: (name: string) => void;
@@ -305,13 +324,29 @@ function EventCard({
           <span className="text-[11px] font-semibold text-accent tracking-wide">
             {e.sport}
           </span>
-          <span className="text-[11px] text-dim">
-            {dLeft === 0
-              ? L.today
-              : dLeft > 0
-              ? `${L.daysPrefix}${dLeft}${L.daysSuffix}`
-              : L.past}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-dim">
+              {dLeft === 0
+                ? L.today
+                : dLeft > 0
+                ? `${L.daysPrefix}${dLeft}${L.daysSuffix}`
+                : L.past}
+            </span>
+            {onToggleEventFav && (
+              <button
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  onToggleEventFav();
+                }}
+                className={`text-[13px] leading-none ${
+                  isEventFav ? "text-accent" : "text-dim"
+                }`}
+                aria-label="Favorite this event"
+              >
+                {isEventFav ? "★" : "☆"}
+              </button>
+            )}
+          </div>
         </div>
 
         {e.fighters && (
@@ -424,6 +459,9 @@ type TabId = (typeof TABS)[number];
 
 type Lang = "en" | "de";
 
+type FavoriteType = "sport" | "fighter" | "promotion" | "event";
+type Favorite = { type: FavoriteType; value: string };
+
 const STRINGS = {
   en: {
     tabEvents: "Events",
@@ -446,7 +484,18 @@ const STRINGS = {
       "Seed data researched manually, as of late Aug 2026. Cards and cancellations change — always confirm with the promotion directly.",
     favStarPrompt: "Star a promotion to follow its events here.",
     noFavYet: "No favorites yet.",
-    noFavHint: "Star a promotion above to see its events here.",
+    noFavHint: "Star a sport, promotion, fighter or event to see it here.",
+    favLoginPrompt:
+      "Log in to save favorites and get notified about new events.",
+    favSportsLabel: "Sports",
+    favPromotionsLabel: "Promotions",
+    favFightersLabel: "Fighters",
+    favEventsLabel: "Events",
+    noFavFighters: "No favorite fighters yet — star one from the Fighters tab.",
+    noFavEvents: "No favorite events yet — star one on an event card.",
+    favUpcomingLabel: "Upcoming",
+    emailNotifLabel:
+      "Email me about new events and reminders for my favorites",
     nextFight: "Next:",
     noUpcoming: "No upcoming fights listed.",
     noFightersYet: "No fighters listed yet.",
@@ -523,7 +572,21 @@ const STRINGS = {
       "Daten manuell recherchiert, Stand Ende Aug 2026. Termine und Absagen ändern sich — bitte immer bei der Promotion direkt bestätigen lassen.",
     favStarPrompt: "Markiere eine Promotion, um ihre Events hier zu sehen.",
     noFavYet: "Noch keine Favoriten.",
-    noFavHint: "Markiere oben eine Promotion, um ihre Events hier zu sehen.",
+    noFavHint:
+      "Markiere eine Sportart, Promotion, Fighter oder ein Event, um es hier zu sehen.",
+    favLoginPrompt:
+      "Melde dich an, um Favoriten zu speichern und über neue Events benachrichtigt zu werden.",
+    favSportsLabel: "Sportarten",
+    favPromotionsLabel: "Promotions",
+    favFightersLabel: "Kämpfer",
+    favEventsLabel: "Events",
+    noFavFighters:
+      "Noch keine Lieblingskämpfer — markiere einen im Kämpfer-Tab.",
+    noFavEvents:
+      "Noch keine Lieblings-Events — markiere eins auf einer Event-Karte.",
+    favUpcomingLabel: "Anstehend",
+    emailNotifLabel:
+      "Per E-Mail über neue Events und Erinnerungen zu meinen Favoriten informieren",
     nextFight: "Nächster Fight:",
     noUpcoming: "Keine anstehenden Fights gelistet.",
     noFightersYet: "Noch keine Fighter gelistet.",
@@ -606,7 +669,8 @@ export default function Home() {
   const [lang, setLang] = useState<Lang>("en");
   const [filter, setFilter] = useState<string[]>([]);
   const [fighterSportFilter, setFighterSportFilter] = useState<string[]>([]);
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<Favorite[]>([]);
+  const [emailNotifications, setEmailNotifications] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
@@ -662,8 +726,6 @@ export default function Home() {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("fightbase:favorites");
-      if (stored) setFavorites(JSON.parse(stored));
       const storedLang = localStorage.getItem("fightbase:lang");
       if (storedLang === "de" || storedLang === "en") setLang(storedLang);
     } catch (e) {
@@ -870,16 +932,61 @@ export default function Home() {
   }
 
   useEffect(() => {
-    if (!loaded) return;
-    localStorage.setItem("fightbase:favorites", JSON.stringify(favorites));
-  }, [favorites, loaded]);
+    if (!session) {
+      setFavorites([]);
+      setEmailNotifications(false);
+      return;
+    }
+    supabase
+      .from("favorites")
+      .select("type, value")
+      .then(({ data }) => {
+        setFavorites((data as Favorite[] | null) ?? []);
+      });
+    supabase
+      .from("profiles")
+      .select("email_notifications")
+      .eq("id", session.user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setEmailNotifications(!!data?.email_notifications);
+      });
+  }, [session]);
 
-  function toggleFavorite(promotion: string) {
+  function isFavorited(type: FavoriteType, value: string) {
+    return favorites.some((f) => f.type === type && f.value === value);
+  }
+
+  async function toggleFavorite(type: FavoriteType, value: string) {
+    if (!session) return;
+    const already = isFavorited(type, value);
     setFavorites((prev) =>
-      prev.includes(promotion)
-        ? prev.filter((p) => p !== promotion)
-        : [...prev, promotion]
+      already
+        ? prev.filter((f) => !(f.type === type && f.value === value))
+        : [...prev, { type, value }]
     );
+    if (already) {
+      await supabase
+        .from("favorites")
+        .delete()
+        .eq("user_id", session.user.id)
+        .eq("type", type)
+        .eq("value", value);
+    } else {
+      await supabase
+        .from("favorites")
+        .insert({ user_id: session.user.id, type, value });
+    }
+  }
+
+  async function handleToggleEmailNotifications() {
+    if (!session) return;
+    const next = !emailNotifications;
+    setEmailNotifications(next);
+    await supabase
+      .from("profiles")
+      .update({ email_notifications: next })
+      .eq("id", session.user.id);
   }
 
   function toggleSport(
@@ -921,10 +1028,21 @@ export default function Home() {
     }).sort((a, b) => (a.date > b.date ? 1 : -1));
   }, [filter, eventSearch]);
 
+  const favoriteFighters = useMemo(
+    () => favorites.filter((f) => f.type === "fighter").map((f) => f.value),
+    [favorites]
+  );
+
   const favoriteEvents = useMemo(() => {
-    return EVENTS.filter((e) => favorites.includes(e.promotion)).sort(
-      (a, b) => (a.date > b.date ? 1 : -1)
-    );
+    return EVENTS.filter((e) =>
+      favorites.some((f) => {
+        if (f.type === "promotion") return f.value === e.promotion;
+        if (f.type === "sport") return f.value === e.sport;
+        if (f.type === "event") return f.value === e.id;
+        if (f.type === "fighter") return e.fighters?.includes(f.value);
+        return false;
+      })
+    ).sort((a, b) => (a.date > b.date ? 1 : -1));
   }, [favorites]);
 
   const fighterList = useMemo(() => {
@@ -1054,7 +1172,11 @@ export default function Home() {
               <EventCard
                 key={e.id}
                 e={e}
-                isFav={favorites.includes(e.promotion)}
+                isFav={isFavorited("promotion", e.promotion)}
+                isEventFav={isFavorited("event", e.id)}
+                onToggleEventFav={
+                  session ? () => toggleFavorite("event", e.id) : undefined
+                }
                 isOpen={expandedId === e.id}
                 onToggle={() =>
                   setExpandedId(expandedId === e.id ? null : e.id)
@@ -1076,52 +1198,142 @@ export default function Home() {
 
       {tab === "favorites" && (
         <>
-          <div className="px-5 pt-4 pb-4 border-b border-border">
-            <p className="text-[13px] text-muted mb-2.5">
-              {L.favStarPrompt}
-            </p>
-            <div className="flex gap-1.5 flex-wrap">
-              {allPromotions.map((p) => {
-                const isFav = favorites.includes(p);
-                return (
-                  <button
-                    key={p}
-                    onClick={() => toggleFavorite(p)}
-                    className={`text-[12px] px-2.5 py-1 rounded-md border transition-colors ${
-                      isFav
-                        ? "border-accent text-text"
-                        : "border-[#2E2E30] bg-panel text-faint"
-                    }`}
-                  >
-                    {isFav ? "★" : "☆"} {p}
-                  </button>
-                );
-              })}
+          {!session ? (
+            <div className="px-5 pt-10 text-center">
+              <p className="text-[14px] text-dim mb-4">{L.favLoginPrompt}</p>
+              <button
+                onClick={() => setTab("account")}
+                className="bg-accent text-white text-[13px] font-semibold rounded-md px-4 py-2.5"
+              >
+                {L.tabAccount}
+              </button>
             </div>
-          </div>
+          ) : (
+            <>
+              <div className="px-5 pt-4 pb-4 border-b border-border flex flex-col gap-3.5">
+                <div>
+                  <p className="text-[11px] font-semibold text-dim uppercase tracking-wide mb-1.5">
+                    {L.favSportsLabel}
+                  </p>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {SPORTS.filter((s) => s !== "All").map((s) => {
+                      const isFav = isFavorited("sport", s);
+                      return (
+                        <button
+                          key={s}
+                          onClick={() => toggleFavorite("sport", s)}
+                          className={`text-[12px] px-2.5 py-1 rounded-md border transition-colors ${
+                            isFav
+                              ? "border-accent text-text"
+                              : "border-[#2E2E30] bg-panel text-faint"
+                          }`}
+                        >
+                          {isFav ? "★" : "☆"} {s}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-          <main className="px-5 pt-5 flex flex-col gap-[18px] pb-6 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
-            {favoriteEvents.length === 0 && (
-              <div className="text-center py-10 md:col-span-full">
-                <p className="text-[15px] text-text mb-1">{L.noFavYet}</p>
-                <p className="text-[13px] text-dim">{L.noFavHint}</p>
+                <div>
+                  <p className="text-[11px] font-semibold text-dim uppercase tracking-wide mb-1.5">
+                    {L.favPromotionsLabel}
+                  </p>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {allPromotions.map((p) => {
+                      const isFav = isFavorited("promotion", p);
+                      return (
+                        <button
+                          key={p}
+                          onClick={() => toggleFavorite("promotion", p)}
+                          className={`text-[12px] px-2.5 py-1 rounded-md border transition-colors ${
+                            isFav
+                              ? "border-accent text-text"
+                              : "border-[#2E2E30] bg-panel text-faint"
+                          }`}
+                        >
+                          {isFav ? "★" : "☆"} {p}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold text-dim uppercase tracking-wide mb-1.5">
+                    {L.favFightersLabel}
+                  </p>
+                  {favoriteFighters.length === 0 ? (
+                    <p className="text-[12px] text-dim">{L.noFavFighters}</p>
+                  ) : (
+                    <div className="flex gap-1.5 flex-wrap">
+                      {favoriteFighters.map((name) => (
+                        <button
+                          key={name}
+                          onClick={() => toggleFavorite("fighter", name)}
+                          className="text-[12px] px-2.5 py-1 rounded-md border border-accent text-text"
+                        >
+                          ★ {name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold text-dim uppercase tracking-wide mb-1.5">
+                    {L.favEventsLabel}
+                  </p>
+                  {favorites.filter((f) => f.type === "event").length ===
+                  0 ? (
+                    <p className="text-[12px] text-dim">{L.noFavEvents}</p>
+                  ) : (
+                    <div className="flex gap-1.5 flex-wrap">
+                      {favorites
+                        .filter((f) => f.type === "event")
+                        .map((f) => {
+                          const ev = EVENTS.find((e) => e.id === f.value);
+                          return (
+                            <button
+                              key={f.value}
+                              onClick={() => toggleFavorite("event", f.value)}
+                              className="text-[12px] px-2.5 py-1 rounded-md border border-accent text-text"
+                            >
+                              ★ {ev?.main ?? f.value}
+                            </button>
+                          );
+                        })}
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-            {favoriteEvents.map((e) => (
-              <EventCard
-                key={e.id}
-                e={e}
-                isFav={true}
-                isOpen={expandedId === e.id}
-                onToggle={() =>
-                  setExpandedId(expandedId === e.id ? null : e.id)
-                }
-                onSelectFighter={setSelectedFighter}
-                fightersData={fightersData}
-                L={L}
-              />
-            ))}
-          </main>
+
+              <main className="px-5 pt-5 flex flex-col gap-[18px] pb-6 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
+                {favoriteEvents.length === 0 && (
+                  <div className="text-center py-10 md:col-span-full">
+                    <p className="text-[15px] text-text mb-1">{L.noFavYet}</p>
+                    <p className="text-[13px] text-dim">{L.noFavHint}</p>
+                  </div>
+                )}
+                {favoriteEvents.map((e) => (
+                  <EventCard
+                    key={e.id}
+                    e={e}
+                    isFav={true}
+                    isEventFav={isFavorited("event", e.id)}
+                    onToggleEventFav={() => toggleFavorite("event", e.id)}
+                    isOpen={expandedId === e.id}
+                    onToggle={() =>
+                      setExpandedId(expandedId === e.id ? null : e.id)
+                    }
+                    onSelectFighter={setSelectedFighter}
+                    fightersData={fightersData}
+                    L={L}
+                  />
+                ))}
+              </main>
+            </>
+          )}
         </>
       )}
 
@@ -1242,24 +1454,42 @@ export default function Home() {
                 onClick={() => setSelectedFighter(name)}
                 className="cursor-pointer text-left border border-border bg-panel rounded-[10px] p-3.5 hover:border-accent transition-colors"
               >
-                <div className="flex items-center gap-3 mb-2">
-                  <FighterIllustration
-                    name={name}
-                    size={44}
-                    photoUrl={info?.photo_url}
-                  />
-                  <div>
-                    <p className="text-[15px] font-semibold text-text">
-                      {name}
-                    </p>
-                    {(info?.sport || info?.record) && (
-                      <p className="text-[12px] text-faint">
-                        {[info?.sport, info?.record]
-                          .filter(Boolean)
-                          .join(" · ")}
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <div className="flex items-center gap-3">
+                    <FighterIllustration
+                      name={name}
+                      size={44}
+                      photoUrl={info?.photo_url}
+                    />
+                    <div>
+                      <p className="text-[15px] font-semibold text-text">
+                        {name}
                       </p>
-                    )}
+                      {(info?.sport || info?.record) && (
+                        <p className="text-[12px] text-faint">
+                          {[info?.sport, info?.record]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                      )}
+                    </div>
                   </div>
+                  {session && (
+                    <button
+                      onClick={(ev) => {
+                        ev.stopPropagation();
+                        toggleFavorite("fighter", name);
+                      }}
+                      className={`text-[15px] leading-none shrink-0 ${
+                        isFavorited("fighter", name)
+                          ? "text-accent"
+                          : "text-dim"
+                      }`}
+                      aria-label="Favorite this fighter"
+                    >
+                      {isFavorited("fighter", name) ? "★" : "☆"}
+                    </button>
+                  )}
                 </div>
                 {next ? (
                   <p className="text-[12px] text-muted">
@@ -1502,6 +1732,18 @@ export default function Home() {
                 )}
               </div>
 
+              <label className="flex items-start gap-2.5 mb-5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={emailNotifications}
+                  onChange={handleToggleEmailNotifications}
+                  className="mt-0.5 accent-accent"
+                />
+                <span className="text-[13px] text-muted leading-snug">
+                  {L.emailNotifLabel}
+                </span>
+              </label>
+
               <button
                 onClick={handleLogout}
                 className="text-[14px] font-semibold rounded-md py-2.5 px-4 border border-border text-text"
@@ -1577,6 +1819,12 @@ export default function Home() {
             isAdmin ||
             (!!session &&
               fightersData[selectedFighter]?.claimed_by === session.user.id)
+          }
+          isFav={isFavorited("fighter", selectedFighter)}
+          onToggleFav={
+            session
+              ? () => toggleFavorite("fighter", selectedFighter)
+              : undefined
           }
           onClose={() => setSelectedFighter(null)}
           onSaved={(f) =>
