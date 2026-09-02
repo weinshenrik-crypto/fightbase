@@ -11,11 +11,11 @@ export default function Impressum() {
         ← Back to Fightbase
       </Link>
       <h1 className="font-display font-bold text-[26px] mt-4 mb-6">
-        Impressum
+        Legal Notice (Impressum)
       </h1>
 
       <h2 className="font-semibold text-[15px] mb-1">
-        Angaben gemäß § 5 TMG
+        Information according to § 5 TMG (German Telemedia Act)
       </h2>
       <p className="text-[14px] text-muted leading-relaxed mb-5">
         Henrik Weins
@@ -24,28 +24,29 @@ export default function Impressum() {
         <br />
         52224 Stolberg (Rhld.)
         <br />
-        Deutschland
+        Germany
       </p>
 
-      <h2 className="font-semibold text-[15px] mb-1">Kontakt</h2>
+      <h2 className="font-semibold text-[15px] mb-1">Contact</h2>
       <p className="text-[14px] text-muted leading-relaxed mb-5">
-        E-Mail: weinshenrik@gmail.com
+        Email: weinshenrik@gmail.com
       </p>
 
       <h2 className="font-semibold text-[15px] mb-1">
-        Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV
+        Responsible for content according to § 18 Abs. 2 MStV (German
+        Interstate Media Treaty)
       </h2>
       <p className="text-[14px] text-muted leading-relaxed mb-5">
-        Henrik Weins (Anschrift wie oben)
+        Henrik Weins (address as above)
       </p>
 
-      <h2 className="font-semibold text-[15px] mb-1">Hinweis</h2>
+      <h2 className="font-semibold text-[15px] mb-1">Disclaimer</h2>
       <p className="text-[14px] text-muted leading-relaxed">
-        Fightbase ist ein privates, nicht-kommerzielles Projekt zur
-        Übersicht von Kampfsport-Events. Trotz sorgfältiger inhaltlicher
-        Kontrolle übernehmen wir keine Haftung für die Inhalte externer
-        Links. Für den Inhalt der verlinkten Seiten sind ausschließlich
-        deren Betreiber verantwortlich.
+        Fightbase is a private, non-commercial project providing an
+        overview of combat sports events. Despite careful review of the
+        content, we assume no liability for the content of external
+        links. The operators of linked pages are solely responsible for
+        their content.
       </p>
     </div>
   );
