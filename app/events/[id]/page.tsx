@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { supabase } from "@/lib/supabaseClient";
 import {
   EVENTS,
   formatDate,
@@ -11,6 +12,10 @@ import {
   venueLocality,
 } from "@/lib/events";
 import FighterIllustration from "@/components/FighterIllustration";
+
+// Fighter photos can be added/changed any time, so revalidate frequently
+// instead of freezing the page at build time.
+export const revalidate = 60;
 
 export function generateStaticParams() {
   return EVENTS.map((e) => ({ id: e.id }));
@@ -33,9 +38,27 @@ export function generateMetadata({
   };
 }
 
-export default function EventPage({ params }: { params: { id: string } }) {
+export default async function EventPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const event = EVENTS.find((e) => e.id === params.id);
   if (!event) notFound();
+
+  const photos: Record<
+    string,
+    { photo_url: string | null; photo_credit: string | null }
+  > = {};
+  if (event.fighters) {
+    const { data } = await supabase
+      .from("fighters")
+      .select("name, photo_url, photo_credit")
+      .in("name", event.fighters);
+    for (const f of data ?? []) {
+      photos[f.name] = { photo_url: f.photo_url, photo_credit: f.photo_credit };
+    }
+  }
 
   const { weekday, day, month } = formatDate(event.date);
   const dLeft = daysUntil(event.date);
@@ -103,7 +126,11 @@ export default function EventPage({ params }: { params: { id: string } }) {
             href={`/fighters/${fighterSlug(event.fighters[0])}`}
             className="flex flex-col items-center gap-2"
           >
-            <FighterIllustration name={event.fighters[0]} size={72} />
+            <FighterIllustration
+              name={event.fighters[0]}
+              size={72}
+              photoUrl={photos[event.fighters[0]]?.photo_url}
+            />
             <span className="text-[14px] text-text font-medium">
               {event.fighters[0]}
             </span>
@@ -113,13 +140,27 @@ export default function EventPage({ params }: { params: { id: string } }) {
             href={`/fighters/${fighterSlug(event.fighters[1])}`}
             className="flex flex-col items-center gap-2"
           >
-            <FighterIllustration name={event.fighters[1]} size={72} />
+            <FighterIllustration
+              name={event.fighters[1]}
+              size={72}
+              photoUrl={photos[event.fighters[1]]?.photo_url}
+            />
             <span className="text-[14px] text-text font-medium">
               {event.fighters[1]}
             </span>
           </Link>
         </div>
       )}
+      {event.fighters &&
+        (photos[event.fighters[0]]?.photo_credit ||
+          photos[event.fighters[1]]?.photo_credit) && (
+          <p className="text-[10px] text-dim text-center mb-4">
+            {[event.fighters[0], event.fighters[1]]
+              .map((n) => photos[n]?.photo_credit)
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        )}
 
       <h1 className="font-display font-bold text-[26px] text-text mb-1">
         {event.main}

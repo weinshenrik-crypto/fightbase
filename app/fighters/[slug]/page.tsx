@@ -93,7 +93,11 @@ export default async function FighterPage({
       </Link>
 
       <div className="flex items-center gap-4 mt-6 mb-2">
-        <FighterIllustration name={name} size={64} />
+        <FighterIllustration
+          name={name}
+          size={64}
+          photoUrl={fighter.photo_url}
+        />
         <div>
           <h1 className="font-display font-bold text-[24px] text-text">
             {name}
@@ -105,6 +109,9 @@ export default async function FighterPage({
           )}
         </div>
       </div>
+      {fighter.photo_url && fighter.photo_credit && (
+        <p className="text-[10px] text-dim mb-2">{fighter.photo_credit}</p>
+      )}
 
       {(fighter.sport || fighter.record) && (
         <p className="text-[13px] text-faint mb-5">

@@ -21,9 +21,11 @@ import FighterIllustration from "@/components/FighterIllustration";
 
 function FighterAvatar({
   name,
+  photoUrl,
   onClick,
 }: {
   name: string;
+  photoUrl?: string | null;
   onClick: () => void;
 }) {
   return (
@@ -34,7 +36,7 @@ function FighterAvatar({
       }}
       className="flex flex-col items-center gap-1 w-16"
     >
-      <FighterIllustration name={name} size={44} />
+      <FighterIllustration name={name} size={44} photoUrl={photoUrl} />
       <span className="text-[11px] text-muted text-center leading-tight">
         {name}
       </span>
@@ -51,6 +53,7 @@ type FighterRow = {
   bio: string | null;
   career: string | null;
   photo_url: string | null;
+  photo_credit?: string | null;
   claimed_by?: string | null;
 };
 
@@ -120,7 +123,11 @@ function FighterModal({
       >
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-3">
-            <FighterIllustration name={name} size={48} />
+            <FighterIllustration
+              name={name}
+              size={48}
+              photoUrl={fighter.photo_url}
+            />
             <h3 className="font-display font-semibold text-[20px] text-text">
               {name}
             </h3>
@@ -232,6 +239,11 @@ function FighterModal({
                 </p>
               </>
             )}
+            {fighter.photo_url && fighter.photo_credit && (
+              <p className="text-[10px] text-dim mt-3">
+                {fighter.photo_credit}
+              </p>
+            )}
             <Link
               href={`/fighters/${fighterSlug(name)}`}
               className="text-[13px] text-dim underline block mt-4"
@@ -259,6 +271,7 @@ function EventCard({
   isOpen,
   onToggle,
   onSelectFighter,
+  fightersData,
   L,
 }: {
   e: FightEvent;
@@ -266,6 +279,7 @@ function EventCard({
   isOpen: boolean;
   onToggle: () => void;
   onSelectFighter: (name: string) => void;
+  fightersData: Record<string, FighterRow>;
   L: Strings;
 }) {
   const { weekday, day, month } = formatDate(e.date);
@@ -304,11 +318,13 @@ function EventCard({
           <div className="flex items-center justify-between mb-2 px-1">
             <FighterAvatar
               name={e.fighters[0]}
+              photoUrl={fightersData[e.fighters[0]]?.photo_url}
               onClick={() => onSelectFighter(e.fighters![0])}
             />
             <span className="text-[11px] text-dim font-semibold">VS</span>
             <FighterAvatar
               name={e.fighters[1]}
+              photoUrl={fightersData[e.fighters[1]]?.photo_url}
               onClick={() => onSelectFighter(e.fighters![1])}
             />
           </div>
@@ -632,7 +648,7 @@ export default function Home() {
   const [eventSearch, setEventSearch] = useState("");
 
   useEffect(() => {
-    if (tab !== "fighters" || fightersLoaded) return;
+    if (fightersLoaded) return;
     supabase
       .from("fighters")
       .select("*")
@@ -642,7 +658,7 @@ export default function Home() {
         setFightersData(byName);
         setFightersLoaded(true);
       });
-  }, [tab, fightersLoaded]);
+  }, [fightersLoaded]);
 
   useEffect(() => {
     try {
@@ -1044,6 +1060,7 @@ export default function Home() {
                   setExpandedId(expandedId === e.id ? null : e.id)
                 }
                 onSelectFighter={setSelectedFighter}
+                fightersData={fightersData}
                 L={L}
               />
             ))}
@@ -1100,6 +1117,7 @@ export default function Home() {
                   setExpandedId(expandedId === e.id ? null : e.id)
                 }
                 onSelectFighter={setSelectedFighter}
+                fightersData={fightersData}
                 L={L}
               />
             ))}
@@ -1225,7 +1243,11 @@ export default function Home() {
                 className="cursor-pointer text-left border border-border bg-panel rounded-[10px] p-3.5 hover:border-accent transition-colors"
               >
                 <div className="flex items-center gap-3 mb-2">
-                  <FighterIllustration name={name} size={44} />
+                  <FighterIllustration
+                    name={name}
+                    size={44}
+                    photoUrl={info?.photo_url}
+                  />
                   <div>
                     <p className="text-[15px] font-semibold text-text">
                       {name}
