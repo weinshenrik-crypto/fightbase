@@ -21,11 +21,12 @@ export function generateStaticParams() {
   return EVENTS.map((e) => ({ id: e.id }));
 }
 
-export function generateMetadata({
-  params,
-}: {
-  params: { id: string };
-}): Metadata {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const event = EVENTS.find((e) => e.id === params.id);
   if (!event) return {};
   const title = `${event.main} — ${event.title} | Fightbase`;
@@ -38,11 +39,12 @@ export function generateMetadata({
   };
 }
 
-export default async function EventPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function EventPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   const event = EVENTS.find((e) => e.id === params.id);
   if (!event) notFound();
 
