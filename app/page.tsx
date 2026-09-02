@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -1473,6 +1474,15 @@ export default function Home() {
           }
         />
       )}
+
+      <div className="px-5 py-6 flex gap-4 justify-center border-t border-border mt-4">
+        <Link href="/impressum" className="text-[12px] text-dim">
+          Impressum
+        </Link>
+        <Link href="/datenschutz" className="text-[12px] text-dim">
+          Datenschutz
+        </Link>
+      </div>
     </div>
   );
 }
