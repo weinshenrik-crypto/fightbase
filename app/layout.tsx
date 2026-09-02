@@ -15,13 +15,32 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+const title = "Fightbase — Combat sports events calendar";
+const description =
+  "Track every boxing, MMA, Muay Thai, kickboxing, jiu-jitsu, judo, wrestling, karate and taekwondo event that matters to you, all in one place.";
+
 export const metadata: Metadata = {
-  title: "Fightbase — Combat sports events calendar",
-  description:
-    "Track every boxing, MMA, Muay Thai, kickboxing, jiu-jitsu, judo, wrestling, karate and taekwondo event that matters to you, all in one place.",
+  metadataBase: new URL("https://fightbase.io"),
+  title,
+  description,
   icons: {
     icon: "/favicon-32.png",
     apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    title,
+    description,
+    url: "https://fightbase.io",
+    siteName: "Fightbase",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    images: ["/og-image.png"],
   },
 };
 
@@ -30,9 +49,21 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Fightbase",
+    url: "https://fightbase.io",
+    description,
+  };
+
   return (
     <html lang="en" className={`${oswald.variable} ${inter.variable}`}>
       <body className="font-body">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         {children}
         <CookieBanner />
       </body>
