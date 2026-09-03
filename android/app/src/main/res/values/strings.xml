@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Fightbase</string>
+    <string name="title_activity_main">Fightbase</string>
+    <string name="package_name">io.fightbase.app</string>
+    <string name="custom_url_scheme">io.fightbase.app</string>
+</resources>

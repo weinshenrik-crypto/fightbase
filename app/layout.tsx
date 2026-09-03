@@ -3,6 +3,7 @@ import { Oswald, Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import CookieBanner from "@/components/CookieBanner";
+import NativeAppBridge from "@/components/NativeAppBridge";
 
 const oswald = Oswald({
   subsets: ["latin"],
@@ -80,6 +81,7 @@ export default function RootLayout({
         />
         {children}
         <CookieBanner />
+        <NativeAppBridge />
         <Analytics />
       </body>
     </html>
