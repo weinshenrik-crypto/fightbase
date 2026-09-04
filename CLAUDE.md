@@ -21,7 +21,18 @@ Das Flag nicht entfernen, ohne vorher zu prüfen, ob der Bug behoben ist.
 
 ## Deploy
 
-Push auf `main` → Vercel deployed automatisch. Es gibt keinen separaten Deploy-Schritt.
+**Ein Push auf `main` deployed NICHT.** Das Vercel-Projekt (`fightcard/fightbase`) ist
+nicht mit dem GitHub-Repo verbunden — unter Settings → Git steht ausdrücklich
+"This Project is not connected to a Git repository". Deployen geht nur manuell:
+
+```bash
+vercel --prod
+```
+
+Git-Push und Deploy sind also zwei getrennte Schritte. Wer nur pusht, hat auf
+fightbase.io nichts geändert. Beim Prüfen, ob etwas live ist, immer gegen die
+laufende Seite testen (`curl -s https://fightbase.io | grep ...`), nicht gegen den
+Git-Stand.
 
 Das Remote ist SSH (`git@github.com:weinshenrik-crypto/fightbase.git`). Falls
 `Permission denied (publickey)`: der Deploy-Key ist nicht im Agent geladen —
