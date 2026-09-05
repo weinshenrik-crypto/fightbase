@@ -75,6 +75,12 @@ schiebt die Änderung sofort live:
 curl -X POST https://fightbase.io/api/revalidate -H "Authorization: Bearer $CRON_SECRET"
 ```
 
+**Achtung beim lokalen Build:** `npm run build` bedient sich aus
+`.next/cache/fetch-cache`. Wer gerade Events in Supabase geändert hat und dann
+baut, bekommt Seiten aus den alten Daten — inklusive Seiten für Promotions, die
+es so nicht mehr gibt. Vor dem Verifizieren einer Datenänderung also
+`rm -rf .next/cache/fetch-cache` und neu bauen.
+
 `lib/eventsDb.ts` ist die einzige Stelle, die liest. `lib/events.ts` enthält nur noch
 Typ und reine Helfer — Funktionen, die eine Eventliste brauchen, bekommen sie als
 Parameter übergeben.
