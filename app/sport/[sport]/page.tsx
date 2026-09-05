@@ -10,6 +10,7 @@ import {
   daysUntil,
 } from "@/lib/events";
 import { getEvents } from "@/lib/eventsDb";
+import { SPORT_GUIDES } from "@/lib/sportGuides";
 
 // Muss ein Literal sein — Next.js liest diesen Wert statisch aus und
 // erkennt keine importierten Bezeichner. Entspricht EVENTS_REVALIDATE.
@@ -53,6 +54,7 @@ export default async function SportPage({
     .filter((e) => e.sport === sport)
     .sort((a, b) => (a.date > b.date ? 1 : -1));
   const description = SPORT_DESCRIPTIONS[sport];
+  const guide = SPORT_GUIDES[sport];
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -88,8 +90,13 @@ export default async function SportPage({
         {sport} Events Calendar
       </h1>
       {description && (
-        <p className="text-[14px] text-muted leading-relaxed mb-8">
+        <p className="text-[14px] text-muted leading-relaxed mb-3">
           {description}
+        </p>
+      )}
+      {guide && (
+        <p className="text-[14px] text-muted leading-relaxed mb-8">
+          {guide.lede}
         </p>
       )}
 
@@ -132,6 +139,26 @@ export default async function SportPage({
       <Link href="/" className="text-[13px] text-accent block mt-8 mb-6">
         See all combat sports events →
       </Link>
+
+      {guide && (
+        <section className="border-t border-border pt-6 mb-8">
+          <h2 className="font-display font-bold text-[19px] text-text mb-5">
+            About {sport}
+          </h2>
+          <div className="flex flex-col gap-5">
+            {guide.sections.map((section) => (
+              <div key={section.heading}>
+                <h3 className="font-display font-semibold text-[15px] text-text mb-1.5">
+                  {section.heading}
+                </h3>
+                <p className="text-[13.5px] text-muted leading-relaxed">
+                  {section.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="border-t border-border pt-5">
         <p className="text-[11px] font-semibold text-dim uppercase tracking-wide mb-2">
