@@ -71,7 +71,7 @@ export const BROADCASTER_LINKS: Record<string, string> = {
 export const PROMOTION_LINKS: Record<string, string> = {
   ADCC: "https://adcombat.com",
   GLORY: "https://glorykickboxing.com",
-  "IJF Judo Grand Slam": "https://www.ijf.org",
+  IJF: "https://www.ijf.org",
   OKTAGON: "https://oktagonmma.com",
   UFC: "https://www.ufc.com",
   UWW: "https://uww.org",
@@ -161,7 +161,7 @@ export const SPORT_DESCRIPTIONS: Record<string, string> = {
   Wrestling:
     "Upcoming United World Wrestling (UWW) Ranking Series events and major freestyle, Greco-Roman and women's wrestling tournaments.",
   Karate:
-    "Upcoming WKF Karate 1 Premier League events feeding the Olympic-cycle world rankings.",
+    "Upcoming WKF Karate 1 Premier League and Series A events feeding the world karate rankings.",
   Taekwondo:
     "Upcoming World Taekwondo Grand Prix events and the season-ending Grand Prix Final.",
 };

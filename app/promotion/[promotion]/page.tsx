@@ -10,6 +10,7 @@ import {
   daysUntil,
 } from "@/lib/events";
 import { getEvents } from "@/lib/eventsDb";
+import { PROMOTION_GUIDES } from "@/lib/promotionGuides";
 
 // Muss ein Literal sein — Next.js liest diesen Wert statisch aus und
 // erkennt keine importierten Bezeichner. Entspricht EVENTS_REVALIDATE.
@@ -53,6 +54,10 @@ export default async function PromotionPage({
     (a, b) => (a.date > b.date ? 1 : -1)
   );
   const officialUrl = PROMOTION_LINKS[promotion];
+  const guide = PROMOTION_GUIDES[promotion];
+  const otherPromotions = promotionsWithPage(allEvents).filter(
+    (p) => p !== promotion
+  );
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -91,6 +96,11 @@ export default async function PromotionPage({
         Every upcoming {promotion} event tracked on Fightbase — dates, fight
         cards and where to watch.
       </p>
+      {guide && (
+        <p className="text-[14px] text-muted leading-relaxed mb-3">
+          {guide.lede}
+        </p>
+      )}
       {officialUrl && (
         <a
           href={officialUrl}
@@ -139,9 +149,48 @@ export default async function PromotionPage({
         })}
       </div>
 
-      <Link href="/" className="text-[13px] text-accent block mt-8">
+      <Link href="/" className="text-[13px] text-accent block my-8">
         See all combat sports events →
       </Link>
+
+      {guide && (
+        <section className="border-t border-border pt-6 mb-8">
+          <h2 className="font-display font-bold text-[19px] text-text mb-5">
+            About {promotion}
+          </h2>
+          <div className="flex flex-col gap-5">
+            {guide.sections.map((section) => (
+              <div key={section.heading}>
+                <h3 className="font-display font-semibold text-[15px] text-text mb-1.5">
+                  {section.heading}
+                </h3>
+                <p className="text-[13.5px] text-muted leading-relaxed">
+                  {section.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {otherPromotions.length > 0 && (
+        <div className="border-t border-border pt-5">
+          <p className="text-[11px] font-semibold text-dim uppercase tracking-wide mb-2">
+            Other promotions
+          </p>
+          <div className="flex gap-2 flex-wrap">
+            {otherPromotions.map((p) => (
+              <Link
+                key={p}
+                href={`/promotion/${promotionSlug(p)}`}
+                className="text-[12px] px-2.5 py-1 rounded-md border border-[#2E2E30] text-faint hover:border-accent hover:text-text transition-colors"
+              >
+                {p}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
