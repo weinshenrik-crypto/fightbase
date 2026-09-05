@@ -61,6 +61,28 @@ supabase/               SQL-Schema, Migrationen, Seeds, E-Mail-Templates
 `app/page.tsx` ist bewusst eine große Datei. Sprach-Strings liegen dort in einem
 `STRINGS`-Objekt (`en`/`de`) — neue UI-Texte immer in **beiden** Sprachen ergänzen.
 
+## Events pflegen
+
+Events liegen in der Supabase-Tabelle `events`, **nicht mehr im Code**. Neue Termine
+gehen also ohne Deploy live: Zeile im Supabase Table Editor anlegen (`slug`, `date`,
+`sport`, `promotion`, `title`, `main` sind Pflicht), fertig.
+
+Die Seiten holen die Events per ISR alle 60 Minuten neu. Wer nicht warten will,
+schiebt die Änderung sofort live:
+
+```bash
+curl -X POST https://fightbase.io/api/revalidate -H "Authorization: Bearer $CRON_SECRET"
+```
+
+`lib/eventsDb.ts` ist die einzige Stelle, die liest. `lib/events.ts` enthält nur noch
+Typ und reine Helfer — Funktionen, die eine Eventliste brauchen, bekommen sie als
+Parameter übergeben.
+
+**Beim Eintragen keine Kämpfe erfinden.** Die Seitenbeschreibungen werben ausdrücklich
+mit "no fabricated fights". Termine gehören belegt, und im Zweifel lieber weggelassen.
+Kampftermine verschieben sich häufig — vor dem Eintragen gegen die Promotion selbst
+prüfen, nicht gegen einen Sammel-Kalender.
+
 ## Supabase
 
 Projekt-Ref: `ewfqauarkzzhdckkbdzt`
