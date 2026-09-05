@@ -75,6 +75,35 @@ schiebt die Änderung sofort live:
 curl -X POST https://fightbase.io/api/revalidate -H "Authorization: Bearer $CRON_SECRET"
 ```
 
+`CRON_SECRET` liegt in Vercel als **Sensitive** und lässt sich weder per
+`vercel env pull` noch im Dashboard zurücklesen — ohne eigene Kopie geht der
+Befehl also nicht. Alternative: einmal pushen, der Rebuild erledigt dasselbe.
+Das ist nicht nur Kosmetik — die Detailseite eines frisch eingetragenen Events
+(`/events/<slug>`) antwortet bis zur nächsten Revalidierung mit **404**, weil
+`generateStaticParams` den Slug noch nicht kennt und die Seite dann `notFound()`
+aufruft.
+
+### Belegte Quellen
+
+Vor dem Eintragen gegen die Organisation selbst prüfen, nicht gegen einen
+Sammel-Kalender. Was sich bewährt hat:
+
+| Sportart | Quelle | Hinweis |
+|---|---|---|
+| Jiu-Jitsu | `ibjjf.com/api/v1/events/calendar.json` | Kompletter Kalender als JSON. Braucht `X-Requested-With: XMLHttpRequest`, sonst `{"error":"Denied"}`. Beste Quelle im ganzen Projekt. |
+| Judo | `ijf.org/calendar` | Vollständig, Senioren und Nachwuchs gemischt — nur Senior/Elite eintragen. |
+| Karate | `wkf.net/karate-one` | Premier League, Series A und Youth League, zwei Jahre im Voraus. |
+| Ringen | `uww.org/events` | `uww.org/calendar` existiert nicht (404). |
+
+IBJJF, IJF und WKF sind JS-gerendert; ein simpler Fetch liefert bei WKF und IJF
+trotzdem Text, bei IBJJF nur über die JSON-API oben.
+
+**Muay Thai lässt sich nicht befüllen.** Geprüft: die RWS-Event-Seite
+(`rank.rajadamnern.com/events`) ist leer, und ONE kündigt seine Karten erst
+kurzfristig an. Die Stadionprogramme in Bangkok werden tagesaktuell angesetzt.
+Nicht durch Hochrechnen von Wochenrhythmen "lösen" — die Sport-Landingpage
+erklärt diese Lücke inzwischen offen.
+
 **Achtung beim lokalen Build:** `npm run build` bedient sich aus
 `.next/cache/fetch-cache`. Wer gerade Events in Supabase geändert hat und dann
 baut, bekommt Seiten aus den alten Daten — inklusive Seiten für Promotions, die
