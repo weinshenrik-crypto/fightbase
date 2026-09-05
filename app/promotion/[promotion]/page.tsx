@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import {
-  EVENTS,
   PROMOTION_LINKS,
   promotionSlug,
   promotionBySlug,
@@ -10,9 +9,15 @@ import {
   formatDate,
   daysUntil,
 } from "@/lib/events";
+import { getEvents } from "@/lib/eventsDb";
 
-export function generateStaticParams() {
-  return promotionsWithPage().map((p) => ({ promotion: promotionSlug(p) }));
+// Muss ein Literal sein — Next.js liest diesen Wert statisch aus und
+// erkennt keine importierten Bezeichner. Entspricht EVENTS_REVALIDATE.
+export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  const events = await getEvents();
+  return promotionsWithPage(events).map((p) => ({ promotion: promotionSlug(p) }));
 }
 
 export async function generateMetadata({
@@ -21,8 +26,9 @@ export async function generateMetadata({
   params: Promise<{ promotion: string }>;
 }): Promise<Metadata> {
   const { promotion: slug } = await params;
-  const promotion = promotionBySlug(slug);
-  if (!promotion || !promotionsWithPage().includes(promotion)) return {};
+  const events = await getEvents();
+  const promotion = promotionBySlug(events, slug);
+  if (!promotion || !promotionsWithPage(events).includes(promotion)) return {};
   const title = `${promotion} Schedule — Upcoming Events | Fightbase`;
   const description = `Every upcoming ${promotion} event tracked on Fightbase — dates, fight cards and where to watch.`;
   return {
@@ -39,10 +45,11 @@ export default async function PromotionPage({
   params: Promise<{ promotion: string }>;
 }) {
   const { promotion: slug } = await params;
-  const promotion = promotionBySlug(slug);
-  if (!promotion || !promotionsWithPage().includes(promotion)) notFound();
+  const allEvents = await getEvents();
+  const promotion = promotionBySlug(allEvents, slug);
+  if (!promotion || !promotionsWithPage(allEvents).includes(promotion)) notFound();
 
-  const events = EVENTS.filter((e) => e.promotion === promotion).sort(
+  const events = allEvents.filter((e) => e.promotion === promotion).sort(
     (a, b) => (a.date > b.date ? 1 : -1)
   );
   const officialUrl = PROMOTION_LINKS[promotion];

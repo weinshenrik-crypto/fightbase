@@ -9,14 +9,17 @@ import {
   formatDate,
   daysUntil,
 } from "@/lib/events";
+import { getEvents } from "@/lib/eventsDb";
 import FighterIllustration from "@/components/FighterIllustration";
 
 // Fighter bios/records can change any time (admin edits, self-registration),
 // so revalidate frequently instead of freezing content at build time.
 export const revalidate = 60;
 
+
 export async function generateStaticParams() {
-  const eventSlugs = allFighterNames().map((name) => fighterSlug(name));
+  const events = await getEvents();
+  const eventSlugs = allFighterNames(events).map((name) => fighterSlug(name));
   const { data } = await supabase.from("fighters").select("slug");
   const dbSlugs = (data ?? []).map((f) => f.slug).filter(Boolean) as string[];
   return Array.from(new Set([...eventSlugs, ...dbSlugs])).map((slug) => ({
@@ -34,7 +37,9 @@ async function getFighterBySlug(slug: string) {
 
   // Fallback for rows created before the slug column was backfilled,
   // or for event-only fighters that don't have a DB row yet.
-  const eventName = allFighterNames().find((n) => fighterSlug(n) === slug);
+  const eventName = allFighterNames(await getEvents()).find(
+    (n) => fighterSlug(n) === slug
+  );
   if (!eventName) return null;
   const { data: byName } = await supabase
     .from("fighters")
@@ -74,7 +79,7 @@ export default async function FighterPage(
   if (!fighter) notFound();
 
   const name = fighter.name as string;
-  const upcoming = upcomingFightsFor(name);
+  const upcoming = upcomingFightsFor(await getEvents(), name);
 
   const jsonLd = {
     "@context": "https://schema.org",

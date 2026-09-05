@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import {
-  EVENTS,
   SPORTS,
   SPORT_DESCRIPTIONS,
   sportSlug,
@@ -10,6 +9,11 @@ import {
   formatDate,
   daysUntil,
 } from "@/lib/events";
+import { getEvents } from "@/lib/eventsDb";
+
+// Muss ein Literal sein — Next.js liest diesen Wert statisch aus und
+// erkennt keine importierten Bezeichner. Entspricht EVENTS_REVALIDATE.
+export const revalidate = 3600;
 
 export function generateStaticParams() {
   return SPORTS.filter((s) => s !== "All").map((s) => ({
@@ -45,9 +49,9 @@ export default async function SportPage({
   const sport = sportBySlug(slug);
   if (!sport) notFound();
 
-  const events = EVENTS.filter((e) => e.sport === sport).sort((a, b) =>
-    a.date > b.date ? 1 : -1
-  );
+  const events = (await getEvents())
+    .filter((e) => e.sport === sport)
+    .sort((a, b) => (a.date > b.date ? 1 : -1));
   const description = SPORT_DESCRIPTIONS[sport];
 
   const jsonLd = {

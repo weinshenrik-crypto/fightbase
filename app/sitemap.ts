@@ -1,6 +1,5 @@
 import { MetadataRoute } from "next";
 import {
-  EVENTS,
   SPORTS,
   allFighterNames,
   fighterSlug,
@@ -8,10 +7,16 @@ import {
   promotionSlug,
   promotionsWithPage,
 } from "@/lib/events";
+import { getEvents } from "@/lib/eventsDb";
 import { supabase } from "@/lib/supabaseClient";
+
+// Muss ein Literal sein — Next.js liest diesen Wert statisch aus und
+// erkennt keine importierten Bezeichner. Entspricht EVENTS_REVALIDATE.
+export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = "https://fightbase.io";
+  const events = await getEvents();
   const now = new Date();
 
   const staticPages: MetadataRoute.Sitemap = [
@@ -20,7 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/datenschutz`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },
   ];
 
-  const eventPages: MetadataRoute.Sitemap = EVENTS.map((e) => ({
+  const eventPages: MetadataRoute.Sitemap = events.map((e) => ({
     url: `${base}/events/${e.id}`,
     lastModified: now,
     changeFrequency: "weekly",
@@ -36,7 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   }));
 
-  const promotionPages: MetadataRoute.Sitemap = promotionsWithPage().map(
+  const promotionPages: MetadataRoute.Sitemap = promotionsWithPage(events).map(
     (p) => ({
       url: `${base}/promotion/${promotionSlug(p)}`,
       lastModified: now,
@@ -47,7 +52,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const { data } = await supabase.from("fighters").select("slug");
   const dbSlugs = (data ?? []).map((f) => f.slug).filter(Boolean) as string[];
-  const eventSlugs = allFighterNames().map((name) => fighterSlug(name));
+  const eventSlugs = allFighterNames(events).map((name) => fighterSlug(name));
   const allSlugs = Array.from(new Set([...eventSlugs, ...dbSlugs]));
 
   const fighterPages: MetadataRoute.Sitemap = allSlugs.map((slug) => ({

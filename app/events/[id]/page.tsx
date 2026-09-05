@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { supabase } from "@/lib/supabaseClient";
 import {
-  EVENTS,
   formatDate,
   daysUntil,
   watchLinks,
@@ -11,14 +10,17 @@ import {
   PROMOTION_LINKS,
   venueLocality,
 } from "@/lib/events";
+import { getEvents } from "@/lib/eventsDb";
 import FighterIllustration from "@/components/FighterIllustration";
 
 // Fighter photos can be added/changed any time, so revalidate frequently
 // instead of freezing the page at build time.
 export const revalidate = 60;
 
-export function generateStaticParams() {
-  return EVENTS.map((e) => ({ id: e.id }));
+
+export async function generateStaticParams() {
+  const events = await getEvents();
+  return events.map((e) => ({ id: e.id }));
 }
 
 export async function generateMetadata(
@@ -27,7 +29,7 @@ export async function generateMetadata(
   }
 ): Promise<Metadata> {
   const params = await props.params;
-  const event = EVENTS.find((e) => e.id === params.id);
+  const event = (await getEvents()).find((e) => e.id === params.id);
   if (!event) return {};
   const title = `${event.main} — ${event.title} | Fightbase`;
   const description = `${event.title} (${event.promotion}) on ${event.date} at ${event.venue}. ${event.note}`;
@@ -45,7 +47,7 @@ export default async function EventPage(
   }
 ) {
   const params = await props.params;
-  const event = EVENTS.find((e) => e.id === params.id);
+  const event = (await getEvents()).find((e) => e.id === params.id);
   if (!event) notFound();
 
   const photos: Record<

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { EVENTS, daysUntil, formatDate, type FightEvent } from "@/lib/events";
+import { daysUntil, formatDate, type FightEvent } from "@/lib/events";
+import { getEvents } from "@/lib/eventsDb";
 
 // Runs once a day (see vercel.json). For each event, two things can trigger
 // an email: the event just got added to the calendar ("new_event"), or it's
@@ -91,7 +92,10 @@ export async function GET(req: Request) {
   const knownIds = new Set((knownRows ?? []).map((r) => r.id as string));
   const bootstrap = knownIds.size === 0;
 
-  const upcoming = EVENTS.filter((e) => daysUntil(e.date) >= 0);
+  // Frisch lesen: ein gerade eingetragenes Event soll sofort eine
+  // "neues Event"-Mail auslösen, nicht erst nach Ablauf des ISR-Caches.
+  const allEvents = await getEvents({ fresh: true });
+  const upcoming = allEvents.filter((e) => daysUntil(e.date) >= 0);
   const unseen = upcoming.filter((e) => !knownIds.has(e.id));
   if (unseen.length > 0) {
     await db
