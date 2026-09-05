@@ -251,8 +251,8 @@ export const PROMOTION_GUIDES: Record<string, PromotionGuide> = {
     ],
   },
 
-  "WKF Karate 1": {
-    lede: "Karate 1 is the World Karate Federation's international circuit, comprising the Premier League and the second-tier Series A. It is the main competitive stage for sport karate and the source of the world ranking.",
+  WKF: {
+    lede: "The World Karate Federation governs the sport worldwide and runs Karate 1, its international circuit, comprising the Premier League and the second-tier Series A. It is the main competitive stage for sport karate and the source of the world ranking.",
     sections: [
       {
         heading: "Kumite and kata",
@@ -264,7 +264,7 @@ export const PROMOTION_GUIDES: Record<string, PromotionGuide> = {
       },
       {
         heading: "The circuit",
-        body: "Premier League events are the top tier and carry the most ranking points; Series A events sit below them and are where competitors build toward Premier League entry. The World Championships sit above both. Karate appeared at the Olympic Games in Tokyo and was not retained on the programme afterwards, so unlike judo or taekwondo this circuit is not currently an Olympic qualification path — the WKF calendar is the sport's competitive summit in its own right.",
+        body: "Premier League events are the top tier and carry the most ranking points; Series A events sit below them and are where competitors build toward Premier League entry. Alongside the circuit the federation stages the World Championships and a separate team World Cup, in which nations rather than individuals are drawn against each other. Karate appeared at the Olympic Games in Tokyo and was not retained on the programme afterwards, so unlike judo or taekwondo this calendar is not currently an Olympic qualification path — it is the sport's competitive summit in its own right.",
       },
     ],
   },

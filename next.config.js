@@ -12,6 +12,14 @@ const nextConfig = {
         destination: "/promotion/ijf",
         permanent: true,
       },
+      // Gleicher Fall wie die IJF: "WKF Karate 1" ist der Name der Turnierserie,
+      // nicht des Verbands. Der World Cup ist ein WKF-Event ausserhalb dieser
+      // Serie und haette sonst ein zweites Promotion-Label gebraucht.
+      {
+        source: "/promotion/wkf-karate-1",
+        destination: "/promotion/wkf",
+        permanent: true,
+      },
     ];
   },
 };

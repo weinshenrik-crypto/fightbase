@@ -75,7 +75,7 @@ export const PROMOTION_LINKS: Record<string, string> = {
   OKTAGON: "https://oktagonmma.com",
   UFC: "https://www.ufc.com",
   UWW: "https://uww.org",
-  "WKF Karate 1": "https://www.wkf.net",
+  WKF: "https://www.wkf.net",
   "World Taekwondo": "https://www.worldtaekwondo.org",
   "Queensberry Promotions": "https://queensberry.co.uk",
   "Riyadh Season": "https://riyadhseason.sa",
