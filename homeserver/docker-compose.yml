@@ -1,0 +1,62 @@
+# n8n auf dem UGREEN NASync DH2300 (ARM64, 4 GB fest verlötet).
+#
+# Warum hier im Repo: Diese Automatisierung füttert die events-Tabelle von
+# Fightbase. Sie gehört zum Projekt, und versioniert ist sie besser aufgehoben
+# als in losen Dateien auf einem Laptop.
+#
+# Vor dem ersten Start: .env aus .env.example anlegen und ausfüllen.
+# Start:  docker compose up -d
+# Logs:   docker compose logs -f n8n
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      # Nur im LAN erreichbar. Von außen kommt der Verkehr über den Tunnel,
+      # nicht über eine Portfreigabe im Router.
+      - "5678:5678"
+    environment:
+      # Öffentliche Adresse — n8n baut daraus die Webhook-URLs, die du bei
+      # WhatsApp/Twilio hinterlegst. Ohne das zeigen die Webhooks auf localhost
+      # und die Dienste erreichen dich nie.
+      - N8N_HOST=${N8N_HOST}
+      - WEBHOOK_URL=https://${N8N_HOST}/
+      - N8N_PROTOCOL=https
+      - N8N_PORT=5678
+      # Hinter dem Tunnel terminiert Cloudflare TLS — ohne das hält n8n die
+      # Verbindung für unsicher und lehnt Cookies ab.
+      - N8N_PROXY_HOPS=1
+      # Verschlüsselt gespeicherte Credentials. UNBEDINGT sichern: ohne diesen
+      # Schlüssel sind alle hinterlegten Zugangsdaten nach einem Neuaufsetzen weg.
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - GENERIC_TIMEZONE=Europe/Berlin
+      - TZ=Europe/Berlin
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_DIAGNOSTICS_ENABLED=false
+    volumes:
+      - n8n_data:/home/node/.n8n
+    deploy:
+      resources:
+        limits:
+          # Der NAS hat 4 GB fest verlötet und muss nebenher sein eigenes
+          # Betriebssystem fahren. Ohne Deckel kann n8n ihn ausbremsen.
+          memory: 1536M
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    # Baut eine ausgehende Verbindung zu Cloudflare auf. Dadurch ist n8n von
+    # außen erreichbar, ohne einen Port im Router zu öffnen.
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - n8n
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+volumes:
+  n8n_data:

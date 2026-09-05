@@ -6,3 +6,6 @@ out
 .claude/
 .vercel
 tsconfig.tsbuildinfo
+
+# Tunnel-Token und n8n-Verschlüsselungsschlüssel
+homeserver/.env
