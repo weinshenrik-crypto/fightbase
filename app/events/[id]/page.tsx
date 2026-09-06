@@ -108,12 +108,12 @@ export default async function EventPage(
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Link href="/" className="text-[13px] text-accent">
+      <Link href="/" className="text-[13px] text-accentText">
         ← Back to Fightbase
       </Link>
 
       <div className="mt-6 mb-1 flex items-center gap-3 text-[13px] text-dim">
-        <span className="text-accent font-semibold uppercase tracking-wide">
+        <span className="text-accentText font-semibold uppercase tracking-wide">
           {event.sport}
         </span>
         <span>
@@ -221,7 +221,7 @@ export default async function EventPage(
         </div>
       )}
 
-      <Link href="/" className="text-[13px] text-accent">
+      <Link href="/" className="text-[13px] text-accentText">
         See all upcoming combat sports events →
       </Link>
     </div>

@@ -23,6 +23,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: base, lastModified: now, changeFrequency: "daily", priority: 1 },
     { url: `${base}/impressum`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },
     { url: `${base}/datenschutz`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${base}/terms`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },
   ];
 
   const eventPages: MetadataRoute.Sitemap = events.map((e) => ({

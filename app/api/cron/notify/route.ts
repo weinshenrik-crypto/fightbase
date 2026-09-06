@@ -81,7 +81,15 @@ function buildEmailHtml(newEvents: FightEvent[], reminders: FightEvent[]) {
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  // Die Pruefung auf ein gesetztes CRON_SECRET muss zuerst kommen: ohne sie
+  // vergleicht der Ausdruck gegen den String "Bearer undefined", und in einer
+  // Umgebung ohne gesetztes Secret (Preview-Deploy, frischer Branch) kaeme
+  // jeder mit genau diesem Header durch — die Route liest E-Mail-Adressen und
+  // verschickt Mail.
+  if (
+    !process.env.CRON_SECRET ||
+    authHeader !== `Bearer ${process.env.CRON_SECRET}`
+  ) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

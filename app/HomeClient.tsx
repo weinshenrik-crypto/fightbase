@@ -141,7 +141,7 @@ function FighterModal({
               <button
                 onClick={onToggleFav}
                 className={`text-[17px] leading-none ${
-                  isFav ? "text-accent" : "text-dim"
+                  isFav ? "text-accentText" : "text-dim"
                 }`}
                 aria-label="Favorite this fighter"
               >
@@ -159,6 +159,7 @@ function FighterModal({
         ) : editing ? (
           <div className="flex flex-col gap-2.5">
             <input
+              aria-label={L.nicknamePlaceholder}
               placeholder={L.nicknamePlaceholder}
               value={fighter.nickname ?? ""}
               onChange={(e) =>
@@ -167,6 +168,7 @@ function FighterModal({
               className="bg-black/30 border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
             />
             <input
+              aria-label={L.sportPlaceholder}
               placeholder={L.sportPlaceholder}
               value={fighter.sport ?? ""}
               onChange={(e) =>
@@ -175,6 +177,7 @@ function FighterModal({
               className="bg-black/30 border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
             />
             <input
+              aria-label={L.recordPlaceholder}
               placeholder={L.recordPlaceholder}
               value={fighter.record ?? ""}
               onChange={(e) =>
@@ -183,6 +186,7 @@ function FighterModal({
               className="bg-black/30 border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
             />
             <input
+              aria-label={L.photoUrlPlaceholder}
               placeholder={L.photoUrlPlaceholder}
               value={fighter.photo_url ?? ""}
               onChange={(e) =>
@@ -191,6 +195,7 @@ function FighterModal({
               className="bg-black/30 border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
             />
             <textarea
+              aria-label={L.bioPlaceholder}
               placeholder={L.bioPlaceholder}
               rows={3}
               value={fighter.bio ?? ""}
@@ -198,6 +203,7 @@ function FighterModal({
               className="bg-black/30 border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent resize-none"
             />
             <textarea
+              aria-label={L.careerPlaceholder}
               placeholder={L.careerPlaceholder}
               rows={4}
               value={fighter.career ?? ""}
@@ -225,7 +231,7 @@ function FighterModal({
         ) : (
           <div>
             {fighter.nickname && (
-              <p className="text-[13px] text-accent mb-1">
+              <p className="text-[13px] text-accentText mb-1">
                 &quot;{fighter.nickname}&quot;
               </p>
             )}
@@ -270,7 +276,7 @@ function FighterModal({
             {canEdit && (
               <button
                 onClick={() => setEditing(true)}
-                className="text-[13px] text-accent mt-2"
+                className="text-[13px] text-accentText mt-2"
               >
                 {fighter.bio ? L.editProfile : L.addProfile}
               </button>
@@ -323,7 +329,7 @@ function EventCard({
         }`}
       >
         <div className="flex justify-between items-center mb-1.5">
-          <span className="text-[11px] font-semibold text-accent tracking-wide">
+          <span className="text-[11px] font-semibold text-accentText tracking-wide">
             {e.sport}
           </span>
           <div className="flex items-center gap-2">
@@ -341,7 +347,7 @@ function EventCard({
                   onToggleEventFav();
                 }}
                 className={`text-[13px] leading-none ${
-                  isEventFav ? "text-accent" : "text-dim"
+                  isEventFav ? "text-accentText" : "text-dim"
                 }`}
                 aria-label="Favorite this event"
               >
@@ -569,6 +575,11 @@ const STRINGS = {
     cookieText:
       "We only store technically necessary data in your browser (login status, favorites) — no advertising or tracking cookies. More in our",
     cookieLink: "Privacy Policy",
+    legalTerms: "Terms of Use",
+    signupLegal: "By creating an account you agree to our",
+    signupLegalAnd: "and our",
+    signupLegalPrivacy: "Privacy Policy",
+    signupLegalEnd: ".",
     cookieAccept: "Got it",
     legalImprint: "Legal Notice",
     legalPrivacy: "Privacy Policy",
@@ -673,6 +684,11 @@ const STRINGS = {
     cookieText:
       "Wir speichern nur technisch notwendige Daten in deinem Browser (Login-Status, Favoriten) — keine Werbe- oder Tracking-Cookies. Mehr dazu in unserer",
     cookieLink: "Datenschutzerklärung",
+    legalTerms: "Nutzungsbedingungen",
+    signupLegal: "Mit der Registrierung stimmst du unseren",
+    signupLegalAnd: "und unserer",
+    signupLegalPrivacy: "Datenschutzerklärung",
+    signupLegalEnd: "zu.",
     cookieAccept: "Verstanden",
     legalImprint: "Impressum",
     legalPrivacy: "Datenschutz",
@@ -769,6 +785,14 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
     }
     setLoaded(true);
   }, []);
+
+  // Das <html lang> steht in layout.tsx statisch auf "en". Bleibt es das,
+  // liest ein Screenreader die deutschen Texte mit englischer Aussprache vor
+  // (WCAG 3.1.1). Die Sprache ist Client-State, also wird das Attribut hier
+  // nachgezogen, sobald sie feststeht oder sich ändert.
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   function changeLang(next: Lang) {
     setLang(next);
@@ -1212,6 +1236,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
           <div className="px-5 pt-4">
             <input
               type="text"
+              aria-label="Search events, fighters, promotions…"
               placeholder="Search events, fighters, promotions…"
               value={eventSearch}
               onChange={(e) => setEventSearch(e.target.value)}
@@ -1421,6 +1446,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
           <div className="px-5 pt-4 pb-4 border-b border-border flex flex-col gap-3 md:flex-row md:items-center">
             <input
               type="text"
+              aria-label="Search fighters…"
               placeholder="Search fighters…"
               value={fighterSearch}
               onChange={(e) => setFighterSearch(e.target.value)}
@@ -1429,7 +1455,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
             {session && (
               <button
                 onClick={() => setShowRegisterForm((v) => !v)}
-                className="text-[13px] font-semibold text-accent shrink-0"
+                className="text-[13px] font-semibold text-accentText shrink-0"
               >
                 {showRegisterForm ? "Cancel" : "+ Register as a fighter"}
               </button>
@@ -1467,30 +1493,35 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
             >
               <input
                 required
+                aria-label="Full name"
                 placeholder="Full name"
                 value={regName}
                 onChange={(e) => setRegName(e.target.value)}
                 className="bg-panel border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
               />
               <input
+                aria-label="Nickname"
                 placeholder="Nickname"
                 value={regNickname}
                 onChange={(e) => setRegNickname(e.target.value)}
                 className="bg-panel border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
               />
               <input
+                aria-label="Sport (e.g. MMA, Boxing)"
                 placeholder="Sport (e.g. MMA, Boxing)"
                 value={regSport}
                 onChange={(e) => setRegSport(e.target.value)}
                 className="bg-panel border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
               />
               <input
+                aria-label="Record (e.g. 5-1-0)"
                 placeholder="Record (e.g. 5-1-0)"
                 value={regRecord}
                 onChange={(e) => setRegRecord(e.target.value)}
                 className="bg-panel border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent"
               />
               <textarea
+                aria-label="Short bio"
                 placeholder="Short bio"
                 rows={3}
                 value={regBio}
@@ -1498,6 +1529,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                 className="bg-panel border border-border rounded-md px-3 py-2 text-[13px] text-text placeholder:text-dim outline-none focus:border-accent resize-none"
               />
               <textarea
+                aria-label="Career history"
                 placeholder="Career history"
                 rows={3}
                 value={regCareer}
@@ -1512,7 +1544,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                 {regSaving ? "Creating…" : "Create my fighter profile"}
               </button>
               {regError && (
-                <p className="text-[12px] text-accent">{regError}</p>
+                <p className="text-[12px] text-accentText">{regError}</p>
               )}
             </form>
           )}
@@ -1561,7 +1593,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                       }}
                       className={`text-[15px] leading-none shrink-0 ${
                         isFavorited("fighter", name)
-                          ? "text-accent"
+                          ? "text-accentText"
                           : "text-dim"
                       }`}
                       aria-label="Favorite this fighter"
@@ -1610,7 +1642,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
             <>
               <button
                 onClick={() => setOpenThread(null)}
-                className="text-[13px] text-accent mb-3"
+                className="text-[13px] text-accentText mb-3"
               >
                 {L.backToThreads}
               </button>
@@ -1622,7 +1654,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                   (isAdmin || session.user.id === openThread.created_by) && (
                     <button
                       onClick={() => handleDeleteThread(openThread.id)}
-                      className="text-[12px] text-accent shrink-0 ml-3"
+                      className="text-[12px] text-accentText shrink-0 ml-3"
                     >
                       {L.deleteThread}
                     </button>
@@ -1639,14 +1671,14 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                       className="border border-border bg-panel rounded-[10px] p-3"
                     >
                       <div className="flex justify-between items-start mb-1">
-                        <p className="text-[12px] text-accent font-semibold">
+                        <p className="text-[12px] text-accentText font-semibold">
                           {p.profiles?.username ?? L.anonymous}
                         </p>
                         {session &&
                           (isAdmin || session.user.id === p.user_id) && (
                             <button
                               onClick={() => handleDeletePost(p.id)}
-                              className="text-[11px] text-dim hover:text-accent"
+                              className="text-[11px] text-dim hover:text-accentText"
                             >
                               {L.delete}
                             </button>
@@ -1668,6 +1700,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                   <textarea
                     required
                     rows={3}
+                    aria-label={L.replyPlaceholder}
                     placeholder={L.replyPlaceholder}
                     value={newPost}
                     onChange={(e) => setNewPost(e.target.value)}
@@ -1698,6 +1731,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                 >
                   <input
                     required
+                    aria-label={L.threadTitlePlaceholder}
                     placeholder={L.threadTitlePlaceholder}
                     value={newThreadTitle}
                     onChange={(e) => setNewThreadTitle(e.target.value)}
@@ -1705,6 +1739,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                   />
                   <textarea
                     rows={2}
+                    aria-label={L.firstMessagePlaceholder}
                     placeholder={L.firstMessagePlaceholder}
                     value={newThreadBody}
                     onChange={(e) => setNewThreadBody(e.target.value)}
@@ -1717,7 +1752,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                     {L.newThread}
                   </button>
                   {forumError && (
-                    <p className="text-[12px] text-accent">{forumError}</p>
+                    <p className="text-[12px] text-accentText">{forumError}</p>
                   )}
                 </form>
               ) : (
@@ -1765,7 +1800,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                 {L.loggedInAs} {session.user.email}
               </p>
               {isAdmin && (
-                <p className="text-[12px] text-accent font-semibold mb-4">
+                <p className="text-[12px] text-accentText font-semibold mb-4">
                   {L.adminBadge}
                 </p>
               )}
@@ -1789,6 +1824,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                       <input
                         required
                         minLength={3}
+                        aria-label={L.usernamePlaceholder}
                         placeholder={L.usernamePlaceholder}
                         value={usernameInput}
                         onChange={(e) => setUsernameInput(e.target.value)}
@@ -1803,7 +1839,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                       </button>
                     </div>
                     {usernameError && (
-                      <p className="text-[12px] text-accent">
+                      <p className="text-[12px] text-accentText">
                         {usernameError}
                       </p>
                     )}
@@ -1841,6 +1877,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                 <input
                   type="email"
                   required
+                  aria-label={L.email}
                   placeholder={L.email}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -1850,6 +1887,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                   type="password"
                   required
                   minLength={6}
+                  aria-label={L.password}
                   placeholder={L.password}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -1868,6 +1906,19 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                     </span>
                   </label>
                 )}
+                {authMode === "signup" && (
+                  <p className="text-[12px] text-faint leading-snug">
+                    {L.signupLegal}{" "}
+                    <Link href="/terms" className="text-accentText">
+                      {L.legalTerms}
+                    </Link>{" "}
+                    {L.signupLegalAnd}{" "}
+                    <Link href="/datenschutz" className="text-accentText">
+                      {L.signupLegalPrivacy}
+                    </Link>{" "}
+                    {L.signupLegalEnd}
+                  </p>
+                )}
                 <button
                   type="submit"
                   disabled={authLoading}
@@ -1880,7 +1931,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                     : L.logIn}
                 </button>
                 {authError && (
-                  <p className="text-[12px] text-accent text-center">
+                  <p className="text-[12px] text-accentText text-center">
                     {authError}
                   </p>
                 )}
@@ -1960,7 +2011,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                 onClick={() =>
                   setAuthMode(authMode === "signup" ? "login" : "signup")
                 }
-                className="text-[13px] text-accent mt-4"
+                className="text-[13px] text-accentText mt-4"
               >
                 {authMode === "signup" ? L.haveAccount : L.newHere}
               </button>
@@ -2088,6 +2139,9 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
         </Link>
         <Link href="/datenschutz" className="text-[12px] text-dim">
           {L.legalPrivacy}
+        </Link>
+        <Link href="/terms" className="text-[12px] text-dim">
+          {L.legalTerms}
         </Link>
       </div>
     </div>

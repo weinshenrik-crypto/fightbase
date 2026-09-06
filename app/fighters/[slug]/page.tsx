@@ -95,7 +95,7 @@ export default async function FighterPage(
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Link href="/" className="text-[13px] text-accent">
+      <Link href="/" className="text-[13px] text-accentText">
         ← Back to Fightbase
       </Link>
 
@@ -110,7 +110,7 @@ export default async function FighterPage(
             {name}
           </h1>
           {fighter.nickname && (
-            <p className="text-[13px] text-accent">
+            <p className="text-[13px] text-accentText">
               &quot;{fighter.nickname}&quot;
             </p>
           )}
@@ -184,7 +184,7 @@ export default async function FighterPage(
         })}
       </div>
 
-      <Link href="/" className="text-[13px] text-accent">
+      <Link href="/" className="text-[13px] text-accentText">
         See all upcoming combat sports events →
       </Link>
     </div>

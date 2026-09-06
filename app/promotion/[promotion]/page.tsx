@@ -85,7 +85,7 @@ export default async function PromotionPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Link href="/" className="text-[13px] text-accent">
+      <Link href="/" className="text-[13px] text-accentText">
         ← Back to Fightbase
       </Link>
 
@@ -106,7 +106,7 @@ export default async function PromotionPage({
           href={officialUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[13px] text-accent inline-block mb-8"
+          className="text-[13px] text-accentText inline-block mb-8"
         >
           {promotion} official site ↗
         </a>
@@ -149,7 +149,7 @@ export default async function PromotionPage({
         })}
       </div>
 
-      <Link href="/" className="text-[13px] text-accent block my-8">
+      <Link href="/" className="text-[13px] text-accentText block my-8">
         See all combat sports events →
       </Link>
 

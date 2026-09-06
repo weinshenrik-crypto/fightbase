@@ -82,7 +82,7 @@ export default async function SportPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Link href="/" className="text-[13px] text-accent">
+      <Link href="/" className="text-[13px] text-accentText">
         ← Back to Fightbase
       </Link>
 
@@ -136,7 +136,7 @@ export default async function SportPage({
         })}
       </div>
 
-      <Link href="/" className="text-[13px] text-accent block mt-8 mb-6">
+      <Link href="/" className="text-[13px] text-accentText block mt-8 mb-6">
         See all combat sports events →
       </Link>
 

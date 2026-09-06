@@ -50,7 +50,7 @@ export default function CookieBanner() {
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-panel border-t border-border px-5 py-4 md:flex md:items-center md:justify-between md:gap-6">
       <p className="text-[12px] text-muted leading-relaxed mb-3 md:mb-0">
         {t.body}{" "}
-        <Link href="/datenschutz" className="text-accent">
+        <Link href="/datenschutz" className="text-accentText">
           {t.link}
         </Link>
         .

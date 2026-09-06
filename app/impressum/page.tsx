@@ -7,7 +7,7 @@ export const metadata = {
 export default function Impressum() {
   return (
     <div className="max-w-[480px] md:max-w-2xl mx-auto min-h-screen px-5 py-10 font-body text-text">
-      <Link href="/" className="text-[13px] text-accent">
+      <Link href="/" className="text-[13px] text-accentText">
         ← Back to Fightbase
       </Link>
       <h1 className="font-display font-bold text-[26px] mt-4 mb-6">
@@ -15,7 +15,7 @@ export default function Impressum() {
       </h1>
 
       <h2 className="font-semibold text-[15px] mb-1">
-        Information according to § 5 TMG (German Telemedia Act)
+        Information according to § 5 DDG (German Digital Services Act)
       </h2>
       <p className="text-[14px] text-muted leading-relaxed mb-5">
         Henrik Weins
