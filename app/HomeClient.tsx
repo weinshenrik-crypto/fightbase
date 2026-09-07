@@ -17,6 +17,8 @@ import {
   promotionsWithPage,
   allFighterNames,
   upcomingFightsFor,
+  sortForCalendar,
+  venueTime,
   type FightEvent,
 } from "@/lib/events";
 import FighterIllustration from "@/components/FighterIllustration";
@@ -312,6 +314,9 @@ function EventCard({
   const { weekday, day, month } = formatDate(e.date);
   const dLeft = daysUntil(e.date);
   const links = watchLinks(e.broadcaster);
+  const startTime = e.startsAt
+    ? venueTime(e.startsAt, e.timezone)
+    : null;
 
   return (
     <div className="flex gap-3.5">
@@ -321,6 +326,11 @@ function EventCard({
           {day}
         </div>
         <div className="text-[11px] text-dim">{month}</div>
+        {startTime && (
+          <div className="text-[10px] text-faint mt-0.5 tabular-nums">
+            {startTime}
+          </div>
+        )}
       </div>
       <div
         onClick={onToggle}
@@ -1115,7 +1125,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
 
   const filtered = useMemo(() => {
     const q = eventSearch.trim().toLowerCase();
-    return events.filter((e) => {
+    const matching = events.filter((e) => {
       if (filter.length > 0 && !filter.includes(e.sport)) return false;
       if (!q) return true;
       const haystack = [
@@ -1128,7 +1138,8 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
         .join(" ")
         .toLowerCase();
       return haystack.includes(q);
-    }).sort((a, b) => (a.date > b.date ? 1 : -1));
+    });
+    return sortForCalendar(matching);
   }, [filter, eventSearch]);
 
   const favoriteFighters = useMemo(

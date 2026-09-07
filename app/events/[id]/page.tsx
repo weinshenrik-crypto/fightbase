@@ -11,6 +11,7 @@ import {
   venueLocality,
 } from "@/lib/events";
 import { getEvents } from "@/lib/eventsDb";
+import EventTime from "@/components/EventTime";
 import FighterIllustration from "@/components/FighterIllustration";
 
 // Fighter photos can be added/changed any time, so revalidate frequently
@@ -119,6 +120,9 @@ export default async function EventPage(
         <span>
           {weekday} {day} {month}
         </span>
+        {event.startsAt && (
+          <EventTime startsAt={event.startsAt} timezone={event.timezone} />
+        )}
         <span>
           {dLeft === 0 ? "today" : dLeft > 0 ? `in ${dLeft} days` : "past"}
         </span>

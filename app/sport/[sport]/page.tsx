@@ -7,6 +7,7 @@ import {
   sportSlug,
   sportBySlug,
   formatDate,
+  sortForCalendar,
   daysUntil,
 } from "@/lib/events";
 import { getEvents } from "@/lib/eventsDb";
@@ -50,9 +51,9 @@ export default async function SportPage({
   const sport = sportBySlug(slug);
   if (!sport) notFound();
 
-  const events = (await getEvents())
-    .filter((e) => e.sport === sport)
-    .sort((a, b) => (a.date > b.date ? 1 : -1));
+  const events = sortForCalendar(
+    (await getEvents()).filter((e) => e.sport === sport)
+  );
   const description = SPORT_DESCRIPTIONS[sport];
   const guide = SPORT_GUIDES[sport];
 

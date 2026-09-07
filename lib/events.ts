@@ -14,6 +14,11 @@ export type FightEvent = {
   venue: string;
   broadcaster: string;
   note: string;
+  // Absoluter Beginn der Hauptkarte als ISO-String, plus die IANA-Zone des
+  // Austragungsorts. Beide fehlen, solange der Veranstalter keine Zeit
+  // angekündigt hat — geraten wird hier nichts.
+  startsAt?: string;
+  timezone?: string;
   // Undercard bouts announced so far — only added once officially confirmed
   // by the promotion, never guessed. Most cards this far out aren't full yet.
   undercard?: string[];
@@ -33,6 +38,49 @@ export const SPORTS = [
   "Taekwondo",
 ];
 
+/**
+ * Startzeit am Austragungsort, z.B. "19:00 JST".
+ *
+ * Ohne timezone wird die Zone des Betrachters benutzt — das ist nur dann
+ * richtig, wenn beim Eintragen keine Ortszeit bekannt war, und deshalb der
+ * seltene Fall.
+ */
+export function venueTime(startsAt: string, timezone?: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZoneName: "short",
+    ...(timezone ? { timeZone: timezone } : {}),
+  }).format(new Date(startsAt));
+}
+
+/** Startzeit in der Zone des Betrachters, z.B. "11:00". */
+export function localTime(startsAt: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(startsAt));
+}
+
+/**
+ * Ob sich Ortszeit und Betrachterzeit überhaupt unterscheiden. Wenn nicht,
+ * wäre ein zweiter Zeitstempel nur Rauschen.
+ */
+export function timeDiffers(startsAt: string, timezone?: string) {
+  if (!timezone) return false;
+  const at = (tz?: string) =>
+    new Intl.DateTimeFormat("en-GB", {
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      ...(tz ? { timeZone: tz } : {}),
+    }).format(new Date(startsAt));
+  return at(timezone) !== at();
+}
+
 export function formatDate(iso: string) {
   const d = new Date(iso + "T00:00:00");
   const weekday = d.toLocaleDateString("en-GB", { weekday: "short" });
@@ -46,6 +94,25 @@ export function daysUntil(iso: string) {
   now.setHours(0, 0, 0, 0);
   const target = new Date(iso + "T00:00:00");
   return Math.round((target.getTime() - now.getTime()) / 86400000);
+}
+
+/**
+ * Kalender-Reihenfolge: kommende Events zuerst (das nächste oben), vergangene
+ * darunter, das zuletzt gelaufene zuerst.
+ *
+ * Reines Sortieren nach Datum stellt sonst ein abgeschlossenes Event an den
+ * Anfang der Startseite — beim ersten Blick sieht ein Besucher dann eine Karte,
+ * die schon gelaufen ist. Ausblenden wäre die Alternative, aber vergangene
+ * Events behalten ihren Wert: ihre Detailseiten sind indexiert, und wer nach
+ * einem Ergebnis sucht, landet genau dort.
+ */
+export function sortForCalendar<T extends { date: string }>(events: T[]): T[] {
+  const upcoming: T[] = [];
+  const past: T[] = [];
+  events.forEach((e) => (daysUntil(e.date) >= 0 ? upcoming : past).push(e));
+  upcoming.sort((a, b) => (a.date > b.date ? 1 : -1));
+  past.sort((a, b) => (a.date > b.date ? -1 : 1));
+  return [...upcoming, ...past];
 }
 
 // Deterministic hue per fighter name — original illustration, not a photo.

@@ -18,6 +18,8 @@ type EventRow = {
   broadcaster: string;
   note: string;
   undercard: string[] | null;
+  starts_at: string | null;
+  timezone: string | null;
 };
 
 // Zurück in die FightEvent-Form, damit der gesamte bestehende Code
@@ -33,6 +35,8 @@ function toFightEvent(row: EventRow): FightEvent {
     ...(row.fighter_a && row.fighter_b
       ? { fighters: [row.fighter_a, row.fighter_b] as [string, string] }
       : {}),
+    ...(row.starts_at ? { startsAt: row.starts_at } : {}),
+    ...(row.timezone ? { timezone: row.timezone } : {}),
     venue: row.venue,
     broadcaster: row.broadcaster,
     note: row.note,

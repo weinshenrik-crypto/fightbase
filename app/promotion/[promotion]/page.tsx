@@ -7,6 +7,7 @@ import {
   promotionBySlug,
   promotionsWithPage,
   formatDate,
+  sortForCalendar,
   daysUntil,
 } from "@/lib/events";
 import { getEvents } from "@/lib/eventsDb";
@@ -50,8 +51,8 @@ export default async function PromotionPage({
   const promotion = promotionBySlug(allEvents, slug);
   if (!promotion || !promotionsWithPage(allEvents).includes(promotion)) notFound();
 
-  const events = allEvents.filter((e) => e.promotion === promotion).sort(
-    (a, b) => (a.date > b.date ? 1 : -1)
+  const events = sortForCalendar(
+    allEvents.filter((e) => e.promotion === promotion)
   );
   const officialUrl = PROMOTION_LINKS[promotion];
   const guide = PROMOTION_GUIDES[promotion];
