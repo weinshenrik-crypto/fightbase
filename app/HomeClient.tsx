@@ -480,7 +480,19 @@ const FAQ = [
   },
 ];
 
-const TABS = ["events", "favorites", "fighters", "forum", "account"] as const;
+type ResultRow = {
+  id: string;
+  event_slug: string;
+  position: number;
+  bout: string;
+  winner: string | null;
+  method: string | null;
+  round: number | null;
+  end_time: string | null;
+  note: string;
+};
+
+const TABS = ["events", "results", "favorites", "fighters", "forum", "account"] as const;
 type TabId = (typeof TABS)[number];
 
 type Lang = "en" | "de";
@@ -586,6 +598,35 @@ const STRINGS = {
       "We only store technically necessary data in your browser (login status, favorites) — no advertising or tracking cookies. More in our",
     cookieLink: "Privacy Policy",
     legalTerms: "Terms of Use",
+    tabResults: "Results",
+    resultsIntro:
+      "What actually happened. Cards are listed newest first; each bout shows how it ended.",
+    noResultsYet: "No results recorded for this event yet.",
+    noPastEvents: "No finished events yet — check back after the next card.",
+    mainEvent: "Main event",
+    resultDraw: "Draw",
+    resultNC: "No contest",
+    reportPost: "Report",
+    reportTitle: "Report this post",
+    reportWhy: "What is wrong with it?",
+    reportSpam: "Spam or advertising",
+    reportHarassment: "Insults or harassment",
+    reportIllegal: "Illegal content or pirated stream",
+    reportPersonalData: "Someone else's personal data",
+    reportOther: "Something else",
+    reportDetail: "Anything else we should know? (optional)",
+    reportSend: "Send report",
+    reportCancel: "Cancel",
+    reportThanks: "Thanks — we will look at it.",
+    reportAlready: "You have already reported this post.",
+    reportNeedLogin: "Sign in to report a post.",
+    deleteAccount: "Delete account",
+    deleteAccountWarn:
+      "This removes your account, your favorites and everything you posted in the forum. It cannot be undone.",
+    deleteAccountConfirm: "Yes, delete permanently",
+    deleteAccountCancel: "Keep my account",
+    deleteAccountFailed:
+      "That did not work. Please email us and we will do it manually.",
     signupLegal: "By creating an account you agree to our",
     signupLegalAnd: "and our",
     signupLegalPrivacy: "Privacy Policy",
@@ -695,6 +736,35 @@ const STRINGS = {
       "Wir speichern nur technisch notwendige Daten in deinem Browser (Login-Status, Favoriten) — keine Werbe- oder Tracking-Cookies. Mehr dazu in unserer",
     cookieLink: "Datenschutzerklärung",
     legalTerms: "Nutzungsbedingungen",
+    tabResults: "Ergebnisse",
+    resultsIntro:
+      "Was tatsächlich passiert ist. Neueste Karte zuerst; bei jedem Kampf steht, wie er ausgegangen ist.",
+    noResultsYet: "Für dieses Event sind noch keine Ergebnisse eingetragen.",
+    noPastEvents: "Noch keine abgeschlossenen Events — schau nach der nächsten Karte wieder rein.",
+    mainEvent: "Hauptkampf",
+    resultDraw: "Unentschieden",
+    resultNC: "No Contest",
+    reportPost: "Melden",
+    reportTitle: "Diesen Beitrag melden",
+    reportWhy: "Was stimmt damit nicht?",
+    reportSpam: "Spam oder Werbung",
+    reportHarassment: "Beleidigung oder Belästigung",
+    reportIllegal: "Rechtswidriger Inhalt oder illegaler Stream",
+    reportPersonalData: "Personenbezogene Daten anderer",
+    reportOther: "Etwas anderes",
+    reportDetail: "Noch etwas, das wir wissen sollten? (optional)",
+    reportSend: "Meldung senden",
+    reportCancel: "Abbrechen",
+    reportThanks: "Danke — wir sehen es uns an.",
+    reportAlready: "Du hast diesen Beitrag bereits gemeldet.",
+    reportNeedLogin: "Zum Melden bitte anmelden.",
+    deleteAccount: "Konto löschen",
+    deleteAccountWarn:
+      "Damit verschwinden dein Konto, deine Favoriten und alles, was du im Forum geschrieben hast. Das lässt sich nicht rückgängig machen.",
+    deleteAccountConfirm: "Ja, endgültig löschen",
+    deleteAccountCancel: "Konto behalten",
+    deleteAccountFailed:
+      "Das hat nicht geklappt. Schreib uns bitte eine E-Mail, dann erledigen wir es von Hand.",
     signupLegal: "Mit der Registrierung stimmst du unseren",
     signupLegalAnd: "und unserer",
     signupLegalPrivacy: "Datenschutzerklärung",
@@ -1123,6 +1193,90 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
     []
   );
 
+  // --- Ergebnisse vergangener Events ---------------------------------------
+  // Werden erst geladen, wenn der Tab zum ersten Mal geoeffnet wird. Die
+  // Startseite soll dafuer keine zusaetzliche Abfrage bezahlen.
+  const [results, setResults] = useState<Record<string, ResultRow[]>>({});
+  const [resultsLoaded, setResultsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (tab !== "results" || resultsLoaded) return;
+    setResultsLoaded(true);
+    supabase
+      .from("event_results")
+      .select("*")
+      .order("position", { ascending: true })
+      .then(({ data }) => {
+        const byEvent: Record<string, ResultRow[]> = {};
+        (data ?? []).forEach((r: ResultRow) => {
+          (byEvent[r.event_slug] ||= []).push(r);
+        });
+        setResults(byEvent);
+      });
+  }, [tab, resultsLoaded]);
+
+  // Abgeschlossene Events, das zuletzt gelaufene zuerst.
+  const pastEvents = useMemo(
+    () =>
+      events
+        .filter((e) => daysUntil(e.date) < 0)
+        .sort((a, b) => (a.date > b.date ? -1 : 1)),
+    [events]
+  );
+
+  // --- Beitrag melden --------------------------------------------------------
+  const [reporting, setReporting] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState("spam");
+  const [reportDetail, setReportDetail] = useState("");
+  const [reportDone, setReportDone] = useState<string | null>(null);
+
+  async function submitReport(postId: string) {
+    if (!session) return;
+    const { error } = await supabase.from("reports").insert({
+      reporter_id: session.user.id,
+      target_type: "post",
+      target_id: postId,
+      reason: reportReason,
+      detail: reportDetail.trim(),
+    });
+    // 23505 ist die Unique-Verletzung: derselbe Beitrag wurde von dieser Person
+    // schon gemeldet. Fuer den Meldenden ist das kein Fehler — die Meldung
+    // liegt vor.
+    setReportDone(error && error.code !== "23505" ? "failed" : "ok");
+    setReporting(null);
+    setReportDetail("");
+    setReportReason("spam");
+  }
+
+  // --- Konto loeschen --------------------------------------------------------
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDeleteAccount() {
+    setDeleting(true);
+    setDeleteError(false);
+    try {
+      // Das Zugangstoken der laufenden Sitzung mitschicken. Die Route loescht
+      // ausschliesslich das Konto, zu dem dieses Token gehoert.
+      const {
+        data: { session: live },
+      } = await supabase.auth.getSession();
+      const res = await fetch("/api/account/delete", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${live?.access_token ?? ""}` },
+      });
+      if (!res.ok) throw new Error("delete failed");
+      await supabase.auth.signOut();
+      setConfirmingDelete(false);
+      setTab("events");
+    } catch {
+      setDeleteError(true);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   const filtered = useMemo(() => {
     const q = eventSearch.trim().toLowerCase();
     const matching = events.filter((e) => {
@@ -1231,6 +1385,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
             {
               {
                 events: L.tabEvents,
+                results: L.tabResults,
                 favorites: L.tabFavorites,
                 fighters: L.tabFighters,
                 forum: L.tabForum,
@@ -1309,6 +1464,83 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
             </p>
           </footer>
         </>
+      )}
+
+      {tab === "results" && (
+        <div className="px-5 pt-4">
+          <p className="text-[13px] text-dim mb-5 leading-relaxed">
+            {L.resultsIntro}
+          </p>
+
+          {pastEvents.length === 0 && (
+            <p className="text-[13px] text-dim">{L.noPastEvents}</p>
+          )}
+
+          <div className="flex flex-col gap-4">
+            {pastEvents.map((e) => {
+              const { day, month } = formatDate(e.date);
+              const bouts = results[e.id] ?? [];
+              return (
+                <div
+                  key={e.id}
+                  className="border border-border bg-panel rounded-[10px] p-4"
+                >
+                  <div className="flex justify-between items-baseline mb-1">
+                    <Link
+                      href={`/events/${e.id}`}
+                      className="text-[14px] font-semibold text-text"
+                    >
+                      {e.title}
+                    </Link>
+                    <span className="text-[11px] text-dim shrink-0 ml-3 tabular-nums">
+                      {day} {month}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-faint mb-3">
+                    {e.promotion} · {e.venue}
+                  </p>
+
+                  {bouts.length === 0 ? (
+                    <p className="text-[12px] text-dim">{L.noResultsYet}</p>
+                  ) : (
+                    <ol className="flex flex-col gap-2.5">
+                      {bouts.map((b) => (
+                        <li
+                          key={b.id}
+                          className="border-l-2 border-border pl-3"
+                        >
+                          {b.position === 1 && (
+                            <p className="text-[10px] uppercase tracking-wide text-accentText mb-0.5">
+                              {L.mainEvent}
+                            </p>
+                          )}
+                          <p className="text-[13px] text-text">{b.bout}</p>
+                          <p className="text-[12px] text-muted">
+                            {b.winner ? (
+                              <>
+                                <span className="font-semibold">{b.winner}</span>
+                                {b.method ? ` — ${b.method}` : ""}
+                              </>
+                            ) : (
+                              b.method ?? L.resultDraw
+                            )}
+                            {b.round ? `, R${b.round}` : ""}
+                            {b.end_time ? ` ${b.end_time}` : ""}
+                          </p>
+                          {b.note && (
+                            <p className="text-[11px] text-dim mt-0.5">
+                              {b.note}
+                            </p>
+                          )}
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {tab === "favorites" && (
@@ -1685,16 +1917,84 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                         <p className="text-[12px] text-accentText font-semibold">
                           {p.profiles?.username ?? L.anonymous}
                         </p>
-                        {session &&
-                          (isAdmin || session.user.id === p.user_id) && (
+                        <div className="flex gap-3 shrink-0">
+                          {session && session.user.id !== p.user_id && (
                             <button
-                              onClick={() => handleDeletePost(p.id)}
+                              onClick={() => {
+                                setReportDone(null);
+                                setReporting(p.id);
+                              }}
                               className="text-[11px] text-dim hover:text-accentText"
                             >
-                              {L.delete}
+                              {L.reportPost}
                             </button>
                           )}
+                          {session &&
+                            (isAdmin || session.user.id === p.user_id) && (
+                              <button
+                                onClick={() => handleDeletePost(p.id)}
+                                className="text-[11px] text-dim hover:text-accentText"
+                              >
+                                {L.delete}
+                              </button>
+                            )}
+                        </div>
                       </div>
+
+                      {reporting === p.id && (
+                        <div className="border border-border rounded-md p-3 mb-2 bg-black/20">
+                          <p className="text-[12px] font-semibold text-text mb-2">
+                            {L.reportTitle}
+                          </p>
+                          <p className="text-[11px] text-dim mb-1.5">
+                            {L.reportWhy}
+                          </p>
+                          <select
+                            aria-label={L.reportWhy}
+                            value={reportReason}
+                            onChange={(ev) => setReportReason(ev.target.value)}
+                            className="w-full bg-panel border border-border rounded-md px-2.5 py-1.5 text-[12px] text-text mb-2"
+                          >
+                            <option value="spam">{L.reportSpam}</option>
+                            <option value="harassment">
+                              {L.reportHarassment}
+                            </option>
+                            <option value="illegal">{L.reportIllegal}</option>
+                            <option value="personal_data">
+                              {L.reportPersonalData}
+                            </option>
+                            <option value="other">{L.reportOther}</option>
+                          </select>
+                          <textarea
+                            aria-label={L.reportDetail}
+                            placeholder={L.reportDetail}
+                            rows={2}
+                            value={reportDetail}
+                            onChange={(ev) => setReportDetail(ev.target.value)}
+                            className="w-full bg-panel border border-border rounded-md px-2.5 py-1.5 text-[12px] text-text placeholder:text-dim mb-2 resize-none"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => submitReport(p.id)}
+                              className="text-[12px] font-semibold bg-accent text-white rounded-md px-3 py-1.5"
+                            >
+                              {L.reportSend}
+                            </button>
+                            <button
+                              onClick={() => setReporting(null)}
+                              className="text-[12px] text-dim px-2"
+                            >
+                              {L.reportCancel}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {reportDone && reporting !== p.id && (
+                        <p className="text-[11px] text-faint mb-1.5">
+                          {reportDone === "ok" ? L.reportThanks : L.reportAlready}
+                        </p>
+                      )}
                       <p className="text-[13px] text-muted whitespace-pre-wrap">
                         {p.content}
                       </p>
@@ -1876,6 +2176,50 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
               >
                 {L.logOut}
               </button>
+
+              {/* Kontoloeschung in der App ist bei Google Play und im App Store
+                  Pflicht, sobald man ein Konto anlegen kann. Bewusst unten und
+                  unauffaellig, aber vorhanden — und mit Rueckfrage, weil es
+                  nicht rueckgaengig zu machen ist. */}
+              <div className="border-t border-border pt-4 mt-2">
+                {confirmingDelete ? (
+                  <div className="flex flex-col gap-2.5">
+                    <p className="text-[12px] text-muted leading-snug">
+                      {L.deleteAccountWarn}
+                    </p>
+                    {deleteError && (
+                      <p className="text-[12px] text-accentText">
+                        {L.deleteAccountFailed}
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleDeleteAccount}
+                        disabled={deleting}
+                        className="text-[13px] font-semibold rounded-md py-2 px-3 bg-accent text-white disabled:opacity-50"
+                      >
+                        {L.deleteAccountConfirm}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setConfirmingDelete(false);
+                          setDeleteError(false);
+                        }}
+                        className="text-[13px] rounded-md py-2 px-3 border border-border text-text"
+                      >
+                        {L.deleteAccountCancel}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmingDelete(true)}
+                    className="text-[13px] text-dim hover:text-accentText"
+                  >
+                    {L.deleteAccount}
+                  </button>
+                )}
+              </div>
             </>
           ) : (
             <>
