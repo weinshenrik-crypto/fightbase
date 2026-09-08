@@ -299,6 +299,7 @@ function EventCard({
   onToggle,
   onSelectFighter,
   fightersData,
+  results,
   L,
 }: {
   e: FightEvent;
@@ -309,6 +310,8 @@ function EventCard({
   onToggle: () => void;
   onSelectFighter: (name: string) => void;
   fightersData: Record<string, FighterRow>;
+  /** Kampfergebnisse, sofern das Event gelaufen und ausgewertet ist. */
+  results?: ResultRow[];
   L: Strings;
 }) {
   const { weekday, day, month } = formatDate(e.date);
@@ -400,6 +403,32 @@ function EventCard({
               <p className="text-[12px] text-dim leading-relaxed mb-2">
                 {e.note}
               </p>
+            )}
+            {results && results.length > 0 && (
+              <ol className="flex flex-col gap-2 mb-2.5">
+                {results.map((b) => (
+                  <li key={b.id} className="border-l-2 border-border pl-2.5">
+                    {b.position === 1 && (
+                      <p className="text-[10px] uppercase tracking-wide text-accentText">
+                        {L.mainEvent}
+                      </p>
+                    )}
+                    <p className="text-[12px] text-text">{b.bout}</p>
+                    <p className="text-[12px] text-muted">
+                      {b.winner ? (
+                        <>
+                          <span className="font-semibold">{b.winner}</span>
+                          {b.method ? ` — ${b.method}` : ""}
+                        </>
+                      ) : (
+                        b.method ?? L.resultDraw
+                      )}
+                      {b.round ? `, R${b.round}` : ""}
+                      {b.end_time ? ` ${b.end_time}` : ""}
+                    </p>
+                  </li>
+                ))}
+              </ol>
             )}
             {e.undercard && e.undercard.length > 0 && (
               <div className="mb-2">
@@ -1467,8 +1496,8 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
       )}
 
       {tab === "results" && (
-        <div className="px-5 pt-4">
-          <p className="text-[13px] text-dim mb-5 leading-relaxed">
+        <main className="px-5 pt-4 flex flex-col gap-5">
+          <p className="text-[13px] text-dim leading-relaxed">
             {L.resultsIntro}
           </p>
 
@@ -1476,71 +1505,27 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
             <p className="text-[13px] text-dim">{L.noPastEvents}</p>
           )}
 
-          <div className="flex flex-col gap-4">
-            {pastEvents.map((e) => {
-              const { day, month } = formatDate(e.date);
-              const bouts = results[e.id] ?? [];
-              return (
-                <div
-                  key={e.id}
-                  className="border border-border bg-panel rounded-[10px] p-4"
-                >
-                  <div className="flex justify-between items-baseline mb-1">
-                    <Link
-                      href={`/events/${e.id}`}
-                      className="text-[14px] font-semibold text-text"
-                    >
-                      {e.title}
-                    </Link>
-                    <span className="text-[11px] text-dim shrink-0 ml-3 tabular-nums">
-                      {day} {month}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-faint mb-3">
-                    {e.promotion} · {e.venue}
-                  </p>
-
-                  {bouts.length === 0 ? (
-                    <p className="text-[12px] text-dim">{L.noResultsYet}</p>
-                  ) : (
-                    <ol className="flex flex-col gap-2.5">
-                      {bouts.map((b) => (
-                        <li
-                          key={b.id}
-                          className="border-l-2 border-border pl-3"
-                        >
-                          {b.position === 1 && (
-                            <p className="text-[10px] uppercase tracking-wide text-accentText mb-0.5">
-                              {L.mainEvent}
-                            </p>
-                          )}
-                          <p className="text-[13px] text-text">{b.bout}</p>
-                          <p className="text-[12px] text-muted">
-                            {b.winner ? (
-                              <>
-                                <span className="font-semibold">{b.winner}</span>
-                                {b.method ? ` — ${b.method}` : ""}
-                              </>
-                            ) : (
-                              b.method ?? L.resultDraw
-                            )}
-                            {b.round ? `, R${b.round}` : ""}
-                            {b.end_time ? ` ${b.end_time}` : ""}
-                          </p>
-                          {b.note && (
-                            <p className="text-[11px] text-dim mt-0.5">
-                              {b.note}
-                            </p>
-                          )}
-                        </li>
-                      ))}
-                    </ol>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+          {/* Bewusst dieselbe EventCard wie im Events-Tab: gleiche Optik,
+              gleiches Aufklappen, gleiche Favoriten. Der einzige Unterschied
+              ist, dass aufgeklappt die Kampfergebnisse stehen. */}
+          {pastEvents.map((e) => (
+            <EventCard
+              key={e.id}
+              e={e}
+              isFav={isFavorited("promotion", e.promotion)}
+              isEventFav={isFavorited("event", e.id)}
+              onToggleEventFav={
+                session ? () => toggleFavorite("event", e.id) : undefined
+              }
+              isOpen={expandedId === e.id}
+              onToggle={() => setExpandedId(expandedId === e.id ? null : e.id)}
+              onSelectFighter={setSelectedFighter}
+              fightersData={fightersData}
+              results={results[e.id]}
+              L={L}
+            />
+          ))}
+        </main>
       )}
 
       {tab === "favorites" && (
