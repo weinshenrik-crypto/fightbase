@@ -11,7 +11,7 @@ import {
   PROMOTION_LINKS,
   venueLocality,
 } from "@/lib/events";
-import { getEvents, getEventBySlugUncached } from "@/lib/eventsDb";
+import { getEvents, getEventBySlug } from "@/lib/eventsDb";
 import EventTime from "@/components/EventTime";
 import FighterIllustration from "@/components/FighterIllustration";
 
@@ -33,7 +33,7 @@ export async function generateStaticParams() {
 // Seite sich einen Aufruf teilen statt zweimal nachzuschlagen.
 const resolveEvent = cache(async (id: string) => {
   const fromList = (await getEvents()).find((e) => e.id === id);
-  return fromList ?? (await getEventBySlugUncached(id));
+  return fromList ?? (await getEventBySlug(id));
 });
 
 export async function generateMetadata(

@@ -5,6 +5,12 @@ import type { FightEvent } from "./events";
 // Kampfkalender reichlich frisch und hält die Zahl der Requests klein.
 export const EVENTS_REVALIDATE = 3600;
 
+// Die Einzelabfrage nach einem Slug wird kürzer gecacht als die Liste: Sie
+// existiert nur, um ein gerade eingetragenes Event sofort erreichbar zu machen,
+// und soll ein "gibt es nicht" nicht lange festhalten. 60 Sekunden entspricht
+// dem `revalidate` der Detailseite selbst.
+export const EVENT_LOOKUP_REVALIDATE = 60;
+
 type EventRow = {
   slug: string;
   date: string;
@@ -91,7 +97,7 @@ export async function getEvents(
 }
 
 /**
- * Ein einzelnes Event per Slug, am ISR-Cache vorbei.
+ * Ein einzelnes Event per Slug, direkt aus der Datenbank.
  *
  * Nur für den Fall gedacht, dass ein Slug in der gecachten Liste fehlt: Ein
  * gerade eingetragenes Event beantwortet `/events/<slug>` sonst bis zur
@@ -101,19 +107,30 @@ export async function getEvents(
  *
  * Holt bewusst nur die eine Zeile statt der ganzen Liste: Wer zufällige Slugs
  * durchprobiert, löst damit keine teuren Vollabfragen aus, sondern nur je
- * einen Treffer ins Leere über den Primärschlüssel.
+ * einen Treffer ins Leere über den eindeutigen Index auf `slug`.
+ *
+ * **Hier darf kein `cache: "no-store"` stehen.** Die Detailseite ist über
+ * `export const revalidate = 60` statisch. Ein ungecachter Fetch macht sie beim
+ * On-demand-Rendern zur Laufzeit dynamisch, und Next bricht das mit
+ * "Page changed from static to dynamic at runtime" ab — jeder unbekannte Slug
+ * antwortet dann mit 500 statt mit 404. Der kurze ISR-Cache erfüllt denselben
+ * Zweck, ohne die Seite aus der statischen Generierung zu kippen.
+ *
+ * Der Tag `events` hängt die Abfrage an `/api/revalidate` mit an, damit eine
+ * manuelle Revalidierung auch diese Einträge verwirft.
  *
  * Wirft nicht. Der Aufrufer ist bereits im Fehlerfall und soll dann 404
  * ausliefern statt die Seite mit einem Serverfehler abzubrechen.
  */
-export async function getEventBySlugUncached(
-  slug: string
-): Promise<FightEvent | null> {
+export async function getEventBySlug(slug: string): Promise<FightEvent | null> {
   try {
     const { url, headers } = restConfig();
     const res = await fetch(
       `${url}/rest/v1/events?select=*&slug=eq.${encodeURIComponent(slug)}&limit=1`,
-      { headers, cache: "no-store" }
+      {
+        headers,
+        next: { revalidate: EVENT_LOOKUP_REVALIDATE, tags: ["events"] },
+      }
     );
     if (!res.ok) return null;
     const rows = (await res.json()) as EventRow[];
