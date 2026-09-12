@@ -1,3 +1,4 @@
+import { cache } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -10,7 +11,7 @@ import {
   PROMOTION_LINKS,
   venueLocality,
 } from "@/lib/events";
-import { getEvents } from "@/lib/eventsDb";
+import { getEvents, getEventBySlugUncached } from "@/lib/eventsDb";
 import EventTime from "@/components/EventTime";
 import FighterIllustration from "@/components/FighterIllustration";
 
@@ -24,13 +25,24 @@ export async function generateStaticParams() {
   return events.map((e) => ({ id: e.id }));
 }
 
+// Ein frisch eingetragenes Event steckt weder in generateStaticParams noch in
+// der gecachten Liste, die getEvents() liefert — ohne den zweiten Versuch
+// antwortet seine Seite bis zur naechsten Revalidierung mit 404. Die
+// Einzelabfrage laeuft nur, wenn der Slug in der Liste fehlt, kostet im
+// Normalfall also nichts. cache() sorgt dafuer, dass generateMetadata und die
+// Seite sich einen Aufruf teilen statt zweimal nachzuschlagen.
+const resolveEvent = cache(async (id: string) => {
+  const fromList = (await getEvents()).find((e) => e.id === id);
+  return fromList ?? (await getEventBySlugUncached(id));
+});
+
 export async function generateMetadata(
   props: {
     params: Promise<{ id: string }>;
   }
 ): Promise<Metadata> {
   const params = await props.params;
-  const event = (await getEvents()).find((e) => e.id === params.id);
+  const event = await resolveEvent(params.id);
   if (!event) return {};
   const title = `${event.main} — ${event.title} | Fightbase`;
   const description = `${event.title} (${event.promotion}) on ${event.date} at ${event.venue}. ${event.note}`;
@@ -48,7 +60,7 @@ export default async function EventPage(
   }
 ) {
   const params = await props.params;
-  const event = (await getEvents()).find((e) => e.id === params.id);
+  const event = await resolveEvent(params.id);
   if (!event) notFound();
 
   const photos: Record<

@@ -46,6 +46,17 @@ function toFightEvent(row: EventRow): FightEvent {
   };
 }
 
+function restConfig() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    throw new Error(
+      "NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY fehlen — Events können nicht geladen werden."
+    );
+  }
+  return { url, headers: { apikey: key, Authorization: `Bearer ${key}` } };
+}
+
 /**
  * Alle Events, nach Datum aufsteigend. Vergangene sind enthalten — das Filtern
  * übernehmen die Aufrufer, genau wie vorher beim hartkodierten Array.
@@ -57,18 +68,12 @@ function toFightEvent(row: EventRow): FightEvent {
 export async function getEvents(
   { fresh = false }: { fresh?: boolean } = {}
 ): Promise<FightEvent[]> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) {
-    throw new Error(
-      "NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY fehlen — Events können nicht geladen werden."
-    );
-  }
+  const { url, headers } = restConfig();
 
   const res = await fetch(
     `${url}/rest/v1/events?select=*&order=date.asc`,
     {
-      headers: { apikey: key, Authorization: `Bearer ${key}` },
+      headers,
       ...(fresh
         ? { cache: "no-store" as const }
         : { next: { revalidate: EVENTS_REVALIDATE, tags: ["events"] } }),
@@ -83,4 +88,37 @@ export async function getEvents(
 
   const rows = (await res.json()) as EventRow[];
   return rows.map(toFightEvent);
+}
+
+/**
+ * Ein einzelnes Event per Slug, am ISR-Cache vorbei.
+ *
+ * Nur für den Fall gedacht, dass ein Slug in der gecachten Liste fehlt: Ein
+ * gerade eingetragenes Event beantwortet `/events/<slug>` sonst bis zur
+ * nächsten Revalidierung mit 404, obwohl die Zeile längst in der Datenbank
+ * steht — der Slug fehlt dann sowohl in `generateStaticParams` als auch in der
+ * gecachten Liste, und die Seite ruft `notFound()` auf.
+ *
+ * Holt bewusst nur die eine Zeile statt der ganzen Liste: Wer zufällige Slugs
+ * durchprobiert, löst damit keine teuren Vollabfragen aus, sondern nur je
+ * einen Treffer ins Leere über den Primärschlüssel.
+ *
+ * Wirft nicht. Der Aufrufer ist bereits im Fehlerfall und soll dann 404
+ * ausliefern statt die Seite mit einem Serverfehler abzubrechen.
+ */
+export async function getEventBySlugUncached(
+  slug: string
+): Promise<FightEvent | null> {
+  try {
+    const { url, headers } = restConfig();
+    const res = await fetch(
+      `${url}/rest/v1/events?select=*&slug=eq.${encodeURIComponent(slug)}&limit=1`,
+      { headers, cache: "no-store" }
+    );
+    if (!res.ok) return null;
+    const rows = (await res.json()) as EventRow[];
+    return rows.length > 0 ? toFightEvent(rows[0]) : null;
+  } catch {
+    return null;
+  }
 }

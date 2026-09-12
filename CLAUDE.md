@@ -78,10 +78,12 @@ curl -X POST https://fightbase.io/api/revalidate -H "Authorization: Bearer $CRON
 `CRON_SECRET` liegt in Vercel als **Sensitive** und lässt sich weder per
 `vercel env pull` noch im Dashboard zurücklesen — ohne eigene Kopie geht der
 Befehl also nicht. Alternative: einmal pushen, der Rebuild erledigt dasselbe.
-Das ist nicht nur Kosmetik — die Detailseite eines frisch eingetragenen Events
-(`/events/<slug>`) antwortet bis zur nächsten Revalidierung mit **404**, weil
-`generateStaticParams` den Slug noch nicht kennt und die Seite dann `notFound()`
-aufruft.
+
+Die Detailseite eines frisch eingetragenen Events (`/events/<slug>`) ist davon
+nicht mehr betroffen: Fehlt der Slug in der gecachten Liste, fragt die Seite die
+eine Zeile direkt nach (`getEventBySlugUncached`), statt `notFound()` zu rufen.
+Sie ist also sofort erreichbar. Die **Listen** — Startseite, Sport- und
+Promotion-Seiten — zeigen das neue Event weiterhin erst nach der Revalidierung.
 
 ### Belegte Quellen
 
