@@ -81,9 +81,49 @@ Befehl also nicht. Alternative: einmal pushen, der Rebuild erledigt dasselbe.
 
 Die Detailseite eines frisch eingetragenen Events (`/events/<slug>`) ist davon
 nicht mehr betroffen: Fehlt der Slug in der gecachten Liste, fragt die Seite die
-eine Zeile direkt nach (`getEventBySlugUncached`), statt `notFound()` zu rufen.
+eine Zeile direkt nach (`getEventBySlug`), statt `notFound()` zu rufen.
 Sie ist also sofort erreichbar. Die **Listen** — Startseite, Sport- und
 Promotion-Seiten — zeigen das neue Event weiterhin erst nach der Revalidierung.
+
+### Automatischer Import
+
+Der Cron-Job `/api/cron/import` (täglich 9:00 UTC, `vercel.json`) trägt Termine
+aus den vier Verbandskalendern unten selbst ein. Eine Quelle je Datei unter
+`lib/eventSources/`, der Abgleich steckt in `lib/eventSources/plan.ts`.
+
+**Vor dem ersten Lauf muss `supabase/migration-event-import.sql` im
+SQL-Editor laufen** — sie legt `source`, `source_key` und `source_url` an. Ohne
+sie antwortet der Job mit `migration_missing`.
+
+Trockenlauf, schreibt nichts:
+
+```bash
+npx tsx scripts/import-dry-run.ts                 # alle Quellen, ausführlich
+npx tsx scripts/import-dry-run.ts ibjjf           # nur eine
+curl -H "Authorization: Bearer $CRON_SECRET" \
+     "https://fightbase.io/api/cron/import?dry=1" # dasselbe über die Route
+```
+
+Drei Regeln, auf die man sich verlassen kann:
+
+- **Handzeilen sind tabu.** Zeilen mit `source IS NULL` fasst der Job nie an.
+  Steht dort schon derselbe Termin (gleicher Tag, gleiche Sportart, gemeinsames
+  unterscheidendes Wort in Name oder Ort), legt er nichts an und meldet es.
+- **Abgeglichen wird über `(source, source_key)`, nicht über den Slug.** Sonst
+  entstünde bei jeder Umbenennung eines Turniers eine zweite Zeile. Der Slug
+  einer bestehenden Zeile bleibt dadurch stabil.
+- **Es werden keine Kämpfe erfunden.** `fighter_a`/`fighter_b`, `starts_at` und
+  `undercard` bleiben leer — die Verbandskalender nennen Monate im Voraus weder
+  Paarungen noch Anfangszeiten.
+
+Was bewusst gefiltert wird, steht als Kommentar in der jeweiligen Quelldatei.
+Kurz: Nachwuchs raus (IBJJF-Kids, WKF Youth League, IJF nur `age=sen`, UWW nur
+Einträge mit Senior-Klasse), und bei IJF/UWW zusätzlich nur die bedeutenden
+Turniertypen, damit der Kalender nicht mit nationalen Opens volläuft.
+
+**Falle bei IJF:** `?age=world_tour` ist *nicht* senior-rein — dort stehen auch
+Cadets, Juniors und die Youth Olympic Games. Richtig ist `?age=sen` plus das
+Wettkampftyp-Icon (`gs`/`gp`/`wc`/`mas`) als Filter für den World Judo Tour.
 
 ### Belegte Quellen
 
