@@ -85,6 +85,20 @@ eine Zeile direkt nach (`getEventBySlug`), statt `notFound()` zu rufen.
 Sie ist also sofort erreichbar. Die **Listen** — Startseite, Sport- und
 Promotion-Seiten — zeigen das neue Event weiterhin erst nach der Revalidierung.
 
+### Pflegemaske
+
+`/admin/events` ist eine Maske fuer dieselbe Tabelle — mit den Regeln dieses
+Projekts an den Feldern, die der Supabase Table Editor nicht kennt: Pflichtfelder,
+dass `fighter_a`/`fighter_b` nur als Paar zaehlen, dass `undercard` nur
+bestaetigte Kaempfe enthaelt, und dass eine geschaetzte Anfangszeit schlechter
+ist als keine. Importierte Zeilen sind gekennzeichnet und warnen beim
+Bearbeiten, dass der naechste Cron-Lauf sie ueberschreibt.
+
+Die Seite prueft **keine** Rechte. Wer schreiben darf, entscheiden die
+RLS-Policies der `events`-Tabelle (`role = 'admin'` im Profil). Ein Nicht-Admin
+sieht das Formular und bekommt beim Speichern eine Fehlermeldung von Postgres.
+Nicht indexiert (`robots: noindex`).
+
 ### Automatischer Import
 
 Der Cron-Job `/api/cron/import` (täglich 9:00 UTC, `vercel.json`) trägt Termine
