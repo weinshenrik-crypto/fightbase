@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useStoredLang, setStoredLang } from "@/lib/clientStore";
 import Image from "next/image";
 import Link from "next/link";
 import type { Session } from "@supabase/supabase-js";
@@ -840,7 +841,7 @@ const EMPTY_FAVORITES: Favorite[] = [];
 
 export default function HomeClient({ events }: { events: FightEvent[] }) {
   const [tab, setTab] = useState<TabId>("events");
-  const [lang, setLang] = useState<Lang>("en");
+  const lang = useStoredLang();
   const [filter, setFilter] = useState<string[]>([]);
   const [fighterSportFilter, setFighterSportFilter] = useState<string[]>([]);
   // Profil und Favoriten haengen an einer Sitzung. Sie werden deshalb
@@ -851,7 +852,6 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
   const [account, setAccount] = useState<AccountState | null>(null);
   const [favoriteStore, setFavoriteStore] = useState<FavoriteStore | null>(null);
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
-  const [loaded, setLoaded] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
   const [regEmailNotif, setRegEmailNotif] = useState(true);
@@ -904,16 +904,6 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
       });
   }, [fightersLoaded]);
 
-  useEffect(() => {
-    try {
-      const storedLang = localStorage.getItem("fightbase:lang");
-      if (storedLang === "de" || storedLang === "en") setLang(storedLang);
-    } catch (e) {
-      // ignore
-    }
-    setLoaded(true);
-  }, []);
-
   // Das <html lang> steht in layout.tsx statisch auf "en". Bleibt es das,
   // liest ein Screenreader die deutschen Texte mit englischer Aussprache vor
   // (WCAG 3.1.1). Die Sprache ist Client-State, also wird das Attribut hier
@@ -923,12 +913,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
   }, [lang]);
 
   function changeLang(next: Lang) {
-    setLang(next);
-    try {
-      localStorage.setItem("fightbase:lang", next);
-    } catch (e) {
-      // ignore
-    }
+    setStoredLang(next);
   }
 
   // Kontodaten gelten nur, solange sie zur angemeldeten Sitzung gehoeren.

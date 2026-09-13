@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
+import { useStoredLang, setStoredLang } from "@/lib/clientStore";
 
 export type Lang = "en" | "de";
 
@@ -18,9 +19,10 @@ const BACK = { en: "← Back to Fightbase", de: "← Zurück zu Fightbase" };
  *
  * Beide Sprachfassungen kommen als fertige Bäume herein und werden hier nur
  * ausgewählt. Serverseitig wird Englisch gerendert; steht "de" im Speicher,
- * schaltet der erste Effekt um. Das kostet ein Frame — der Alternative, vor
- * dem Mount gar nichts zu rendern, wäre ein leerer Bildschirm, und eine
- * synchrone Auswahl beim ersten Render würde die Hydration zerlegen.
+ * schaltet React direkt nach der Hydration um (useStoredLang). Das kostet ein
+ * Frame — der Alternative, vor dem Mount gar nichts zu rendern, wäre ein leerer
+ * Bildschirm, und eine synchrone Auswahl beim ersten Render würde die Hydration
+ * zerlegen.
  */
 export default function LegalShell({
   en,
@@ -33,16 +35,7 @@ export default function LegalShell({
   titleEn: string;
   titleDe: string;
 }) {
-  const [lang, setLang] = useState<Lang>("en");
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("fightbase:lang");
-      if (stored === "de" || stored === "en") setLang(stored);
-    } catch {
-      // localStorage kann blockiert sein — dann bleibt es bei Englisch.
-    }
-  }, []);
+  const lang = useStoredLang();
 
   // Ein Screenreader spricht die Texte sonst in der falschen Sprache aus.
   useEffect(() => {
@@ -50,12 +43,7 @@ export default function LegalShell({
   }, [lang]);
 
   function choose(next: Lang) {
-    setLang(next);
-    try {
-      localStorage.setItem("fightbase:lang", next);
-    } catch {
-      // Sprache gilt dann nur für diesen Seitenaufruf.
-    }
+    setStoredLang(next);
   }
 
   return (

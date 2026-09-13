@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useStoredLang, useCookieConsent, acceptCookies } from "@/lib/clientStore";
 
 const TEXT = {
   en: {
@@ -17,29 +17,15 @@ const TEXT = {
 };
 
 export default function CookieBanner() {
-  const [visible, setVisible] = useState(false);
-  const [lang, setLang] = useState<"en" | "de">("en");
-
-  useEffect(() => {
-    let alreadyConsented = false;
-    try {
-      alreadyConsented = !!localStorage.getItem("fightbase:cookie-consent");
-      const storedLang = localStorage.getItem("fightbase:lang");
-      if (storedLang === "de" || storedLang === "en") setLang(storedLang);
-    } catch (e) {
-      // localStorage inaccessible (e.g. strict privacy settings) —
-      // fall through and show the banner rather than hiding it forever.
-    }
-    if (!alreadyConsented) setVisible(true);
-  }, []);
+  // Beides kommt aus localStorage und darf deshalb erst nach der Hydration
+  // wirken — sonst weicht das Server-HTML vom Client ab. useSyncExternalStore
+  // erledigt genau das; einen Effekt braucht es dafür nicht.
+  const lang = useStoredLang();
+  const consented = useCookieConsent();
+  const visible = !consented;
 
   function accept() {
-    try {
-      localStorage.setItem("fightbase:cookie-consent", "accepted");
-    } catch (e) {
-      // ignore
-    }
-    setVisible(false);
+    acceptCookies();
   }
 
   if (!visible) return null;
