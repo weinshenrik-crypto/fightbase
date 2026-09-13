@@ -162,6 +162,11 @@ Drei Regeln, auf die man sich verlassen kann:
   `undercard` bleiben leer — die Verbandskalender nennen Monate im Voraus weder
   Paarungen noch Anfangszeiten.
 
+Alternativ kann der Job vom NAS aus angestoßen werden statt per Vercel-Cron —
+fertige n8n-Workflows liegen unter `homeserver/n8n-workflows/`, die Anleitung
+in `homeserver/README.md`. n8n ruft dabei denselben Endpunkt auf und baut die
+Logik nicht nach.
+
 Was bewusst gefiltert wird, steht als Kommentar in der jeweiligen Quelldatei.
 Kurz: Nachwuchs raus (IBJJF-Kids, WKF Youth League, IJF nur `age=sen`, UWW nur
 Einträge mit Senior-Klasse), und bei IJF/UWW zusätzlich nur die bedeutenden

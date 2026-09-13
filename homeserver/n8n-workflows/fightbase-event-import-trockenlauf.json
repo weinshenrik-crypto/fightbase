@@ -1,0 +1,60 @@
+{
+  "name": "Fightbase — Event-Import Trockenlauf",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "b1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Von Hand starten",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-200, 0]
+    },
+    {
+      "parameters": {
+        "url": "https://fightbase.io/api/cron/import",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "dry",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "b1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Trockenlauf abfragen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [40, 0],
+      "notes": "dry=1 — schreibt garantiert nichts, dieselbe Logik wie der echte Lauf."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Macht aus der Antwort eine Zeile je Event, das angelegt wuerde. Gedacht\n// zum Durchsehen, bevor der taegliche Lauf zum ersten Mal scharf geschaltet\n// wird — und danach immer dann, wenn eine Quelle sich geaendert haben koennte.\n\nconst r = $input.first().json;\n\nif (r.error) {\n  throw new Error(`${r.error}${r.detail ? ` — ${r.detail}` : ''}${r.hint ? ` (${r.hint})` : ''}`);\n}\n\nconst zeilen = [];\n\nfor (const s of r.sources ?? []) {\n  if (s.error) {\n    zeilen.push({ json: { quelle: s.source, art: 'FEHLER', text: s.error } });\n    continue;\n  }\n  for (const i of s.wouldInsert ?? []) {\n    zeilen.push({\n      json: { quelle: s.source, art: 'neu', datum: i.date, titel: i.title, slug: i.slug, ort: i.venue },\n    });\n  }\n  for (const u of s.wouldUpdate ?? []) {\n    zeilen.push({\n      json: { quelle: s.source, art: 'geaendert', slug: u.slug, aenderungen: u.changes },\n    });\n  }\n  for (const n of s.notes ?? []) {\n    zeilen.push({ json: { quelle: s.source, art: 'Hinweis', text: n } });\n  }\n}\n\nif (zeilen.length === 0) {\n  return [{ json: { ergebnis: 'Nichts zu tun — alle Quellen sind aktuell abgebildet.' } }];\n}\n\nreturn zeilen;"
+      },
+      "id": "b1b2c3d4-0003-4000-8000-000000000003",
+      "name": "Plan auflisten",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [280, 0]
+    }
+  ],
+  "connections": {
+    "Von Hand starten": {
+      "main": [[{ "node": "Trockenlauf abfragen", "type": "main", "index": 0 }]]
+    },
+    "Trockenlauf abfragen": {
+      "main": [[{ "node": "Plan auflisten", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
