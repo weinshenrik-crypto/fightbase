@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { venueTime, localTime, timeDiffers } from "@/lib/events";
+import { useHydrated } from "@/lib/clientStore";
 
 /**
  * Startzeit eines Events.
@@ -11,7 +11,7 @@ import { venueTime, localTime, timeDiffers } from "@/lib/events";
  * ab, kommt sie dahinter: eine Karte, die in Tokio um 19:00 beginnt, läuft in
  * Deutschland um 11:00, und genau das ist die Zahl, nach der jemand hier sucht.
  *
- * Die zweite Zeit wird bewusst erst nach dem Mount ergänzt. Die Seiten sind
+ * Die zweite Zeit wird bewusst erst nach der Hydration ergänzt. Die Seiten sind
  * statisch vorgerendert, der Server kennt die Zone des Besuchers also nicht —
  * würde man sie beim ersten Render mitzeichnen, käme es zum Hydration-Mismatch.
  */
@@ -24,11 +24,9 @@ export default function EventTime({
   timezone?: string;
   className?: string;
 }) {
-  const [mine, setMine] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (timeDiffers(startsAt, timezone)) setMine(localTime(startsAt));
-  }, [startsAt, timezone]);
+  const hydrated = useHydrated();
+  const mine =
+    hydrated && timeDiffers(startsAt, timezone) ? localTime(startsAt) : null;
 
   return (
     <span className={className}>

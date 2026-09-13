@@ -73,14 +73,65 @@ docker run --rm -v n8n_data:/data -v $(pwd):/backup alpine \
   tar czf /backup/n8n-backup-$(date +%F).tar.gz -C /data .
 ```
 
+## Schritt 5 — Termin-Job einrichten
+
+Liegt fertig unter `n8n-workflows/`. In n8n über **Workflows → Import from
+File** einspielen:
+
+| Datei | Was sie tut |
+|---|---|
+| `fightbase-event-import-trockenlauf.json` | Von Hand startbar. Fragt den Plan ab und listet jede Zeile auf, die angelegt würde. Schreibt garantiert nichts. |
+| `fightbase-event-import.json` | Täglich 09:00. Löst den echten Import aus. |
+
+**Der Job baut die Import-Logik bewusst nicht in n8n nach.** Er ruft nur
+`https://fightbase.io/api/cron/import` auf. Die Quellen, die Filter (kein
+Nachwuchs, nur Senior/Elite, keine erfundenen Kämpfe) und die
+Duplikatserkennung liegen im Repo unter `lib/eventSources/` und sind dort
+getestet. n8n ist hier der Zeitgeber — mehr nicht. Ein zweiter Ort mit
+derselben Logik würde auseinanderlaufen, und die Regeln aus CLAUDE.md gälten
+dann nur noch an einem davon.
+
+### Credential anlegen
+
+Beide Workflows brauchen dasselbe:
+
+1. In n8n **Credentials → New → Header Auth**.
+2. Name des Headers: `Authorization`, Wert: `Bearer <CRON_SECRET>` — derselbe
+   Wert wie in Vercel.
+3. Credential z.B. `Fightbase CRON_SECRET` nennen und in beiden Workflows im
+   HTTP-Node auswählen (nach dem Import steht es dort leer).
+
+Damit liegt das Secret in n8ns verschlüsseltem Speicher — und genau deshalb
+gehört `N8N_ENCRYPTION_KEY` in den Passwortmanager (siehe Schritt 4).
+
+### Reihenfolge beim ersten Mal
+
+1. `supabase/migration-event-import.sql` im Supabase-SQL-Editor ausführen.
+   Ohne sie antwortet der Endpunkt mit `migration_missing` und schreibt nichts.
+2. Den **Trockenlauf** von Hand starten und die Liste durchsehen.
+3. Erst dann den täglichen Workflow aktivieren.
+
+### Warum der Prüf-Node am Ende steht
+
+Der Endpunkt antwortet mit HTTP 200, auch wenn eine einzelne Quelle nicht
+erreichbar war — eine kaputte Quelle soll die anderen drei nicht mitreißen.
+Ohne den Code-Node „Lauf prüfen" stünde die Ausführung in n8n deshalb auf
+grün, während z.B. die IBJJF seit Tagen nichts mehr liefert. Der Node macht
+daraus einen echten Fehlschlag, den man in der Ausführungsliste sieht.
+
+### Vercel-Cron oder NAS?
+
+`vercel.json` führt denselben Import auch als Vercel-Cron. Beides parallel
+laufen zu lassen schadet nicht — der Import ist idempotent, ein zweiter Lauf
+am selben Tag schreibt nichts. Wer es an einer Stelle haben will: den Eintrag
+`/api/cron/import` aus `vercel.json` nehmen und den n8n-Workflow aktivieren.
+Auf dem Vercel-Hobby-Plan sind ohnehin nur zwei Cron-Jobs erlaubt.
+
 ## Danach
 
-Steht n8n, kommen die eigentlichen Bausteine:
+Steht n8n, kommen die restlichen Bausteine:
 
 1. **Instance-level MCP aktivieren** (Settings → Instance-level MCP), damit
    Claude Workflows für dich bauen und starten kann.
 2. **WhatsApp-Agent**: Webhook → AI-Agent-Node mit Claude → Memory in Supabase
    → Tool-Nodes für Supabase, Vercel und GitHub.
-3. **Termin-Job**: täglich Quellen abfragen und neue Events in `events`
-   schreiben. Seit der Migration weg vom hartkodierten Array reicht dafür ein
-   Datenbank-Insert, kein Deploy.

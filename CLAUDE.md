@@ -43,24 +43,56 @@ Das Remote ist SSH (`git@github.com:weinshenrik-crypto/fightbase.git`). Falls
 
 ```
 app/
-  page.tsx              Die gesamte Haupt-App (~2100 Zeilen, Client Component):
-                        Events, Favoriten, Fighters, Forum, Account, Auth, i18n
+  page.tsx              Dünne Server-Hülle: holt die Events und reicht sie weiter
+  HomeClient.tsx        Die eigentliche App (~2500 Zeilen, Client Component):
+                        Events, Ergebnisse, Favoriten, Fighters, Forum,
+                        Account, Auth, i18n
   events/[id]/          Event-Detailseiten
   fighters/[slug]/      Fighter-Profile
   sport/[sport]/        Eine SEO-Landingpage pro Sportart
   promotion/[promotion]/ Eine SEO-Landingpage pro Promotion
-  api/cron/notify/      Vercel-Cron: verschickt Event-Erinnerungen via Resend
+  impressum/ datenschutz/ terms/   Rechtstexte, alle über LegalShell
+  admin/events/         Pflegemaske für die events-Tabelle
+  api/cron/notify/      Vercel-Cron: Event-Erinnerungen via Resend
+  api/cron/import/      Vercel-Cron: Termine aus den Verbandskalendern
+  api/cron/results/     Vercel-Cron: Ergebnisse aus Wikipedia
+  api/revalidate/       Wirft den Event-Cache weg (Bearer CRON_SECRET)
+  api/account/delete/   Kontolöschung
 lib/
-  events.ts             Event-Daten, Sportarten- und Promotion-Definitionen
+  events.ts             Typ FightEvent, Sportarten und reine Helfer — keine Daten
+  eventsDb.ts           Die einzige Stelle, die Events liest
+  eventSources/         Quellen des automatischen Imports, eine Datei je Verband
+  resultsSource.ts      Ergebnisse aus Wikipedia-Wikitext
+  sportGuides.ts        Redaktionstexte der Sport-Landingpages
+  promotionGuides.ts    dito für die Promotion-Seiten
+  clientStore.ts        Sprache und Cookie-Zustimmung als externer Store
   supabaseClient.ts     Browser-Client (anon key)
   supabaseAdmin.ts      Server-Client (service role) — nur in API-Routes verwenden
 components/
+  EventTime.tsx         Startzeit am Austragungsort, dahinter die des Betrachters
+  FighterIllustration.tsx  Generierte Darstellung statt Foto (siehe "Nicht tun")
+  CookieBanner.tsx      Hinweis auf technisch notwendige Speicherung
+  LegalShell.tsx        Zweisprachiger Rahmen der Rechtsseiten
   NativeAppBridge.tsx   No-op im Web; blendet in der Capacitor-App den Splash aus
+scripts/                Prüfskripte, von Hand und in der CI
 supabase/               SQL-Schema, Migrationen, Seeds, E-Mail-Templates
 ```
 
-`app/page.tsx` ist bewusst eine große Datei. Sprach-Strings liegen dort in einem
-`STRINGS`-Objekt (`en`/`de`) — neue UI-Texte immer in **beiden** Sprachen ergänzen.
+`app/HomeClient.tsx` ist bewusst eine große Datei. Sprach-Strings liegen dort in
+einem `STRINGS`-Objekt (`en`/`de`) — neue UI-Texte immer in **beiden** Sprachen
+ergänzen. Das gilt auch für die Pflegemaske, die ein eigenes `STRINGS` mitbringt.
+
+Zustand, den nur der Browser kennt (gespeicherte Sprache, Cookie-Zustimmung,
+Zeitzone), kommt über `lib/clientStore.ts` und `useSyncExternalStore` herein,
+nicht über einen `useEffect`, der nach dem Mount `setState` ruft. Letzteres
+kostet einen zusätzlichen Renderdurchlauf und ist das, was
+`react-hooks/set-state-in-effect` anmerkt — die Regel blockiert die CI.
+
+**`next-env.d.ts` ist nicht eingecheckt.** Next erzeugt sie bei jedem Lauf neu,
+und zwar mit wechselndem Inhalt (`next dev` verweist auf `.next/dev/types`,
+`next build` auf `.next/types`) — eingecheckt machte also jeder Build den
+Arbeitsbaum schmutzig. Beide Pfade stehen ohnehin in `tsconfig.json` unter
+`include`, und `npx tsc --noEmit` läuft ohne die Datei unverändert durch.
 
 ## Events pflegen
 
@@ -78,10 +110,71 @@ curl -X POST https://fightbase.io/api/revalidate -H "Authorization: Bearer $CRON
 `CRON_SECRET` liegt in Vercel als **Sensitive** und lässt sich weder per
 `vercel env pull` noch im Dashboard zurücklesen — ohne eigene Kopie geht der
 Befehl also nicht. Alternative: einmal pushen, der Rebuild erledigt dasselbe.
-Das ist nicht nur Kosmetik — die Detailseite eines frisch eingetragenen Events
-(`/events/<slug>`) antwortet bis zur nächsten Revalidierung mit **404**, weil
-`generateStaticParams` den Slug noch nicht kennt und die Seite dann `notFound()`
-aufruft.
+
+Die Detailseite eines frisch eingetragenen Events (`/events/<slug>`) ist davon
+nicht mehr betroffen: Fehlt der Slug in der gecachten Liste, fragt die Seite die
+eine Zeile direkt nach (`getEventBySlug`), statt `notFound()` zu rufen.
+Sie ist also sofort erreichbar. Die **Listen** — Startseite, Sport- und
+Promotion-Seiten — zeigen das neue Event weiterhin erst nach der Revalidierung.
+
+### Pflegemaske
+
+`/admin/events` ist eine Maske fuer dieselbe Tabelle — mit den Regeln dieses
+Projekts an den Feldern, die der Supabase Table Editor nicht kennt: Pflichtfelder,
+dass `fighter_a`/`fighter_b` nur als Paar zaehlen, dass `undercard` nur
+bestaetigte Kaempfe enthaelt, und dass eine geschaetzte Anfangszeit schlechter
+ist als keine. Importierte Zeilen sind gekennzeichnet und warnen beim
+Bearbeiten, dass der naechste Cron-Lauf sie ueberschreibt.
+
+Die Seite prueft **keine** Rechte. Wer schreiben darf, entscheiden die
+RLS-Policies der `events`-Tabelle (`role = 'admin'` im Profil). Ein Nicht-Admin
+sieht das Formular und bekommt beim Speichern eine Fehlermeldung von Postgres.
+Nicht indexiert (`robots: noindex`).
+
+### Automatischer Import
+
+Der Cron-Job `/api/cron/import` (täglich 9:00 UTC, `vercel.json`) trägt Termine
+aus den vier Verbandskalendern unten selbst ein. Eine Quelle je Datei unter
+`lib/eventSources/`, der Abgleich steckt in `lib/eventSources/plan.ts`.
+
+**Vor dem ersten Lauf muss `supabase/migration-event-import.sql` im
+SQL-Editor laufen** — sie legt `source`, `source_key` und `source_url` an. Ohne
+sie antwortet der Job mit `migration_missing`.
+
+Trockenlauf, schreibt nichts:
+
+```bash
+npx tsx scripts/import-dry-run.ts                 # alle Quellen, ausführlich
+npx tsx scripts/import-dry-run.ts ibjjf           # nur eine
+curl -H "Authorization: Bearer $CRON_SECRET" \
+     "https://fightbase.io/api/cron/import?dry=1" # dasselbe über die Route
+```
+
+Drei Regeln, auf die man sich verlassen kann:
+
+- **Handzeilen sind tabu.** Zeilen mit `source IS NULL` fasst der Job nie an.
+  Steht dort schon derselbe Termin (gleicher Tag, gleiche Sportart, gemeinsames
+  unterscheidendes Wort in Name oder Ort), legt er nichts an und meldet es.
+- **Abgeglichen wird über `(source, source_key)`, nicht über den Slug.** Sonst
+  entstünde bei jeder Umbenennung eines Turniers eine zweite Zeile. Der Slug
+  einer bestehenden Zeile bleibt dadurch stabil.
+- **Es werden keine Kämpfe erfunden.** `fighter_a`/`fighter_b`, `starts_at` und
+  `undercard` bleiben leer — die Verbandskalender nennen Monate im Voraus weder
+  Paarungen noch Anfangszeiten.
+
+Alternativ kann der Job vom NAS aus angestoßen werden statt per Vercel-Cron —
+fertige n8n-Workflows liegen unter `homeserver/n8n-workflows/`, die Anleitung
+in `homeserver/README.md`. n8n ruft dabei denselben Endpunkt auf und baut die
+Logik nicht nach.
+
+Was bewusst gefiltert wird, steht als Kommentar in der jeweiligen Quelldatei.
+Kurz: Nachwuchs raus (IBJJF-Kids, WKF Youth League, IJF nur `age=sen`, UWW nur
+Einträge mit Senior-Klasse), und bei IJF/UWW zusätzlich nur die bedeutenden
+Turniertypen, damit der Kalender nicht mit nationalen Opens volläuft.
+
+**Falle bei IJF:** `?age=world_tour` ist *nicht* senior-rein — dort stehen auch
+Cadets, Juniors und die Youth Olympic Games. Richtig ist `?age=sen` plus das
+Wettkampftyp-Icon (`gs`/`gp`/`wc`/`mas`) als Filter für den World Judo Tour.
 
 ### Belegte Quellen
 

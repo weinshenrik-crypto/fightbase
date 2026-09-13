@@ -1,0 +1,66 @@
+{
+  "name": "Fightbase — Event-Import (täglich)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 9,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Täglich 09:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-200, 0]
+    },
+    {
+      "parameters": {
+        "url": "https://fightbase.io/api/cron/import",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "neverError": false
+            }
+          }
+        }
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Import auslösen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [40, 0],
+      "notes": "Credential: Header Auth mit Name=Authorization, Wert=Bearer <CRON_SECRET>"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Der Endpunkt antwortet bewusst mit HTTP 200, auch wenn eine einzelne\n// Quelle nicht erreichbar war — eine kaputte Quelle soll die anderen drei\n// nicht mitreissen. Ohne diese Pruefung stuende die Ausfuehrung in n8n\n// deshalb auf gruen, waehrend z.B. die IBJJF seit Tagen nichts liefert.\n// Hier wird daraus ein echter Fehlschlag, den man in der Liste sieht.\n\nconst r = $input.first().json;\nconst probleme = [];\n\nif (r.error) {\n  probleme.push(`Lauf abgelehnt: ${r.error}${r.detail ? ` — ${r.detail}` : ''}${r.hint ? ` (${r.hint})` : ''}`);\n}\n\nfor (const s of r.sources ?? []) {\n  if (s.error) probleme.push(`${s.source}: Quelle nicht erreichbar — ${s.error}`);\n  if (s.insertError) probleme.push(`${s.source}: Anlegen fehlgeschlagen — ${s.insertError}`);\n  for (const e of s.updateErrors ?? []) probleme.push(`${s.source}: Aendern fehlgeschlagen — ${e}`);\n}\n\nif (probleme.length > 0) {\n  throw new Error(probleme.join('\\n'));\n}\n\n// Eine Zeile je Quelle, damit in der Ausfuehrungsliste auf einen Blick steht,\n// was der Lauf getan hat.\nreturn (r.sources ?? []).map((s) => ({\n  json: {\n    quelle: s.source,\n    gefunden: s.found,\n    neu: s.inserts,\n    geaendert: s.updates,\n    unveraendert: s.unchanged,\n    hinweise: (s.notes ?? []).length,\n    gefiltert: s.filtered ?? [],\n  },\n}));"
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "name": "Lauf prüfen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [280, 0]
+    }
+  ],
+  "connections": {
+    "Täglich 09:00": {
+      "main": [[{ "node": "Import auslösen", "type": "main", "index": 0 }]]
+    },
+    "Import auslösen": {
+      "main": [[{ "node": "Lauf prüfen", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

@@ -1,6 +1,16 @@
 node_modules
 .next
 out
+
+# Erzeugt Next selbst — und zwar bei jedem Lauf neu, mit wechselndem Inhalt:
+# `next dev` schreibt Verweise auf .next/dev/types, `next build` auf .next/types.
+# Eingecheckt hiess das, dass jeder Build den Arbeitsbaum schmutzig macht.
+# Beide Pfade stehen ohnehin schon in tsconfig.json unter "include", die Datei
+# traegt also nichts bei, was nicht anderswo steht. Ohne sie laeuft
+# `npx tsc --noEmit` unveraendert durch (geprueft, inklusive Gegenprobe mit
+# absichtlichen Typfehlern in next/image und Metadata); statische Bild-Importe,
+# fuer die next/image-types/global noetig waere, gibt es im Projekt nicht.
+next-env.d.ts
 .env
 .env.*
 !.env.example

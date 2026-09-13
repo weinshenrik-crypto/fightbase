@@ -1,0 +1,63 @@
+name: CI
+
+# Vercel deployt direkt aus main, und die Android-App laedt die Live-Seite per
+# WebView (capacitor.config.ts zeigt mit server.url auf fightbase.io). Ein
+# kaputter Build nimmt also Website und App gleichzeitig mit. Hier laufen die
+# Checks, die man sonst lokal laufen laesst, bevor das passiert.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      # Prueft getEventBySlug() gegen ein gestubbtes fetch — unter anderem, dass
+      # die Einzelabfrage kein cache:"no-store" benutzt. Mit no-store kippt die
+      # Detailseite beim On-demand-Rendern von statisch auf dynamisch, und jeder
+      # unbekannte Slug antwortet mit 500 statt 404.
+      - name: Event-Lookup pruefen
+        run: npx tsx scripts/check-event-lookup.ts
+
+      # Blockierend, seit die acht set-state-in-effect-Fehler weg sind.
+      # Warnungen bleiben Warnungen — eslint beendet sich dafuer mit 0.
+      - name: Lint
+        run: npm run lint
+
+      # Der Build braucht eine erreichbare Supabase-Instanz: die Fighter-Seite
+      # holt ihre Params ueber die Datenbank und bricht den ganzen Build ab,
+      # wenn der Request fehlschlaegt. Platzhalterwerte reichen deshalb nicht.
+      # Ohne hinterlegte Secrets wird der Schritt uebersprungen statt rot zu
+      # werden — Typecheck und Lint laufen dann trotzdem.
+      # Anlegen unter: Settings -> Secrets and variables -> Actions.
+      # Beides sind die oeffentlichen NEXT_PUBLIC_-Werte, kein Service-Role-Key.
+      - name: Build
+        if: env.NEXT_PUBLIC_SUPABASE_URL != '' && env.NEXT_PUBLIC_SUPABASE_ANON_KEY != ''
+        run: npm run build
+
+      - name: Build uebersprungen
+        if: env.NEXT_PUBLIC_SUPABASE_URL == '' || env.NEXT_PUBLIC_SUPABASE_ANON_KEY == ''
+        run: |
+          echo "::warning::Build uebersprungen — NEXT_PUBLIC_SUPABASE_URL und NEXT_PUBLIC_SUPABASE_ANON_KEY sind nicht als Repository-Secrets hinterlegt."
