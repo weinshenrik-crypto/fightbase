@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Session } from "@supabase/supabase-js";
@@ -823,13 +823,33 @@ type ForumPost = {
   profiles?: { username: string | null } | null;
 };
 
+// Kontodaten samt der user_id, zu der sie gehoeren. Passt die id nicht zur
+// aktuellen Session, gelten die Daten als veraltet — siehe activeAccount.
+type AccountState = {
+  userId: string;
+  role: string | null;
+  username: string | null;
+  emailNotifications: boolean;
+};
+
+type FavoriteStore = { userId: string; rows: Favorite[] };
+
+// Stabile leere Liste: Ein frisches [] bei jedem Rendern wuerde alles neu
+// berechnen lassen, was von favorites abhaengt.
+const EMPTY_FAVORITES: Favorite[] = [];
+
 export default function HomeClient({ events }: { events: FightEvent[] }) {
   const [tab, setTab] = useState<TabId>("events");
   const [lang, setLang] = useState<Lang>("en");
   const [filter, setFilter] = useState<string[]>([]);
   const [fighterSportFilter, setFighterSportFilter] = useState<string[]>([]);
-  const [favorites, setFavorites] = useState<Favorite[]>([]);
-  const [emailNotifications, setEmailNotifications] = useState(false);
+  // Profil und Favoriten haengen an einer Sitzung. Sie werden deshalb
+  // *zusammen mit der user_id* gehalten und beim Rendern dagegen geprueft,
+  // statt sie beim Logout einzeln zurueckzusetzen. Ein Reset-Effekt braucht
+  // dafuer einen zusaetzlichen Renderdurchlauf, und wer eine Zeile vergisst,
+  // zeigt dem naechsten Konto kurz die Daten des vorigen.
+  const [account, setAccount] = useState<AccountState | null>(null);
+  const [favoriteStore, setFavoriteStore] = useState<FavoriteStore | null>(null);
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -841,14 +861,13 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
   const [authError, setAuthError] = useState<string | null>(null);
   const [authNotice, setAuthNotice] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [username, setUsername] = useState<string | null>(null);
   const [usernameInput, setUsernameInput] = useState("");
   const [usernameSaving, setUsernameSaving] = useState(false);
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [selectedFighter, setSelectedFighter] = useState<string | null>(null);
-  const [threads, setThreads] = useState<ForumThread[]>([]);
-  const [threadsLoading, setThreadsLoading] = useState(true);
+  // null heisst "noch nicht geladen" — daraus leitet sich der Ladezustand ab,
+  // statt ihn als zweites Feld mitzufuehren.
+  const [threads, setThreads] = useState<ForumThread[] | null>(null);
   const [newThreadTitle, setNewThreadTitle] = useState("");
   const [newThreadBody, setNewThreadBody] = useState("");
   const [openThread, setOpenThread] = useState<ForumThread | null>(null);
@@ -912,6 +931,29 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
     }
   }
 
+  // Kontodaten gelten nur, solange sie zur angemeldeten Sitzung gehoeren.
+  // Nach einem Logout — oder waehrend das Profil des naechsten Kontos noch
+  // laedt — greift der Fallback, ohne dass irgendwo etwas zurueckgesetzt wird.
+  const activeAccount =
+    session && account?.userId === session.user.id ? account : null;
+  const isAdmin = activeAccount?.role === "admin";
+  const username = activeAccount?.username ?? null;
+  const emailNotifications = activeAccount?.emailNotifications ?? false;
+
+  // Solange nichts geladen wurde, steht threads auf null — das ist der
+  // Ladezustand. Ein erneutes Laden (Tabwechsel, nach dem Anlegen eines
+  // Threads) laesst die vorhandene Liste stehen, statt sie gegen einen
+  // Spinner zu tauschen.
+  const threadsLoading = threads === null;
+
+  const favorites = useMemo(
+    () =>
+      session && favoriteStore?.userId === session.user.id
+        ? favoriteStore.rows
+        : EMPTY_FAVORITES,
+    [session, favoriteStore]
+  );
+
   const L = STRINGS[lang];
 
   useEffect(() => {
@@ -923,20 +965,22 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
   }, []);
 
   useEffect(() => {
-    if (!session) {
-      setIsAdmin(false);
-      setUsername(null);
-      return;
-    }
+    // Kein Zuruecksetzen beim Logout noetig: activeAccount verwirft die Daten
+    // von selbst, sobald die Session nicht mehr dazu passt.
+    if (!session) return;
+    const userId = session.user.id;
     supabase
       .from("profiles")
       .select("role, username, email_notifications, notif_prompt_seen")
-      .eq("id", session.user.id)
+      .eq("id", userId)
       .maybeSingle()
       .then(async ({ data }) => {
-        setIsAdmin(data?.role === "admin");
-        setUsername(data?.username ?? null);
-        setEmailNotifications(!!data?.email_notifications);
+        setAccount({
+          userId,
+          role: data?.role ?? null,
+          username: data?.username ?? null,
+          emailNotifications: !!data?.email_notifications,
+        });
         if (!data || data.notif_prompt_seen) return;
 
         let pending: string | null = null;
@@ -947,11 +991,11 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
         }
         if (pending !== null) {
           const enable = pending === "true";
-          setEmailNotifications(enable);
+          setAccount((a) => (a ? { ...a, emailNotifications: enable } : a));
           await supabase
             .from("profiles")
             .update({ email_notifications: enable, notif_prompt_seen: true })
-            .eq("id", session.user.id);
+            .eq("id", userId);
           try {
             localStorage.removeItem("fightbase:pending_notif_pref");
           } catch (e) {
@@ -980,7 +1024,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
           : error.message
       );
     } else {
-      setUsername(usernameInput.trim());
+      setAccount((a) => (a ? { ...a, username: usernameInput.trim() } : a));
     }
   }
 
@@ -1025,15 +1069,17 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
     setSelectedFighter(name);
   }
 
+  // Setzt bewusst keinen Ladezustand, bevor die Abfrage laeuft: Die Funktion
+  // wird auch aus einem Effekt heraus aufgerufen, und ein setState direkt im
+  // Effektkoerper erzwingt einen zusaetzlichen Renderdurchlauf. Der Spinner
+  // ergibt sich stattdessen daraus, dass threads noch null ist.
   function loadThreads() {
-    setThreadsLoading(true);
     supabase
       .from("forum_threads")
       .select("id, title, created_at, created_by, profiles(username)")
       .order("created_at", { ascending: false })
       .then(({ data }) => {
         setThreads((data as unknown as ForumThread[]) ?? []);
-        setThreadsLoading(false);
       });
   }
 
@@ -1142,16 +1188,15 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
   }
 
   useEffect(() => {
-    if (!session) {
-      setFavorites([]);
-      setEmailNotifications(false);
-      return;
-    }
+    // Wie oben: Die Favoriten des abgemeldeten Kontos verfallen dadurch, dass
+    // ihre user_id nicht mehr zur Session passt.
+    if (!session) return;
+    const userId = session.user.id;
     supabase
       .from("favorites")
       .select("type, value")
       .then(({ data }) => {
-        setFavorites((data as Favorite[] | null) ?? []);
+        setFavoriteStore({ userId, rows: (data as Favorite[] | null) ?? [] });
       });
   }, [session]);
 
@@ -1162,11 +1207,16 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
   async function toggleFavorite(type: FavoriteType, value: string) {
     if (!session) return;
     const already = isFavorited(type, value);
-    setFavorites((prev) =>
-      already
-        ? prev.filter((f) => !(f.type === type && f.value === value))
-        : [...prev, { type, value }]
-    );
+    const userId = session.user.id;
+    setFavoriteStore((prev) => {
+      const rows = prev?.userId === userId ? prev.rows : [];
+      return {
+        userId,
+        rows: already
+          ? rows.filter((f) => !(f.type === type && f.value === value))
+          : [...rows, { type, value }],
+      };
+    });
     if (already) {
       await supabase
         .from("favorites")
@@ -1184,7 +1234,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
   async function handleToggleEmailNotifications() {
     if (!session) return;
     const next = !emailNotifications;
-    setEmailNotifications(next);
+    setAccount((a) => (a ? { ...a, emailNotifications: next } : a));
     await supabase
       .from("profiles")
       .update({ email_notifications: next })
@@ -1193,7 +1243,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
 
   async function handleNotifPromptChoice(enable: boolean) {
     if (!session) return;
-    setEmailNotifications(enable);
+    setAccount((a) => (a ? { ...a, emailNotifications: enable } : a));
     setShowNotifPrompt(false);
     await supabase
       .from("profiles")
@@ -1226,11 +1276,14 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
   // Werden erst geladen, wenn der Tab zum ersten Mal geoeffnet wird. Die
   // Startseite soll dafuer keine zusaetzliche Abfrage bezahlen.
   const [results, setResults] = useState<Record<string, ResultRow[]>>({});
-  const [resultsLoaded, setResultsLoaded] = useState(false);
+  // Eine Ref statt eines State-Flags: Sie merkt sich ueber Renderdurchlaeufe
+  // hinweg, dass die Abfrage schon laeuft, loest dabei aber kein erneutes
+  // Rendern aus — genau das ist der Unterschied zu setState im Effektkoerper.
+  const resultsRequested = useRef(false);
 
   useEffect(() => {
-    if (tab !== "results" || resultsLoaded) return;
-    setResultsLoaded(true);
+    if (tab !== "results" || resultsRequested.current) return;
+    resultsRequested.current = true;
     supabase
       .from("event_results")
       .select("*")
@@ -1242,7 +1295,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
         });
         setResults(byEvent);
       });
-  }, [tab, resultsLoaded]);
+  }, [tab]);
 
   // Abgeschlossene Events, das zuletzt gelaufene zuerst.
   const pastEvents = useMemo(
@@ -2061,7 +2114,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                 <p className="text-[13px] text-dim">{L.loading}</p>
               ) : (
                 <div className="flex flex-col gap-2">
-                  {threads.map((t) => (
+                  {(threads ?? []).map((t) => (
                     <button
                       key={t.id}
                       onClick={() => openThreadView(t)}
@@ -2075,7 +2128,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                       </p>
                     </button>
                   ))}
-                  {threads.length === 0 && (
+                  {(threads ?? []).length === 0 && (
                     <p className="text-[13px] text-dim">{L.noThreadsYet}</p>
                   )}
                 </div>
