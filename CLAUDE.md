@@ -43,24 +43,56 @@ Das Remote ist SSH (`git@github.com:weinshenrik-crypto/fightbase.git`). Falls
 
 ```
 app/
-  page.tsx              Die gesamte Haupt-App (~2100 Zeilen, Client Component):
-                        Events, Favoriten, Fighters, Forum, Account, Auth, i18n
+  page.tsx              Dünne Server-Hülle: holt die Events und reicht sie weiter
+  HomeClient.tsx        Die eigentliche App (~2500 Zeilen, Client Component):
+                        Events, Ergebnisse, Favoriten, Fighters, Forum,
+                        Account, Auth, i18n
   events/[id]/          Event-Detailseiten
   fighters/[slug]/      Fighter-Profile
   sport/[sport]/        Eine SEO-Landingpage pro Sportart
   promotion/[promotion]/ Eine SEO-Landingpage pro Promotion
-  api/cron/notify/      Vercel-Cron: verschickt Event-Erinnerungen via Resend
+  impressum/ datenschutz/ terms/   Rechtstexte, alle über LegalShell
+  admin/events/         Pflegemaske für die events-Tabelle
+  api/cron/notify/      Vercel-Cron: Event-Erinnerungen via Resend
+  api/cron/import/      Vercel-Cron: Termine aus den Verbandskalendern
+  api/cron/results/     Vercel-Cron: Ergebnisse aus Wikipedia
+  api/revalidate/       Wirft den Event-Cache weg (Bearer CRON_SECRET)
+  api/account/delete/   Kontolöschung
 lib/
-  events.ts             Event-Daten, Sportarten- und Promotion-Definitionen
+  events.ts             Typ FightEvent, Sportarten und reine Helfer — keine Daten
+  eventsDb.ts           Die einzige Stelle, die Events liest
+  eventSources/         Quellen des automatischen Imports, eine Datei je Verband
+  resultsSource.ts      Ergebnisse aus Wikipedia-Wikitext
+  sportGuides.ts        Redaktionstexte der Sport-Landingpages
+  promotionGuides.ts    dito für die Promotion-Seiten
+  clientStore.ts        Sprache und Cookie-Zustimmung als externer Store
   supabaseClient.ts     Browser-Client (anon key)
   supabaseAdmin.ts      Server-Client (service role) — nur in API-Routes verwenden
 components/
+  EventTime.tsx         Startzeit am Austragungsort, dahinter die des Betrachters
+  FighterIllustration.tsx  Generierte Darstellung statt Foto (siehe "Nicht tun")
+  CookieBanner.tsx      Hinweis auf technisch notwendige Speicherung
+  LegalShell.tsx        Zweisprachiger Rahmen der Rechtsseiten
   NativeAppBridge.tsx   No-op im Web; blendet in der Capacitor-App den Splash aus
+scripts/                Prüfskripte, von Hand und in der CI
 supabase/               SQL-Schema, Migrationen, Seeds, E-Mail-Templates
 ```
 
-`app/page.tsx` ist bewusst eine große Datei. Sprach-Strings liegen dort in einem
-`STRINGS`-Objekt (`en`/`de`) — neue UI-Texte immer in **beiden** Sprachen ergänzen.
+`app/HomeClient.tsx` ist bewusst eine große Datei. Sprach-Strings liegen dort in
+einem `STRINGS`-Objekt (`en`/`de`) — neue UI-Texte immer in **beiden** Sprachen
+ergänzen. Das gilt auch für die Pflegemaske, die ein eigenes `STRINGS` mitbringt.
+
+Zustand, den nur der Browser kennt (gespeicherte Sprache, Cookie-Zustimmung,
+Zeitzone), kommt über `lib/clientStore.ts` und `useSyncExternalStore` herein,
+nicht über einen `useEffect`, der nach dem Mount `setState` ruft. Letzteres
+kostet einen zusätzlichen Renderdurchlauf und ist das, was
+`react-hooks/set-state-in-effect` anmerkt — die Regel blockiert die CI.
+
+**`next-env.d.ts` ist nicht eingecheckt.** Next erzeugt sie bei jedem Lauf neu,
+und zwar mit wechselndem Inhalt (`next dev` verweist auf `.next/dev/types`,
+`next build` auf `.next/types`) — eingecheckt machte also jeder Build den
+Arbeitsbaum schmutzig. Beide Pfade stehen ohnehin in `tsconfig.json` unter
+`include`, und `npx tsc --noEmit` läuft ohne die Datei unverändert durch.
 
 ## Events pflegen
 
