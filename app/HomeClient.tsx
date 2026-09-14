@@ -23,6 +23,7 @@ import {
   type FightEvent,
 } from "@/lib/events";
 import FighterIllustration from "@/components/FighterIllustration";
+import ConfirmEmailPending from "@/components/ConfirmEmailPending";
 
 function FighterAvatar({
   name,
@@ -610,7 +611,6 @@ const STRINGS = {
     usernamePlaceholder: "Username",
     save: "Save",
     logOut: "Log out",
-    confirmEmailNotice: "Check your email to confirm your account.",
     loading: "Loading…",
     noProfileYet: "No profile yet for",
     career: "Career",
@@ -748,7 +748,6 @@ const STRINGS = {
     usernamePlaceholder: "Username",
     save: "Speichern",
     logOut: "Abmelden",
-    confirmEmailNotice: "Bestätige dein Konto über den Link in deiner E-Mail.",
     loading: "Lädt…",
     noProfileYet: "Noch kein Profil für",
     career: "Werdegang",
@@ -859,8 +858,14 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
-  const [authNotice, setAuthNotice] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
+  // Gesetzt heisst: Registrierung ist raus, wir warten auf die Bestaetigungsmail.
+  // Das Formular wird dann durch ConfirmEmailPending ersetzt.
+  const [confirmEmail, setConfirmEmail] = useState<string | null>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  // Nur wenn der Nutzer selbst zurueckgeht, soll der Fokus ins E-Mail-Feld
+  // springen — beim ersten Rendern der Seite waere das ein Fokusdiebstahl.
+  const focusEmailOnReturn = useRef(false);
   const [usernameInput, setUsernameInput] = useState("");
   const [usernameSaving, setUsernameSaving] = useState(false);
   const [usernameError, setUsernameError] = useState<string | null>(null);
@@ -1137,7 +1142,6 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
   async function handleAuthSubmit(ev: React.FormEvent) {
     ev.preventDefault();
     setAuthError(null);
-    setAuthNotice(null);
     setAuthLoading(true);
     const { error } =
       authMode === "signup"
@@ -1155,9 +1159,30 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
       } catch (e) {
         // ignore
       }
-      setAuthNotice(L.confirmEmailNotice);
+      setConfirmEmail(email);
     }
   }
+
+  // Zurueck aus dem Wartezustand ins Formular. Die Adresse steht noch im
+  // email-State, ist also vorbefuellt — der haeufige Fall ist ein Tippfehler,
+  // den man korrigieren und nicht neu tippen will.
+  function handleUseDifferentEmail() {
+    focusEmailOnReturn.current = true;
+    setConfirmEmail(null);
+  }
+
+  // Das Feld existiert erst wieder, nachdem React das Formular gerendert hat —
+  // deshalb hier statt direkt im Klick-Handler.
+  //
+  // Nur focus(), kein setSelectionRange(): Auf <input type="email"> wirft das
+  // laut HTML-Spec einen InvalidStateError ("does not support selection"), und
+  // der Wurf aus dem Effekt heraus reisst das Rendern mit. Der Cursor landet
+  // beim Fokussieren ohnehin am Ende des vorbefuellten Werts.
+  useEffect(() => {
+    if (confirmEmail !== null || !focusEmailOnReturn.current) return;
+    focusEmailOnReturn.current = false;
+    emailInputRef.current?.focus();
+  }, [confirmEmail]);
 
   async function handleOAuthSignIn(
     provider: "google" | "github" | "facebook" | "discord"
@@ -2244,6 +2269,12 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                 )}
               </div>
             </>
+          ) : confirmEmail ? (
+            <ConfirmEmailPending
+              email={confirmEmail}
+              lang={lang}
+              onUseDifferentEmail={handleUseDifferentEmail}
+            />
           ) : (
             <>
               <h2 className="font-display font-semibold text-[20px] text-text mb-1">
@@ -2253,6 +2284,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
 
               <form onSubmit={handleAuthSubmit} className="flex flex-col gap-3">
                 <input
+                  ref={emailInputRef}
                   type="email"
                   required
                   aria-label={L.email}
@@ -2311,11 +2343,6 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                 {authError && (
                   <p className="text-[12px] text-accentText text-center">
                     {authError}
-                  </p>
-                )}
-                {authNotice && (
-                  <p className="text-[12px] text-dim text-center">
-                    {authNotice}
                   </p>
                 )}
               </form>
