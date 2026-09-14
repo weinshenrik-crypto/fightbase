@@ -620,12 +620,15 @@ type ResultRow = {
 };
 
 /**
- * So viele Tage stehen beim Laden offen. Drei, damit oben dasselbe zu sehen ist
- * wie vorher und der lange Rest der Saison eine kurze Liste bleibt, die man
- * aufklappt — bei 54 Tagen im Kalender ist alles offen zu lang und alles zu
- * eine leere Seite.
+ * Wie weit voraus Tage beim Laden offen stehen: die naechsten zwei Wochen.
+ *
+ * Vorher waren es schlicht die ersten drei Gruppen — das haengt aber daran, wie
+ * dicht der Kalender gerade ist. In einer ruhigen Woche standen damit Termine
+ * offen, die sechs Wochen weit weg sind; in einer vollen Woche war schon der
+ * uebernaechste Tag zu. Ein Zeitraum ist das, was jemand meint, der "die
+ * naechsten Wochen" sehen will, und er bleibt bei jeder Kalenderdichte gleich.
  */
-const DAYS_OPEN_BY_DEFAULT = 3;
+const DAYS_AHEAD_OPEN_BY_DEFAULT = 14;
 
 const TABS = ["events", "results", "favorites", "fighters", "forum", "account"] as const;
 type TabId = (typeof TABS)[number];
@@ -971,12 +974,17 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
   // setState ruft, ist genau das, was react-hooks/set-state-in-effect anmerkt,
   // und die Regel blockiert die CI.
   const [dayOverrides, setDayOverrides] = useState<Record<string, boolean>>({});
-  const isDayOpen = (date: string, index: number) =>
-    dayOverrides[date] ?? index < DAYS_OPEN_BY_DEFAULT;
-  const toggleDay = (date: string, index: number) =>
+  // Vergangene Tage bleiben zu — in den Favoriten koennen welche stehen, und
+  // "die naechsten zwei Wochen" heisst nicht rueckwaerts.
+  const openByDefault = (date: string) => {
+    const dLeft = daysUntil(date);
+    return dLeft >= 0 && dLeft <= DAYS_AHEAD_OPEN_BY_DEFAULT;
+  };
+  const isDayOpen = (date: string) => dayOverrides[date] ?? openByDefault(date);
+  const toggleDay = (date: string) =>
     setDayOverrides((prev) => ({
       ...prev,
-      [date]: !(prev[date] ?? index < DAYS_OPEN_BY_DEFAULT),
+      [date]: !(prev[date] ?? openByDefault(date)),
     }));
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
   const [regEmailNotif, setRegEmailNotif] = useState(true);
@@ -1656,16 +1664,16 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                 <p className="text-[13px] text-dim">{L.adjustFilter}</p>
               </div>
             )}
-            {groupByDay(filtered).map((day, i) => (
+            {groupByDay(filtered).map((day) => (
               <Fragment key={day.date}>
                 <DayHeading
                   date={day.date}
                   count={day.events.length}
-                  open={isDayOpen(day.date, i)}
-                  onToggle={() => toggleDay(day.date, i)}
+                  open={isDayOpen(day.date)}
+                  onToggle={() => toggleDay(day.date)}
                   L={L}
                 />
-                {isDayOpen(day.date, i) &&
+                {isDayOpen(day.date) &&
                   day.events.map((e) => (
                   <EventCard
                     key={e.id}
@@ -1849,16 +1857,16 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                     <p className="text-[13px] text-dim">{L.noFavHint}</p>
                   </div>
                 )}
-                {groupByDay(favoriteEvents).map((day, i) => (
+                {groupByDay(favoriteEvents).map((day) => (
                   <Fragment key={day.date}>
                     <DayHeading
                       date={day.date}
                       count={day.events.length}
-                      open={isDayOpen(day.date, i)}
-                      onToggle={() => toggleDay(day.date, i)}
+                      open={isDayOpen(day.date)}
+                      onToggle={() => toggleDay(day.date)}
                       L={L}
                     />
-                    {isDayOpen(day.date, i) &&
+                    {isDayOpen(day.date) &&
                       day.events.map((e) => (
                   <EventCard
                     key={e.id}
