@@ -25,6 +25,32 @@ export type FightEvent = {
 };
 
 
+/**
+ * Ueberschrift und Unterzeile einer Eventkarte.
+ *
+ * `main` ist nicht bei allen Events dasselbe. Bei einem Kampf steht dort die
+ * Paarung ("Rousal vs. Magard") — die gehoert nach oben. Bei einem Turnier
+ * steht dort die Kategorie ("Gi divisions", "Freestyle"), und die sagt als
+ * Ueberschrift nichts: Seit der automatische Import laeuft, stehen Dutzende
+ * IBJJF-Turniere untereinander, deren Karten alle "Gi divisions" oder "No-gi
+ * divisions" heissen, waehrend der Turniername klein und grau darunter steht.
+ * Wer die Liste ueberfliegt, kann Manaus nicht von Turin unterscheiden.
+ *
+ * Deshalb fuehrt bei Turnieren der Name, und die Kategorie rutscht in die
+ * Unterzeile. Kriterium ist das Kaempferpaar, nicht die Quelle: Auch ein von
+ * Hand gepflegtes Turnier hat keine Paarung, und ein importiertes Event mit
+ * Paarung waere ein Kampf.
+ *
+ * `sub` ist leer, wenn beide Felder dasselbe sagen — sonst stuende die
+ * Ueberschrift zweimal untereinander.
+ */
+export function eventHeadline(e: FightEvent): { headline: string; sub: string } {
+  const { headline, sub } = e.fighters
+    ? { headline: e.main, sub: e.title }
+    : { headline: e.title, sub: e.main };
+  return { headline, sub: sub.trim() === headline.trim() ? "" : sub };
+}
+
 export const SPORTS = [
   "All",
   "MMA",
@@ -86,7 +112,33 @@ export function formatDate(iso: string) {
   const weekday = d.toLocaleDateString("en-GB", { weekday: "short" });
   const day = d.getDate();
   const month = d.toLocaleDateString("en-GB", { month: "short" });
-  return { weekday, day, month };
+  // Ausgeschrieben fuer die Tagesueberschrift der Zeitleiste; die Karten
+  // brauchen weiterhin die kurze Form.
+  const monthLong = d.toLocaleDateString("en-GB", { month: "long" });
+  return { weekday, day, month, monthLong };
+}
+
+/** Ein Kalendertag mit den Events, die an ihm stattfinden. */
+export type EventDay = { date: string; events: FightEvent[] };
+
+/**
+ * Events nach Kalendertag buendeln, in der Reihenfolge des ersten Auftretens.
+ *
+ * Anlass: An einem starken Wochenende stehen neun Turniere am selben Tag. Trug
+ * jede Karte ihren eigenen Datumsblock, stand derselbe Tag neunmal untereinander
+ * und "in 5 days" ebenfalls. Beides gehoert einmal an den Anfang des Tages.
+ *
+ * Die Reihenfolge der Eingabe bleibt erhalten — die Listen sind bereits sortiert,
+ * und diese Funktion soll nicht heimlich eine zweite Sortierung einfuehren.
+ */
+export function groupByDay(events: FightEvent[]): EventDay[] {
+  const byDate = new Map<string, FightEvent[]>();
+  for (const e of events) {
+    const day = byDate.get(e.date);
+    if (day) day.push(e);
+    else byDate.set(e.date, [e]);
+  }
+  return [...byDate].map(([date, list]) => ({ date, events: list }));
 }
 
 export function daysUntil(iso: string) {
