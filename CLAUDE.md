@@ -186,10 +186,19 @@ Sammel-Kalender. Was sich bewährt hat:
 | Jiu-Jitsu | `ibjjf.com/api/v1/events/calendar.json` | Kompletter Kalender als JSON. Braucht `X-Requested-With: XMLHttpRequest`, sonst `{"error":"Denied"}`. Beste Quelle im ganzen Projekt. |
 | Judo | `ijf.org/calendar` | Vollständig, Senioren und Nachwuchs gemischt — nur Senior/Elite eintragen. |
 | Karate | `wkf.net/karate-one` | Premier League, Series A und Youth League, zwei Jahre im Voraus. |
-| Ringen | `uww.org/events` | `uww.org/calendar` existiert nicht (404). |
+| Ringen | `uww.org/events`, nur der `ld+json`-Block | `uww.org/calendar` existiert nicht (404). Die Tabelle auf `/events` wird seit dem Umbau im September 2026 erst im Browser gefüllt — im HTML stehen leere `<tr>`. Lesbar bleibt der Suchmaschinen-Block (`@graph` → `ItemList` → `SportsEvent`), und der führt nur die **nächsten drei** Termine. |
 
 IBJJF, IJF und WKF sind JS-gerendert; ein simpler Fetch liefert bei WKF und IJF
 trotzdem Text, bei IBJJF nur über die JSON-API oben.
+
+**Ringen deckt der Import nur noch dünn ab.** Die vollständige Liste liegt hinter
+`athena.uww.org/api/public/competitions…`, und die antwortet ohne Zugangsdaten mit
+401 — daran nicht vorbeibauen. Die drei Termine aus dem `ld+json` sind das, was
+öffentlich lesbar ist; alles Weitere gehört von Hand eingetragen. Die
+Sport-Landingpage erklärt die Lücke offen, genau wie bei Muay Thai. Auch die
+Filter sind dort schwächer als bei den anderen Quellen: Altersklasse und
+Turniertyp kommen nur noch aus dem Turniernamen, weil der Block keine eigenen
+Spalten dafür hat (Begründung im Kopf von `lib/eventSources/uww.ts`).
 
 **Muay Thai lässt sich nicht befüllen.** Geprüft: die RWS-Event-Seite
 (`rank.rajadamnern.com/events`) ist leer, und ONE kündigt seine Karten erst
