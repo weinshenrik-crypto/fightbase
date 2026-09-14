@@ -974,17 +974,31 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
   // setState ruft, ist genau das, was react-hooks/set-state-in-effect anmerkt,
   // und die Regel blockiert die CI.
   const [dayOverrides, setDayOverrides] = useState<Record<string, boolean>>({});
-  // Vergangene Tage bleiben zu — in den Favoriten koennen welche stehen, und
-  // "die naechsten zwei Wochen" heisst nicht rueckwaerts.
-  const openByDefault = (date: string) => {
+  /**
+   * Offen beim Laden: die naechsten zwei Wochen — und immer der erste Tag der
+   * Liste, auch wenn er weiter weg liegt.
+   *
+   * Ohne die zweite Bedingung stand die Seite ganz zugeklappt da, sobald in den
+   * naechsten zwei Wochen nichts stattfindet. Das ist kein Randfall: Mit einem
+   * Sportfilter trifft es sechs der neun Sportarten (Muay Thai, Kickboxen,
+   * Judo, Ringen, Karate, Taekwondo) — deren naechster Termin liegt zwischen 18
+   * und 75 Tagen weit weg. Wer auf "Judo" tippt, bekam eine Liste aus lauter
+   * zugeklappten Zeilen und keine einzige Karte. Das sieht aus wie ein Fehler.
+   *
+   * Vergangene Tage bleiben sonst zu: In den Favoriten koennen welche stehen,
+   * und "die naechsten zwei Wochen" heisst nicht rueckwaerts.
+   */
+  const openByDefault = (date: string, isFirst: boolean) => {
+    if (isFirst) return true;
     const dLeft = daysUntil(date);
     return dLeft >= 0 && dLeft <= DAYS_AHEAD_OPEN_BY_DEFAULT;
   };
-  const isDayOpen = (date: string) => dayOverrides[date] ?? openByDefault(date);
-  const toggleDay = (date: string) =>
+  const isDayOpen = (date: string, isFirst: boolean) =>
+    dayOverrides[date] ?? openByDefault(date, isFirst);
+  const toggleDay = (date: string, isFirst: boolean) =>
     setDayOverrides((prev) => ({
       ...prev,
-      [date]: !(prev[date] ?? openByDefault(date)),
+      [date]: !(prev[date] ?? openByDefault(date, isFirst)),
     }));
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
   const [regEmailNotif, setRegEmailNotif] = useState(true);
@@ -1664,16 +1678,16 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                 <p className="text-[13px] text-dim">{L.adjustFilter}</p>
               </div>
             )}
-            {groupByDay(filtered).map((day) => (
+            {groupByDay(filtered).map((day, i) => (
               <Fragment key={day.date}>
                 <DayHeading
                   date={day.date}
                   count={day.events.length}
-                  open={isDayOpen(day.date)}
-                  onToggle={() => toggleDay(day.date)}
+                  open={isDayOpen(day.date, i === 0)}
+                  onToggle={() => toggleDay(day.date, i === 0)}
                   L={L}
                 />
-                {isDayOpen(day.date) &&
+                {isDayOpen(day.date, i === 0) &&
                   day.events.map((e) => (
                   <EventCard
                     key={e.id}
@@ -1857,16 +1871,16 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                     <p className="text-[13px] text-dim">{L.noFavHint}</p>
                   </div>
                 )}
-                {groupByDay(favoriteEvents).map((day) => (
+                {groupByDay(favoriteEvents).map((day, i) => (
                   <Fragment key={day.date}>
                     <DayHeading
                       date={day.date}
                       count={day.events.length}
-                      open={isDayOpen(day.date)}
-                      onToggle={() => toggleDay(day.date)}
+                      open={isDayOpen(day.date, i === 0)}
+                      onToggle={() => toggleDay(day.date, i === 0)}
                       L={L}
                     />
-                    {isDayOpen(day.date) &&
+                    {isDayOpen(day.date, i === 0) &&
                       day.events.map((e) => (
                   <EventCard
                     key={e.id}
