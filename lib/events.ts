@@ -112,7 +112,33 @@ export function formatDate(iso: string) {
   const weekday = d.toLocaleDateString("en-GB", { weekday: "short" });
   const day = d.getDate();
   const month = d.toLocaleDateString("en-GB", { month: "short" });
-  return { weekday, day, month };
+  // Ausgeschrieben fuer die Tagesueberschrift der Zeitleiste; die Karten
+  // brauchen weiterhin die kurze Form.
+  const monthLong = d.toLocaleDateString("en-GB", { month: "long" });
+  return { weekday, day, month, monthLong };
+}
+
+/** Ein Kalendertag mit den Events, die an ihm stattfinden. */
+export type EventDay = { date: string; events: FightEvent[] };
+
+/**
+ * Events nach Kalendertag buendeln, in der Reihenfolge des ersten Auftretens.
+ *
+ * Anlass: An einem starken Wochenende stehen neun Turniere am selben Tag. Trug
+ * jede Karte ihren eigenen Datumsblock, stand derselbe Tag neunmal untereinander
+ * und "in 5 days" ebenfalls. Beides gehoert einmal an den Anfang des Tages.
+ *
+ * Die Reihenfolge der Eingabe bleibt erhalten — die Listen sind bereits sortiert,
+ * und diese Funktion soll nicht heimlich eine zweite Sortierung einfuehren.
+ */
+export function groupByDay(events: FightEvent[]): EventDay[] {
+  const byDate = new Map<string, FightEvent[]>();
+  for (const e of events) {
+    const day = byDate.get(e.date);
+    if (day) day.push(e);
+    else byDate.set(e.date, [e]);
+  }
+  return [...byDate].map(([date, list]) => ({ date, events: list }));
 }
 
 export function daysUntil(iso: string) {

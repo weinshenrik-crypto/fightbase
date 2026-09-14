@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useStoredLang, setStoredLang } from "@/lib/clientStore";
 import Image from "next/image";
 import Link from "next/link";
@@ -12,6 +12,7 @@ import {
   formatDate,
   daysUntil,
   eventHeadline,
+  groupByDay,
   watchLinks,
   fighterSlug,
   sportSlug,
@@ -293,6 +294,48 @@ function FighterModal({
   );
 }
 
+/**
+ * Tagesueberschrift der Zeitleiste.
+ *
+ * Vorher trug jede Karte ihren eigenen Datumsblock. Am 17.10. stehen neun
+ * Turniere an — derselbe Tag stand dadurch neunmal untereinander, "in 33 days"
+ * ebenfalls. Beides gehoert einmal an den Anfang des Tages.
+ *
+ * Der Strich laeuft nach rechts bis zum Rand aus. Er ist das einzige Element,
+ * das die Kartenbreite bewusst durchbricht, und macht aus der Liste eine
+ * Zeitleiste statt einer Kartensammlung.
+ */
+function DayHeading({
+  date,
+  L,
+}: {
+  date: string;
+  L: Strings;
+}) {
+  const { weekday, day, monthLong } = formatDate(date);
+  const dLeft = daysUntil(date);
+  const soon = dLeft >= 0 && dLeft <= 2;
+  return (
+    <div className="md:col-span-full flex items-baseline gap-3 pt-3 first:pt-0">
+      <h2 className="font-display font-semibold text-[15px] uppercase tracking-[0.09em] text-text whitespace-nowrap">
+        {weekday} {day} {monthLong}
+      </h2>
+      <span
+        className={`text-[12px] whitespace-nowrap ${
+          soon ? "text-accentText font-semibold" : "text-dim"
+        }`}
+      >
+        {dLeft === 0
+          ? L.today
+          : dLeft > 0
+          ? `${L.daysPrefix}${dLeft}${L.daysSuffix}`
+          : L.past}
+      </span>
+      <span aria-hidden className="flex-1 h-px bg-border" />
+    </div>
+  );
+}
+
 function EventCard({
   e,
   isFav,
@@ -303,6 +346,7 @@ function EventCard({
   onSelectFighter,
   fightersData,
   results,
+  showDate = true,
   L,
 }: {
   e: FightEvent;
@@ -315,6 +359,11 @@ function EventCard({
   fightersData: Record<string, FighterRow>;
   /** Kampfergebnisse, sofern das Event gelaufen und ausgewertet ist. */
   results?: ResultRow[];
+  /**
+   * Eigener Datumsblock links neben der Karte. Aus, wo eine Tagesueberschrift
+   * darueber steht — dort waere er die neunte Wiederholung desselben Datums.
+   */
+  showDate?: boolean;
   L: Strings;
 }) {
   const { weekday, day, month } = formatDate(e.date);
@@ -330,7 +379,8 @@ function EventCard({
     : null;
 
   return (
-    <div className="flex gap-3.5">
+    <div className={showDate ? "flex gap-3.5" : ""}>
+      {showDate && (
       <div className="w-12 shrink-0 text-center pt-1">
         <div className="text-[11px] text-dim uppercase">{weekday}</div>
         <div className="font-display font-semibold text-[26px] leading-none text-text">
@@ -343,6 +393,7 @@ function EventCard({
           </div>
         )}
       </div>
+      )}
       <div
         onClick={onToggle}
         className={`flex-1 rounded-[10px] border p-3.5 px-4 cursor-pointer ${
@@ -352,8 +403,15 @@ function EventCard({
         <div className="flex justify-between items-center mb-1.5">
           <span className="text-[11px] font-semibold text-muted uppercase tracking-[0.08em]">
             {e.sport}
+            {!showDate && startTime && (
+              <span className="text-faint normal-case tracking-normal font-normal tabular-nums">
+                {" \u00b7 "}
+                {startTime}
+              </span>
+            )}
           </span>
           <div className="flex items-center gap-2">
+            {showDate && (
             <span
               className={`text-[11px] ${
                 soon ? "text-accentText font-semibold" : "text-dim"
@@ -365,6 +423,7 @@ function EventCard({
                 ? `${L.daysPrefix}${dLeft}${L.daysSuffix}`
                 : L.past}
             </span>
+            )}
             {onToggleEventFav && (
               <button
                 onClick={(ev) => {
@@ -1540,23 +1599,29 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                 <p className="text-[13px] text-dim">{L.adjustFilter}</p>
               </div>
             )}
-            {filtered.map((e) => (
-              <EventCard
-                key={e.id}
-                e={e}
-                isFav={isFavorited("promotion", e.promotion)}
-                isEventFav={isFavorited("event", e.id)}
-                onToggleEventFav={
-                  session ? () => toggleFavorite("event", e.id) : undefined
-                }
-                isOpen={expandedId === e.id}
-                onToggle={() =>
-                  setExpandedId(expandedId === e.id ? null : e.id)
-                }
-                onSelectFighter={setSelectedFighter}
-                fightersData={fightersData}
-                L={L}
-              />
+            {groupByDay(filtered).map((day) => (
+              <Fragment key={day.date}>
+                <DayHeading date={day.date} L={L} />
+                {day.events.map((e) => (
+                  <EventCard
+                    key={e.id}
+                    e={e}
+                    isFav={isFavorited("promotion", e.promotion)}
+                    isEventFav={isFavorited("event", e.id)}
+                    onToggleEventFav={
+                      session ? () => toggleFavorite("event", e.id) : undefined
+                    }
+                    isOpen={expandedId === e.id}
+                    onToggle={() =>
+                      setExpandedId(expandedId === e.id ? null : e.id)
+                    }
+                    onSelectFighter={setSelectedFighter}
+                    fightersData={fightersData}
+                    showDate={false}
+                    L={L}
+                  />
+                ))}
+              </Fragment>
             ))}
           </main>
 
@@ -1704,7 +1769,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                               onClick={() => toggleFavorite("event", f.value)}
                               className="text-[12px] px-2.5 py-1 rounded-md border border-accent text-text"
                             >
-                              ★ {ev?.main ?? f.value}
+                              ★ {ev ? eventHeadline(ev).headline : f.value}
                             </button>
                           );
                         })}
@@ -1720,7 +1785,10 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                     <p className="text-[13px] text-dim">{L.noFavHint}</p>
                   </div>
                 )}
-                {favoriteEvents.map((e) => (
+                {groupByDay(favoriteEvents).map((day) => (
+                  <Fragment key={day.date}>
+                    <DayHeading date={day.date} L={L} />
+                    {day.events.map((e) => (
                   <EventCard
                     key={e.id}
                     e={e}
@@ -1733,8 +1801,11 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                     }
                     onSelectFighter={setSelectedFighter}
                     fightersData={fightersData}
+                    showDate={false}
                     L={L}
                   />
+                    ))}
+                  </Fragment>
                 ))}
               </main>
             </>
