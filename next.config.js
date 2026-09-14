@@ -33,6 +33,19 @@ const nextConfig = {
     ];
   },
 
+  async rewrites() {
+    return [
+      // Android erwartet die Digital Asset Links genau unter diesem Pfad. Die
+      // Antwort baut app/api/assetlinks/route.ts aus ANDROID_CERT_SHA256 —
+      // eine Datei in public/ haette bedeutet, einen Fingerabdruck zu
+      // erfinden oder einen Debug-Wert dauerhaft einzuchecken.
+      {
+        source: "/.well-known/assetlinks.json",
+        destination: "/api/assetlinks",
+      },
+    ];
+  },
+
   async redirects() {
     return [
       // Die IJF stand früher unter zwei Promotion-Namen in der Datenbank

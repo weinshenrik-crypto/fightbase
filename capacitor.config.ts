@@ -6,10 +6,17 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'io.fightbase.app',
   appName: 'Fightbase',
-  webDir: 'out',
+  // Not a real web build: the shell loads the live site. This folder only
+  // holds the offline page below, because Capacitor expects a webDir with an
+  // entry file. It is checked in — `out/` is gitignored and would vanish.
+  webDir: 'native-web',
   server: {
     url: 'https://fightbase.io',
     cleartext: false,
+    // Shown when the WebView cannot reach the site at all. Without it the app
+    // falls back to Chrome's error page, complete with the URL — which looks
+    // like a broken app rather than a missing connection.
+    errorPath: 'error.html',
   },
   plugins: {
     SplashScreen: {
