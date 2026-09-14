@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import {
   formatDate,
   daysUntil,
+  eventHeadline,
   watchLinks,
   fighterSlug,
   PROMOTION_LINKS,
@@ -44,7 +45,13 @@ export async function generateMetadata(
   const params = await props.params;
   const event = await resolveEvent(params.id);
   if (!event) return {};
-  const title = `${event.main} — ${event.title} | Fightbase`;
+  // Bei einem Turnier ist event.main nur die Kategorie ("No-gi divisions").
+  // Als Seitentitel — in der Tableiste und im Suchergebnis — muss der
+  // Turniername vorne stehen, sonst heissen Dutzende Seiten fast gleich.
+  const { headline, sub } = eventHeadline(event);
+  const title = sub
+    ? `${headline} — ${sub} | Fightbase`
+    : `${headline} | Fightbase`;
   const description = `${event.title} (${event.promotion}) on ${event.date} at ${event.venue}. ${event.note}`;
   return {
     title,
@@ -83,11 +90,12 @@ export default async function EventPage(
 
   const locality = venueLocality(event.venue);
   const organizerUrl = PROMOTION_LINKS[event.promotion];
+  const head = eventHeadline(event);
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SportsEvent",
-    name: event.main,
+    name: eventHeadline(event).headline,
     startDate: event.date,
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
@@ -183,10 +191,10 @@ export default async function EventPage(
         )}
 
       <h1 className="font-display font-bold text-[26px] text-text mb-1">
-        {event.main}
+        {head.headline}
       </h1>
       <p className="text-[15px] text-muted mb-1">
-        {event.title} · {event.promotion}
+        {head.sub ? `${head.sub} · ${event.promotion}` : event.promotion}
       </p>
       <p className="text-[13px] text-faint mb-5">
         {event.venue}

@@ -25,6 +25,32 @@ export type FightEvent = {
 };
 
 
+/**
+ * Ueberschrift und Unterzeile einer Eventkarte.
+ *
+ * `main` ist nicht bei allen Events dasselbe. Bei einem Kampf steht dort die
+ * Paarung ("Rousal vs. Magard") — die gehoert nach oben. Bei einem Turnier
+ * steht dort die Kategorie ("Gi divisions", "Freestyle"), und die sagt als
+ * Ueberschrift nichts: Seit der automatische Import laeuft, stehen Dutzende
+ * IBJJF-Turniere untereinander, deren Karten alle "Gi divisions" oder "No-gi
+ * divisions" heissen, waehrend der Turniername klein und grau darunter steht.
+ * Wer die Liste ueberfliegt, kann Manaus nicht von Turin unterscheiden.
+ *
+ * Deshalb fuehrt bei Turnieren der Name, und die Kategorie rutscht in die
+ * Unterzeile. Kriterium ist das Kaempferpaar, nicht die Quelle: Auch ein von
+ * Hand gepflegtes Turnier hat keine Paarung, und ein importiertes Event mit
+ * Paarung waere ein Kampf.
+ *
+ * `sub` ist leer, wenn beide Felder dasselbe sagen — sonst stuende die
+ * Ueberschrift zweimal untereinander.
+ */
+export function eventHeadline(e: FightEvent): { headline: string; sub: string } {
+  const { headline, sub } = e.fighters
+    ? { headline: e.main, sub: e.title }
+    : { headline: e.title, sub: e.main };
+  return { headline, sub: sub.trim() === headline.trim() ? "" : sub };
+}
+
 export const SPORTS = [
   "All",
   "MMA",

@@ -9,6 +9,7 @@ import {
   formatDate,
   sortForCalendar,
   daysUntil,
+  eventHeadline,
 } from "@/lib/events";
 import { getEvents } from "@/lib/eventsDb";
 import { SPORT_GUIDES } from "@/lib/sportGuides";
@@ -109,6 +110,7 @@ export default async function SportPage({
         )}
         {events.map((e) => {
           const { weekday, day, month } = formatDate(e.date);
+          const { headline, sub } = eventHeadline(e);
           return (
             <Link
               key={e.id}
@@ -126,10 +128,11 @@ export default async function SportPage({
               </div>
               <div>
                 <p className="text-[14px] font-semibold text-text">
-                  {e.main}
+                  {headline}
                 </p>
                 <p className="text-[12px] text-faint">
-                  {e.title} · {e.promotion} · in {daysUntil(e.date)} days
+                  {sub ? `${sub} · ` : ""}
+                  {e.promotion} · in {daysUntil(e.date)} days
                 </p>
               </div>
             </Link>

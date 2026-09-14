@@ -11,6 +11,7 @@ import {
   SPORTS,
   formatDate,
   daysUntil,
+  eventHeadline,
   watchLinks,
   fighterSlug,
   sportSlug,
@@ -317,6 +318,11 @@ function EventCard({
 }) {
   const { weekday, day, month } = formatDate(e.date);
   const dLeft = daysUntil(e.date);
+  const { headline, sub } = eventHeadline(e);
+  // Rot markiert, was zeitlich draengt — nicht jede Zeile. Vorher trug jede
+  // Karte ihre Sportart in Akzentrot; auf einer Liste aus 30 Karten war Rot
+  // damit die haeufigste Farbe und hob nichts mehr hervor.
+  const soon = dLeft >= 0 && dLeft <= 2;
   const links = watchLinks(e.broadcaster);
   const startTime = e.startsAt
     ? venueTime(e.startsAt, e.timezone)
@@ -343,11 +349,15 @@ function EventCard({
         }`}
       >
         <div className="flex justify-between items-center mb-1.5">
-          <span className="text-[11px] font-semibold text-accentText tracking-wide">
+          <span className="text-[11px] font-semibold text-muted uppercase tracking-[0.08em]">
             {e.sport}
           </span>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-dim">
+            <span
+              className={`text-[11px] ${
+                soon ? "text-accentText font-semibold" : "text-dim"
+              }`}
+            >
               {dLeft === 0
                 ? L.today
                 : dLeft > 0
@@ -388,10 +398,10 @@ function EventCard({
         )}
 
         <h2 className="font-display font-semibold text-[18px] leading-tight text-text mb-1">
-          {e.main}
+          {headline}
         </h2>
         <p className="text-[13px] text-muted mb-0.5">
-          {e.title} · {e.promotion}
+          {sub ? `${sub} · ${e.promotion}` : e.promotion}
         </p>
         <p className="text-[12px] text-faint mb-1.5">
           {e.venue}
@@ -1498,7 +1508,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
           </div>
 
           {/* Timeline */}
-          <main className="px-5 pt-5 flex flex-col gap-[18px] md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
+          <main className="px-5 pt-5 flex flex-col gap-[18px] md:grid md:grid-cols-2 md:items-start md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
             {filtered.length === 0 && (
               <div className="text-center py-10 md:col-span-full">
                 <p className="text-[15px] text-text mb-1">{L.noEvents}</p>
@@ -1678,7 +1688,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                 </div>
               </div>
 
-              <main className="px-5 pt-5 flex flex-col gap-[18px] pb-6 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
+              <main className="px-5 pt-5 flex flex-col gap-[18px] pb-6 md:grid md:grid-cols-2 md:items-start md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
                 {favoriteEvents.length === 0 && (
                   <div className="text-center py-10 md:col-span-full">
                     <p className="text-[15px] text-text mb-1">{L.noFavYet}</p>
