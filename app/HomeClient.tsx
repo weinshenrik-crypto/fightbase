@@ -307,17 +307,37 @@ function FighterModal({
  */
 function DayHeading({
   date,
+  count,
+  open,
+  onToggle,
   L,
 }: {
   date: string;
+  count: number;
+  open: boolean;
+  onToggle: () => void;
   L: Strings;
 }) {
   const { weekday, day, monthLong } = formatDate(date);
   const dLeft = daysUntil(date);
   const soon = dLeft >= 0 && dLeft <= 2;
   return (
-    <div className="md:col-span-full flex items-baseline gap-3 pt-3 first:pt-0">
-      <h2 className="font-display font-semibold text-[15px] uppercase tracking-[0.09em] text-text whitespace-nowrap">
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={open}
+      aria-label={`${weekday} ${day} ${monthLong} — ${open ? L.hideDay : L.showDay}`}
+      className="md:col-span-full w-full flex items-baseline gap-3 pt-3 first:pt-0 text-left group"
+    >
+      <span
+        aria-hidden
+        className={`text-[10px] text-dim shrink-0 transition-transform ${
+          open ? "rotate-90" : ""
+        }`}
+      >
+        ▶
+      </span>
+      <h2 className="font-display font-semibold text-[15px] uppercase tracking-[0.09em] text-text whitespace-nowrap group-hover:text-accentText transition-colors">
         {weekday} {day} {monthLong}
       </h2>
       <span
@@ -332,7 +352,10 @@ function DayHeading({
           : L.past}
       </span>
       <span aria-hidden className="flex-1 h-px bg-border" />
-    </div>
+      <span className="text-[12px] text-faint whitespace-nowrap tabular-nums shrink-0">
+        {count} {count === 1 ? L.eventOne : L.eventMany}
+      </span>
+    </button>
   );
 }
 
@@ -378,8 +401,12 @@ function EventCard({
     ? venueTime(e.startsAt, e.timezone)
     : null;
 
+  // h-full statt flex-1, wo kein Datumsblock daneben steht: Die Karte ist dann
+  // direktes Rasterkind und soll wie vorher auf die Hoehe der hoechsten Karte
+  // ihrer Reihe gehen. Eine Kampfkarte mit zwei Kaempferbildern ist deutlich
+  // hoeher als eine Turnierkarte; ohne das steht die Reihe ungleich hoch da.
   return (
-    <div className={showDate ? "flex gap-3.5" : ""}>
+    <div className={showDate ? "flex gap-3.5" : "h-full"}>
       {showDate && (
       <div className="w-12 shrink-0 text-center pt-1">
         <div className="text-[11px] text-dim uppercase">{weekday}</div>
@@ -396,9 +423,9 @@ function EventCard({
       )}
       <div
         onClick={onToggle}
-        className={`flex-1 rounded-[10px] border p-3.5 px-4 cursor-pointer ${
-          isFav ? "border-borderFav bg-panelFav" : "border-border bg-panel"
-        }`}
+        className={`rounded-[10px] border p-3.5 px-4 cursor-pointer ${
+          showDate ? "flex-1" : "h-full"
+        } ${isFav ? "border-borderFav bg-panelFav" : "border-border bg-panel"}`}
       >
         <div className="flex justify-between items-center mb-1.5">
           <span className="text-[11px] font-semibold text-muted uppercase tracking-[0.08em]">
@@ -592,6 +619,14 @@ type ResultRow = {
   note: string;
 };
 
+/**
+ * So viele Tage stehen beim Laden offen. Drei, damit oben dasselbe zu sehen ist
+ * wie vorher und der lange Rest der Saison eine kurze Liste bleibt, die man
+ * aufklappt — bei 54 Tagen im Kalender ist alles offen zu lang und alles zu
+ * eine leere Seite.
+ */
+const DAYS_OPEN_BY_DEFAULT = 3;
+
 const TABS = ["events", "results", "favorites", "fighters", "forum", "account"] as const;
 type TabId = (typeof TABS)[number];
 
@@ -614,6 +649,10 @@ const STRINGS = {
     watchOn: "Watch on",
     today: "today",
     past: "past",
+    eventOne: "event",
+    eventMany: "events",
+    showDay: "Show events",
+    hideDay: "Hide events",
     daysPrefix: "in ",
     daysSuffix: " days",
     anonymous: "Anonymous",
@@ -747,6 +786,10 @@ const STRINGS = {
     watchOn: "Schauen auf",
     today: "heute",
     past: "vergangen",
+    eventOne: "Termin",
+    eventMany: "Termine",
+    showDay: "Termine einblenden",
+    hideDay: "Termine ausblenden",
     daysPrefix: "in ",
     daysSuffix: " Tagen",
     anonymous: "Anonym",
@@ -921,6 +964,20 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
   const [favoriteStore, setFavoriteStore] = useState<FavoriteStore | null>(null);
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Welche Tage jemand selbst auf- oder zugeklappt hat. Was hier nicht
+  // drinsteht, folgt der Vorgabe unten. Bewusst ein Override-Objekt und kein
+  // Anfangszustand, den ein Effekt setzt: Ein useEffect, der nach dem Mount
+  // setState ruft, ist genau das, was react-hooks/set-state-in-effect anmerkt,
+  // und die Regel blockiert die CI.
+  const [dayOverrides, setDayOverrides] = useState<Record<string, boolean>>({});
+  const isDayOpen = (date: string, index: number) =>
+    dayOverrides[date] ?? index < DAYS_OPEN_BY_DEFAULT;
+  const toggleDay = (date: string, index: number) =>
+    setDayOverrides((prev) => ({
+      ...prev,
+      [date]: !(prev[date] ?? index < DAYS_OPEN_BY_DEFAULT),
+    }));
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
   const [regEmailNotif, setRegEmailNotif] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
@@ -1592,17 +1649,24 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
           </div>
 
           {/* Timeline */}
-          <main className="px-5 pt-5 flex flex-col gap-[18px] md:grid md:grid-cols-2 md:items-start md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
+          <main className="px-5 pt-5 flex flex-col gap-[18px] md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
             {filtered.length === 0 && (
               <div className="text-center py-10 md:col-span-full">
                 <p className="text-[15px] text-text mb-1">{L.noEvents}</p>
                 <p className="text-[13px] text-dim">{L.adjustFilter}</p>
               </div>
             )}
-            {groupByDay(filtered).map((day) => (
+            {groupByDay(filtered).map((day, i) => (
               <Fragment key={day.date}>
-                <DayHeading date={day.date} L={L} />
-                {day.events.map((e) => (
+                <DayHeading
+                  date={day.date}
+                  count={day.events.length}
+                  open={isDayOpen(day.date, i)}
+                  onToggle={() => toggleDay(day.date, i)}
+                  L={L}
+                />
+                {isDayOpen(day.date, i) &&
+                  day.events.map((e) => (
                   <EventCard
                     key={e.id}
                     e={e}
@@ -1778,17 +1842,24 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                 </div>
               </div>
 
-              <main className="px-5 pt-5 flex flex-col gap-[18px] pb-6 md:grid md:grid-cols-2 md:items-start md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
+              <main className="px-5 pt-5 flex flex-col gap-[18px] pb-6 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
                 {favoriteEvents.length === 0 && (
                   <div className="text-center py-10 md:col-span-full">
                     <p className="text-[15px] text-text mb-1">{L.noFavYet}</p>
                     <p className="text-[13px] text-dim">{L.noFavHint}</p>
                   </div>
                 )}
-                {groupByDay(favoriteEvents).map((day) => (
+                {groupByDay(favoriteEvents).map((day, i) => (
                   <Fragment key={day.date}>
-                    <DayHeading date={day.date} L={L} />
-                    {day.events.map((e) => (
+                    <DayHeading
+                      date={day.date}
+                      count={day.events.length}
+                      open={isDayOpen(day.date, i)}
+                      onToggle={() => toggleDay(day.date, i)}
+                      L={L}
+                    />
+                    {isDayOpen(day.date, i) &&
+                      day.events.map((e) => (
                   <EventCard
                     key={e.id}
                     e={e}
