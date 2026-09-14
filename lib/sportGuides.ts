@@ -143,6 +143,10 @@ export const SPORT_GUIDES: Record<string, SportGuide> = {
         heading: "The international calendar",
         body: "United World Wrestling runs a Ranking Series of tournaments through the year, with the World Championships as the season's final event and the last chance to earn ranking points. Continental championships for Europe, Asia, Africa, Oceania and the Americas sit alongside them. Seeding at the World Championships comes from ranking points, which is why wrestlers who have already qualified still enter mid-season events.",
       },
+      {
+        heading: "Why this calendar is short",
+        body: "United World Wrestling publishes its full schedule inside its own web application, and the data service behind it is not open. What can be read from the outside is a short list of the next few events. We take those, add the World Championships, Ranking Series legs and continental titles by hand, and leave out anything we cannot source — which is why this page lists fewer events than the wrestling season actually holds.",
+      },
     ],
   },
 

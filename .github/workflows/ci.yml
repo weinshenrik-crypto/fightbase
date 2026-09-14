@@ -41,6 +41,12 @@ jobs:
       - name: Event-Lookup pruefen
         run: npx tsx scripts/check-event-lookup.ts
 
+      # Die UWW-Quelle liest den ld+json-Block der Seite, weil deren Tabelle
+      # erst im Browser gefuellt wird. Der Test laeuft gegen eine gestubbte
+      # Seite, braucht also kein Netz.
+      - name: UWW-Quelle pruefen
+        run: npx tsx scripts/check-uww-source.ts
+
       # Blockierend, seit die acht set-state-in-effect-Fehler weg sind.
       # Warnungen bleiben Warnungen — eslint beendet sich dafuer mit 0.
       - name: Lint
