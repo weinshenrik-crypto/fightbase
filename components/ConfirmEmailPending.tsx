@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 // Der Wartezustand nach der Registrierung. Tritt im Account-Panel an die Stelle
@@ -49,50 +49,6 @@ const TEXT = {
   },
 } satisfies Record<Lang, unknown>;
 
-/**
- * Kurzer Zwei-Ton-Chime, direkt erzeugt statt aus einer Audiodatei — das Projekt
- * haette sonst sein erstes Binaer-Asset nur fuer einen Viertelsekundenton.
- *
- * Der Klick auf "Registrieren" liegt unmittelbar davor und zaehlt als Nutzergeste,
- * deshalb greift die Autoplay-Sperre der Browser hier nicht.
- */
-function playChime() {
-  try {
-    const Ctor =
-      window.AudioContext ??
-      (window as unknown as { webkitAudioContext?: typeof AudioContext })
-        .webkitAudioContext;
-    if (!Ctor) return;
-
-    const ctx = new Ctor();
-    const start = ctx.currentTime;
-
-    [880, 1320].forEach((frequency, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = frequency;
-
-      // Ein hart ein- und ausgeschalteter Sinus knackt hoerbar. Die kurzen
-      // Rampen an beiden Enden sind genau dagegen.
-      const at = start + i * 0.12;
-      gain.gain.setValueAtTime(0, at);
-      gain.gain.linearRampToValueAtTime(0.06, at + 0.012);
-      gain.gain.linearRampToValueAtTime(0, at + 0.12);
-
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(at);
-      osc.stop(at + 0.13);
-    });
-
-    // Ein nicht geschlossener AudioContext bleibt offen; Browser erlauben nur
-    // eine begrenzte Zahl davon pro Seite.
-    window.setTimeout(() => void ctx.close(), 600);
-  } catch {
-    // Der Ton ist Beiwerk. Faellt AudioContext aus, bleibt der Rest bestehen.
-  }
-}
-
 export default function ConfirmEmailPending({
   email,
   lang,
@@ -108,14 +64,6 @@ export default function ConfirmEmailPending({
   const [sending, setSending] = useState(false);
   const [resent, setResent] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Einmal beim Erscheinen, nicht bei jedem Re-Render.
-  const chimePlayed = useRef(false);
-  useEffect(() => {
-    if (chimePlayed.current) return;
-    chimePlayed.current = true;
-    playChime();
-  }, []);
 
   // Der Countdown laeuft ab dem Erscheinen, nicht ab dem ersten Klick: Die erste
   // Mail ist gerade rausgegangen, Supabases Minimum-Intervall laeuft also schon.
