@@ -34,8 +34,18 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="fightbase.io" />
-                <data android:scheme="https" android:host="www.fightbase.io" />
+                <!--
+                    Ein Attribut je data-Tag. Android fuehrt die Attribute aller
+                    data-Tags eines Filters zusammen und bildet daraus das
+                    Kreuzprodukt — https x {fightbase.io, www.fightbase.io}.
+                    Scheme und Host im selben Tag zu mischen ergibt dasselbe
+                    Ergebnis, liest sich aber so, als waeren es zwei getrennte
+                    Paare; Android Lint merkt das als
+                    IntentFilterUniqueDataAttributes an.
+                -->
+                <data android:scheme="https" />
+                <data android:host="fightbase.io" />
+                <data android:host="www.fightbase.io" />
             </intent-filter>
         </activity>
 

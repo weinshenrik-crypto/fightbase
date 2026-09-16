@@ -300,6 +300,22 @@ cd android
 **JDK 21 ist Pflicht.** Das mit Android Studio gelieferte JDK 25 lässt Gradle 8.14 mit
 `Unsupported class file major version 69` abbrechen.
 
+### Ein Release herausgeben
+
+1. **`versionCode` in `android/app/build.gradle` erhöhen.** Play verlangt eine
+   streng steigende Zahl; ein AAB mit einer schon hochgeladenen Nummer wird
+   abgelehnt. `versionName` ist frei und nur für Menschen.
+2. `./gradlew bundleRelease` — braucht `android/keystore.properties` und
+   `android/app/fightbase-release.jks`, die es nur lokal gibt.
+3. AAB in der Play Console hochladen.
+
+**Nur nötig, wenn sich etwas Natives geändert hat.** Alles unter `app/`,
+`lib/` und `components/` ist über die WebView sofort in der App live und
+braucht kein Release.
+
+Vor dem ersten Release mit Deep Links muss `ANDROID_CERT_SHA256` gesetzt sein
+(siehe oben) — sonst verifiziert Android die Links beim Installieren nicht.
+
 Signierung liest `android/keystore.properties` (gitignored). Diese Datei und
 `android/app/fightbase-release.jks` existieren **nur lokal** — ohne sie kein Release-Build.
 
