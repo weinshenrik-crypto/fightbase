@@ -60,13 +60,32 @@ export async function fetchWikitext(title: string): Promise<string | null> {
   return page.revisions?.[0]?.slots?.main?.content ?? null;
 }
 
+/**
+ * Wikipedias Klammerzusatz zur Begriffsklärung aus einem Linkziel entfernen.
+ *
+ * Bei häufigen Namen trägt der Artikeltitel eine Unterscheidung:
+ * `[[Sean O'Malley (fighter)|Sean O'Malley]]`. Weil unten bewusst das Linkziel
+ * genommen wird und nicht der Anzeigetext, stand der Zusatz sonst im Namen —
+ * auf der Seite hätte „Sean O'Malley (fighter)" gegen „Marlon Vera" gekämpft.
+ *
+ * Bewusst nur am Ende und nur innerhalb des Linkziels: Eine Klammer außerhalb
+ * des Links ist eine Anmerkung des Artikels und keine Begriffsklärung.
+ */
+function stripDisambiguation(target: string): string {
+  return target.replace(/\s*\([^)]*\)\s*$/, "").trim();
+}
+
 /** [[Joshua Van|Van]] (c) -> Joshua Van. Links, Fett und Fußnoten raus. */
 function cleanName(raw: string): string {
   return raw
     .replace(/<ref[^>]*>[\s\S]*?<\/ref>/g, "")
     .replace(/<ref[^>]*\/>/g, "")
-    .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$1")
-    .replace(/\[\[([^\]]+)\]\]/g, "$1")
+    .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (_m, target: string) =>
+      stripDisambiguation(target)
+    )
+    .replace(/\[\[([^\]]+)\]\]/g, (_m, target: string) =>
+      stripDisambiguation(target)
+    )
     .replace(/'''?/g, "")
     .replace(/\{\{[^}]*\}\}/g, "")
     .replace(/\s*\((?:c|ic)\)\s*/gi, " ")
