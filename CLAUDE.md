@@ -302,12 +302,35 @@ cd android
 
 ### Ein Release herausgeben
 
+0. **Erst `git pull`.** Der häufigste Fehlschlag ist ein alter Checkout: Play
+   lehnt das AAB mit „Versionscode 1 wurde bereits verwendet" ab, weil die
+   Erhöhung aus einem Commit stammt, den der Arbeitsbaum noch nicht hat.
+   Blockiert der Pull wegen `next-env.d.ts`, ist das harmlos —
+   `git checkout -- next-env.d.ts`, die Datei erzeugt Next bei jedem Lauf neu
+   und ist seit `93b9a98` ohnehin nicht mehr eingecheckt.
 1. **`versionCode` in `android/app/build.gradle` erhöhen.** Play verlangt eine
    streng steigende Zahl; ein AAB mit einer schon hochgeladenen Nummer wird
    abgelehnt. `versionName` ist frei und nur für Menschen.
-2. `./gradlew bundleRelease` — braucht `android/keystore.properties` und
-   `android/app/fightbase-release.jks`, die es nur lokal gibt.
-3. AAB in der Play Console hochladen.
+2. `./gradlew bundleRelease` — braucht `android/keystore.properties`, die auf
+   den Keystore zeigt. Beide gibt es nur lokal.
+
+   Vorher `JAVA_HOME` setzen, sonst bricht es mit „Unable to locate a Java
+   Runtime" ab — Homebrews `openjdk@21` ist keg-only und liegt nicht im
+   Suchpfad:
+
+   ```bash
+   export JAVA_HOME=$(ls -d /opt/homebrew/Cellar/openjdk@21/*/libexec/openjdk.jdk/Contents/Home | tail -1)
+   ```
+
+   Fehlt `keystore.properties`, bricht der Build mit einer Meldung ab, die
+   sagt, was fehlt. Bis September 2026 war das eine nackte
+   `NullPointerException` in `signReleaseBundle` — falls die je wiederkommt,
+   ist die Prüfung in `android/app/build.gradle` verloren gegangen.
+3. Das AAB liegt unter
+   `android/app/build/outputs/bundle/release/app-release.aab` und geht in der
+   Play Console nach Test and release → Testing → Internal testing → Create
+   new release. Dort muss danach die neue Nummer stehen — das ist die
+   Kontrolle, ob wirklich der frische Build hochgeladen wurde.
 
 **Nur nötig, wenn sich etwas Natives geändert hat.** Alles unter `app/`,
 `lib/` und `components/` ist über die WebView sofort in der App live und

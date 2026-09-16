@@ -47,6 +47,12 @@ jobs:
       - name: UWW-Quelle pruefen
         run: npx tsx scripts/check-uww-source.ts
 
+      # Der Wikipedia-Parser fuer Ergebnisse, gegen feste Wikitext-Schnipsel
+      # statt gegen Wikipedia — laeuft also ohne Netz. Prueft unter anderem,
+      # dass Klammern nur aus Namen fallen und nicht aus der Methode.
+      - name: Ergebnis-Parser pruefen
+        run: npx tsx scripts/check-results-source.ts
+
       # Blockierend, seit die acht set-state-in-effect-Fehler weg sind.
       # Warnungen bleiben Warnungen — eslint beendet sich dafuer mit 0.
       - name: Lint
