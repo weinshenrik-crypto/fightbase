@@ -38,8 +38,42 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
+            // Nur zuweisen, wenn der Block oben auch gefuellt wurde. Fehlt
+            // keystore.properties, blieb signingConfigs.release leer und wurde
+            // trotzdem benutzt — siehe die Pruefung unter diesem Block.
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            }
         }
+    }
+}
+
+// Ohne keystore.properties lief ein Release-Build zwanzig Sekunden durch und
+// brach dann in :app:signReleaseBundle mit einer nackten NullPointerException
+// ab — ohne jeden Hinweis darauf, dass schlicht eine Datei fehlt. Diese
+// Pruefung sagt stattdessen, was fehlt, bevor irgendetwas gebaut wird.
+//
+// Debug-Builds sind nicht betroffen: Die signiert Android Studios
+// Debug-Keystore, und der wird bei Bedarf selbst angelegt.
+gradle.taskGraph.whenReady { graph ->
+    def signsRelease = graph.allTasks.any { it.name == 'signReleaseBundle' || it.name == 'packageRelease' }
+    if (signsRelease && !keystorePropertiesFile.exists()) {
+        throw new GradleException(
+            "android/keystore.properties fehlt - ohne sie laesst sich kein Release signieren.\n" +
+            "\n" +
+            "Die Datei ist gitignored und existiert nur lokal. Sie braucht vier Zeilen:\n" +
+            "  storeFile=app/fightbase-release.jks\n" +
+            "  storePassword=<Passwort des Keystores>\n" +
+            "  keyAlias=<Alias>\n" +
+            "  keyPassword=<Passwort des Schluessels>\n" +
+            "\n" +
+            "Fehlt auch app/fightbase-release.jks: Der Upload-Schluessel laesst sich\n" +
+            "in der Play Console zuruecksetzen (Setup -> App integrity). Der\n" +
+            "App-Signaturschluessel liegt bei Google und geht dabei nicht verloren.\n" +
+            "\n" +
+            "Nur testen, ohne Signatur? ./gradlew assembleDebug baut eine APK, die\n" +
+            "sich installieren laesst."
+        )
     }
 }
 
