@@ -18,6 +18,35 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!--
+                Deep Links: Ein Link auf fightbase.io oeffnet die App statt den
+                Browser. autoVerify laesst Android beim Installieren
+                https://fightbase.io/.well-known/assetlinks.json abrufen und den
+                Fingerabdruck der Signatur vergleichen; erst wenn das passt,
+                uebernimmt die App die Links ohne Rueckfrage.
+
+                Die Ziel-URL laedt Capacitor nicht von selbst — das macht
+                MainActivity.openDeepLink(), und zwar nur fuer die beiden Hosts
+                unten.
+            -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!--
+                    Ein Attribut je data-Tag. Android fuehrt die Attribute aller
+                    data-Tags eines Filters zusammen und bildet daraus das
+                    Kreuzprodukt — https x {fightbase.io, www.fightbase.io}.
+                    Scheme und Host im selben Tag zu mischen ergibt dasselbe
+                    Ergebnis, liest sich aber so, als waeren es zwei getrennte
+                    Paare; Android Lint merkt das als
+                    IntentFilterUniqueDataAttributes an.
+                -->
+                <data android:scheme="https" />
+                <data android:host="fightbase.io" />
+                <data android:host="www.fightbase.io" />
+            </intent-filter>
         </activity>
 
         <provider

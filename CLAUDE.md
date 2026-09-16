@@ -241,6 +241,53 @@ API-Routes braucht, die ein statischer Export nicht abbilden kann.
 **Konsequenz:** Änderungen an der Website sind sofort in der App live — ein neuer
 App-Store-Release ist nur für native Änderungen nötig (Icons, Splash, Plugins, Berechtigungen).
 
+### Was nativ dazukommt
+
+`webDir` zeigt auf **`native-web/`**, nicht auf `out/`. Dort liegen zwei Dateien,
+mehr braucht die App lokal nicht:
+
+- `error.html` — erscheint, wenn die WebView `fightbase.io` nicht erreicht
+  (`server.errorPath`). Ohne sie zeigte die App Chromes Fehlerseite samt
+  Adresszeile, was nach kaputter App aussieht statt nach fehlender Verbindung.
+  Bewusst ohne Schriftdatei und ohne externes Skript — sie wird genau dann
+  gebraucht, wenn nichts geladen werden kann.
+- `index.html` — nur da, weil Capacitor im `webDir` eine Einstiegsseite
+  erwartet. Im Betrieb nie sichtbar.
+
+`out/` ist gitignored und wäre für andere verschwunden; deshalb ein eigener,
+eingecheckter Ordner.
+
+`MainActivity.java` ist nicht mehr leer. Zwei Dinge, die Capacitor 8 in dieser
+Lage nicht mitbringt:
+
+- **Zurück-Taste.** Im Paket `@capacitor/android` kommt „BackPressed" an keiner
+  Stelle mehr vor, und `@capacitor/app` ist hier nicht installiert. Ohne die
+  Behandlung schließt die Zurück-Taste auf der zweiten Seite die App, statt
+  zurückzugehen.
+- **Deep Links.** Der Intent-Filter im Manifest sorgt dafür, dass die App
+  geöffnet wird; die Ziel-URL lädt Capacitor aber nicht von selbst. Geladen
+  werden nur `fightbase.io` und `www.fightbase.io` — ein Intent kommt von außen,
+  und ohne Positivliste würde die App jede fremde URL in ihrer eigenen WebView
+  mit der angemeldeten Supabase-Sitzung öffnen.
+
+### Deep Links scharf schalten
+
+Android prüft beim Installieren `https://fightbase.io/.well-known/assetlinks.json`.
+Den Pfad schreibt `next.config.js` auf `app/api/assetlinks/route.ts` um, und die
+Route baut die Antwort aus **`ANDROID_CERT_SHA256`**. Ist die Variable nicht
+gesetzt oder kein gültiger Fingerabdruck (32 Hex-Paare mit Doppelpunkt),
+antwortet sie mit 404 — dann greifen die Deep Links schlicht nicht, sonst
+ändert sich nichts.
+
+**Der richtige Wert ist der App-Signaturschlüssel aus der Play Console**
+(Setup → App integrity → App signing key certificate, SHA-256), *nicht* der
+Upload-Schlüssel: Beim AAB signiert Google die Auslieferung selbst neu. Mehrere
+Fingerabdrücke gehen kommagetrennt (z.B. zusätzlich der Upload-Schlüssel, damit
+ein selbst gebautes Release auch verifiziert).
+
+Zum Testen ohne Play Console lassen sich die Links auf dem Gerät von Hand
+erlauben: Einstellungen → Apps → Fightbase → Standardmäßig öffnen.
+
 Build:
 ```bash
 export ANDROID_HOME=/opt/homebrew/share/android-commandlinetools
@@ -252,6 +299,22 @@ cd android
 
 **JDK 21 ist Pflicht.** Das mit Android Studio gelieferte JDK 25 lässt Gradle 8.14 mit
 `Unsupported class file major version 69` abbrechen.
+
+### Ein Release herausgeben
+
+1. **`versionCode` in `android/app/build.gradle` erhöhen.** Play verlangt eine
+   streng steigende Zahl; ein AAB mit einer schon hochgeladenen Nummer wird
+   abgelehnt. `versionName` ist frei und nur für Menschen.
+2. `./gradlew bundleRelease` — braucht `android/keystore.properties` und
+   `android/app/fightbase-release.jks`, die es nur lokal gibt.
+3. AAB in der Play Console hochladen.
+
+**Nur nötig, wenn sich etwas Natives geändert hat.** Alles unter `app/`,
+`lib/` und `components/` ist über die WebView sofort in der App live und
+braucht kein Release.
+
+Vor dem ersten Release mit Deep Links muss `ANDROID_CERT_SHA256` gesetzt sein
+(siehe oben) — sonst verifiziert Android die Links beim Installieren nicht.
 
 Signierung liest `android/keystore.properties` (gitignored). Diese Datei und
 `android/app/fightbase-release.jks` existieren **nur lokal** — ohne sie kein Release-Build.
@@ -267,6 +330,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY    Public anon key
 SUPABASE_SERVICE_ROLE_KEY        Nur serverseitig — niemals an den Client
 RESEND_API_KEY                   E-Mail-Versand für Event-Erinnerungen
 CRON_SECRET                      Schützt /api/cron/notify
+ANDROID_CERT_SHA256              SHA-256 des App-Signaturschlüssels, für die
+                                 Deep Links der Android-App. Optional; fehlt
+                                 sie, liefert /.well-known/assetlinks.json 404.
 ```
 
 ## Konventionen
