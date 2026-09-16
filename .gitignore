@@ -21,3 +21,14 @@ tsconfig.tsbuildinfo
 
 # Tunnel-Token und n8n-Verschlüsselungsschlüssel
 homeserver/.env
+
+# Signaturschluessel der Android-App und alles, was dazugehoert.
+#
+# android/.gitignore deckt *.jks nur unterhalb von android/ ab. Der Schluessel
+# liegt aber ausserhalb (wichtig/fightbase-release.jks), und ein `git add -A`
+# im Wurzelverzeichnis haette ihn mitgenommen. Wer den Upload-Schluessel
+# verliert, braucht einen Reset ueber die Play Console; wer ihn veroeffentlicht,
+# hat ein groesseres Problem.
+*.jks
+*.keystore
+keystore.properties
