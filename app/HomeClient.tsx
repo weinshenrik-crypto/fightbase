@@ -1568,7 +1568,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
   }, [fighterList, fighterSearch, fighterSportFilter, fightersData]);
 
   return (
-    <div className="max-w-[480px] md:max-w-3xl lg:max-w-5xl mx-auto min-h-screen pb-10">
+    <div className="max-w-[480px] md:max-w-3xl lg:max-w-5xl xl:max-w-7xl 2xl:max-w-[1440px] mx-auto min-h-screen pb-10">
       {/* Header */}
       <header className="px-5 pt-5 pb-2 border-b border-border flex items-center gap-3">
         <Image
@@ -1678,7 +1678,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                   L={L}
                 />
                 {isDayOpen(day.date, i === 0) && (
-                  <div className="flex flex-col gap-[18px] mt-2 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
+                  <div className="flex flex-col gap-[18px] mt-2 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3 xl:grid-cols-4">
                     {day.events.map((e) => (
                       <EventCard
                         key={e.id}
@@ -1875,7 +1875,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                       stickyTopClass="top-0"
                     />
                     {isDayOpen(day.date, i === 0) && (
-                      <div className="flex flex-col gap-[18px] mt-2 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
+                      <div className="flex flex-col gap-[18px] mt-2 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3 xl:grid-cols-4">
                         {day.events.map((e) => (
                           <EventCard
                             key={e.id}
@@ -2017,7 +2017,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
             </p>
           )}
 
-          <main className="px-5 pt-5 pb-10 flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-4 lg:grid-cols-3">
+          <main className="px-5 pt-5 pb-10 flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-4 lg:grid-cols-3 xl:grid-cols-4">
           {visibleFighters.map(({ name, upcoming }) => {
             const info = fightersData[name];
             const next = upcoming[0];
