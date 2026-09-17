@@ -228,3 +228,31 @@ Messbar, nicht nach Gefühl:
 ## Offene Punkte
 
 Keine.
+
+---
+
+## Nachtrag: Was bei der Umsetzung anders kam
+
+Eingetragen am 17. September 2026, nach Abschluss der Implementierung.
+
+**Der Cross-Fade ist entfallen.** Der Abschnitt „Motion" oben verspricht einen
+150-ms-Cross-Fade beim Wechsel der klebenden Datumszeile. Umgesetzt ist er
+**nicht**. Die vorgesehene Tailwind-Klasse allein bewirkt nichts, weil im Baum
+nie etwas `opacity` ändert — sie war toter Code und wurde entfernt. Ein echter
+Cross-Fade bräuchte einen `IntersectionObserver` samt State, und genau dieses
+Muster schließt CLAUDE.md aus (`react-hooks/set-state-in-effect` blockiert die
+CI). Die klebende Datumszeile funktioniert; sie blendet nur nicht.
+
+**Die erste Karte sitzt bei 316,5 px, nicht bei ~288.** Die Schätzung oben war
+zu optimistisch: Die Sportart-Liste im Kopf war rund 62 px hoch, nicht ~100.
+Das Abnahmekriterium (≤ 320 px) ist erfüllt, die genannte Zahl war es nicht.
+
+**Der Umbau betraf zwei Tabs, nicht einen.** `DayHeading` wird auch im
+Favoriten-Tab verwendet. Ohne den gleichen Umbau dort wären die Überschriften
+genau so gestapelt, wie Aufgabe 3 es verhindern soll.
+
+**Offen und bewusst zurückgestellt:** Die aufklappbare Event-Karte ist ein
+`div` mit `onClick`, ohne `role`, `tabIndex` oder `onKeyDown` — per Tastatur
+also nicht bedienbar. Das ist älter als dieser Durchgang, aber er entfernt mit
+„Tap for details" den letzten Hinweis darauf. Ein eigener Durchgang sollte
+hier ansetzen.
