@@ -337,7 +337,7 @@ function DayHeading({
       >
         ▶
       </span>
-      <h2 className="font-display font-semibold text-[15px] uppercase tracking-[0.09em] text-text whitespace-nowrap group-hover:text-accentText transition-colors">
+      <h2 className="font-display font-semibold text-[15px] uppercase tracking-[0.09em] text-text whitespace-nowrap group-hover:text-accentText transition-colors transition-opacity duration-150 motion-reduce:transition-none">
         {weekday} {day} {monthLong}
       </h2>
       <span
