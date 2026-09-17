@@ -38,6 +38,7 @@ export async function generateMetadata({
   return {
     title,
     description,
+    alternates: { canonical: `/sport/${slug}` },
     openGraph: { title, description, type: "website" },
     twitter: { card: "summary", title, description },
   };

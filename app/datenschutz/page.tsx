@@ -1,6 +1,7 @@
 import LegalShell from "@/components/LegalShell";
 
 export const metadata = {
+  alternates: { canonical: "/datenschutz" },
   title: "Privacy Policy — Fightbase",
 };
 

@@ -9,6 +9,14 @@ import { getEvents } from "@/lib/eventsDb";
 // erkennt keine importierten Bezeichner. Entspricht EVENTS_REVALIDATE.
 export const revalidate = 3600;
 
+// Eigener Canonical, weil die Startseite unter zwei Hostnamen erreichbar ist
+// (fightbase.io und www.fightbase.io liefern byte-gleichen Inhalt) und ohne
+// diesen Hinweis jede Seite doppelt im Index stehen kann. Loest relativ gegen
+// metadataBase aus app/layout.tsx auf.
+export const metadata = {
+  alternates: { canonical: "/" },
+};
+
 export default async function Home() {
   const events = await getEvents();
   return <HomeClient events={events} />;
