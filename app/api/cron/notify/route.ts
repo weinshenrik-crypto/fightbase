@@ -69,10 +69,10 @@ function buildEmailHtml(newEvents: FightEvent[], reminders: FightEvent[]) {
           Updates on your favorites
         </h1>
         <table role="presentation" width="100%">${rows}</table>
-        <p style="color:#5A5A5E;font-size:11px;line-height:1.6;text-align:center;margin:28px 0 0 0;">
+        <p style="color:#8A8A8E;font-size:11px;line-height:1.6;text-align:center;margin:28px 0 0 0;">
           You're getting this because you favorited a sport, fighter, promotion or event on
-          <a href="https://fightbase.io" style="color:#5A5A5E;">Fightbase</a>.
-          <a href="https://fightbase.io/?tab=account" style="color:#5A5A5E;">Manage notifications</a>.
+          <a href="https://fightbase.io" style="color:#8A8A8E;">Fightbase</a>.
+          <a href="https://fightbase.io/?tab=account" style="color:#8A8A8E;">Manage notifications</a>.
         </p>
       </td></tr>
     </table>

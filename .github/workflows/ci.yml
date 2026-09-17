@@ -53,6 +53,12 @@ jobs:
       - name: Ergebnis-Parser pruefen
         run: npx tsx scripts/check-results-source.ts
 
+      # Haelt das Farb-System zusammen: keine rohen Hex-Werte in Tailwind-Klassen
+      # und jede Textfarbe ueber 4.5:1. Zwei Werte waren genau so am System
+      # vorbeigelaufen und lagen bei 2.66:1 und 2.07:1.
+      - name: Farb-Tokens pruefen
+        run: npx tsx scripts/check-design-tokens.ts
+
       # Blockierend, seit die acht set-state-in-effect-Fehler weg sind.
       # Warnungen bleiben Warnungen — eslint beendet sich dafuer mit 0.
       - name: Lint

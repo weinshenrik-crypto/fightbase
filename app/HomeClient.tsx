@@ -538,7 +538,7 @@ function EventCard({
               </div>
             )}
             {links.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-1 border-t border-[#2E2E30] mt-1.5">
+              <div className="flex flex-wrap gap-1.5 pt-1 border-t border-borderStrong mt-1.5">
                 {links.map((l) =>
                   l.url ? (
                     <a
@@ -553,7 +553,7 @@ function EventCard({
                   ) : (
                     <span
                       key={l.label}
-                      className="text-[12px] px-2.5 py-1 rounded-md border border-[#2E2E30] text-faint"
+                      className="text-[12px] px-2.5 py-1 rounded-md border border-borderStrong text-faint"
                     >
                       {l.label}
                     </span>
@@ -570,7 +570,7 @@ function EventCard({
           </div>
         ) : (
           (e.note || links.length > 0) && (
-            <p className="text-[11px] text-[#5A5A5E]">
+            <p className="text-[12px] text-faint">
               {links.length > 0 ? L.tapForDetailsWatch : L.tapForDetails}
             </p>
           )
@@ -1661,7 +1661,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                   className={`text-[13px] font-medium px-3.5 py-1.5 rounded-full border transition-colors ${
                     active
                       ? "bg-accent border-accent text-white"
-                      : "border-[#3A3A3C] text-muted"
+                      : "border-borderStrong text-muted"
                   }`}
                 >
                   {s}
@@ -1712,7 +1712,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
           </main>
 
           <footer className="px-5 pt-6">
-            <p className="text-[11px] text-[#4A4A4E] leading-relaxed">
+            <p className="text-[12px] text-faint leading-relaxed">
               {L.footerNote}
             </p>
           </footer>
@@ -1781,7 +1781,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                           className={`text-[12px] px-2.5 py-1 rounded-md border transition-colors ${
                             isFav
                               ? "border-accent text-text"
-                              : "border-[#2E2E30] bg-panel text-faint"
+                              : "border-borderStrong bg-panel text-faint"
                           }`}
                         >
                           {isFav ? "★" : "☆"} {s}
@@ -1805,7 +1805,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                           className={`text-[12px] px-2.5 py-1 rounded-md border transition-colors ${
                             isFav
                               ? "border-accent text-text"
-                              : "border-[#2E2E30] bg-panel text-faint"
+                              : "border-borderStrong bg-panel text-faint"
                           }`}
                         >
                           {isFav ? "★" : "☆"} {p}
@@ -1942,7 +1942,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                   className={`text-[13px] font-medium px-3.5 py-1.5 rounded-full border transition-colors ${
                     active
                       ? "bg-accent border-accent text-white"
-                      : "border-[#3A3A3C] text-muted"
+                      : "border-borderStrong text-muted"
                   }`}
                 >
                   {s}
@@ -2687,7 +2687,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
             <Link
               key={s}
               href={`/sport/${sportSlug(s)}`}
-              className="text-[12px] px-2.5 py-1 rounded-md border border-[#2E2E30] text-faint hover:border-accent hover:text-text transition-colors"
+              className="text-[12px] px-2.5 py-1 rounded-md border border-borderStrong text-faint hover:border-accent hover:text-text transition-colors"
             >
               {s}
             </Link>
@@ -2704,7 +2704,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
             <Link
               key={p}
               href={`/promotion/${promotionSlug(p)}`}
-              className="text-[12px] px-2.5 py-1 rounded-md border border-[#2E2E30] text-faint hover:border-accent hover:text-text transition-colors"
+              className="text-[12px] px-2.5 py-1 rounded-md border border-borderStrong text-faint hover:border-accent hover:text-text transition-colors"
             >
               {p}
             </Link>
