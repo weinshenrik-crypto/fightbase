@@ -486,8 +486,22 @@ function EventCard({
           </div>
         )}
 
-        <h2 className="font-display font-semibold text-[18px] leading-tight text-text mb-1">
-          {headline}
+        {/* Der Titel ist ein echter Link, nicht nur klickbare Flaeche. Zwei
+            Gruende: Die Startseite gibt damit ueberhaupt erst interne Links an
+            die Eventseiten weiter — vorher war die Karte ein div mit onClick,
+            und Google fand von hier aus keinen einzigen /events/-Pfad. Und ein
+            <a> ist fokussierbar und mit Enter ausloesbar, waehrend die Karte
+            selbst per Tastatur unerreichbar bleibt.
+            stopPropagation, damit ein Klick auf den Titel navigiert statt
+            zusaetzlich die Karte aufzuklappen. */}
+        <h2 className="font-display font-semibold text-[18px] leading-tight mb-1">
+          <Link
+            href={`/events/${e.id}`}
+            onClick={(ev) => ev.stopPropagation()}
+            className="text-text hover:text-accentText focus-visible:text-accentText transition-colors"
+          >
+            {headline}
+          </Link>
         </h2>
         <p className="text-[13px] text-muted mb-0.5">
           {sub ? `${sub} · ${e.promotion}` : e.promotion}
