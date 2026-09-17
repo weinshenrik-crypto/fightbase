@@ -7,3 +7,11 @@ body {
   background: #0c0c0d;
   color: #edeae4;
 }
+
+/* Zwei klebende Ebenen liegen ueber der Liste: die Filterreihe (77px) und
+   darunter die Datumszeile (47px). Ohne diesen Versatz scrollt der Browser
+   ein rueckwaerts fokussiertes Element genau darunter, wo es unsichtbar ist
+   — WCAG 2.2 SC 2.4.11. Beide Hoehen sind bei 375 und 1440 px gleich. */
+html {
+  scroll-padding-top: 124px;
+}

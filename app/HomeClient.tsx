@@ -311,12 +311,14 @@ function DayHeading({
   open,
   onToggle,
   L,
+  stickyTopClass = "top-[77px]",
 }: {
   date: string;
   count: number;
   open: boolean;
   onToggle: () => void;
   L: Strings;
+  stickyTopClass?: string;
 }) {
   const { weekday, day, monthLong } = formatDate(date);
   const dLeft = daysUntil(date);
@@ -327,7 +329,7 @@ function DayHeading({
       onClick={onToggle}
       aria-expanded={open}
       aria-label={`${weekday} ${day} ${monthLong} — ${open ? L.hideDay : L.showDay}`}
-      className="sticky top-[77px] z-10 bg-base self-start w-full flex items-baseline gap-3 py-3 text-left group"
+      className={`sticky ${stickyTopClass} z-10 bg-base w-full flex items-baseline gap-3 py-3 text-left group`}
     >
       <span
         aria-hidden
@@ -337,7 +339,7 @@ function DayHeading({
       >
         ▶
       </span>
-      <h2 className="font-display font-semibold text-[15px] uppercase tracking-[0.09em] text-text whitespace-nowrap group-hover:text-accentText transition-[color,opacity] duration-150 motion-reduce:transition-none">
+      <h2 className="font-display font-semibold text-[15px] uppercase tracking-[0.09em] text-text whitespace-nowrap group-hover:text-accentText transition-colors duration-150 motion-reduce:transition-none">
         {weekday} {day} {monthLong}
       </h2>
       <span
@@ -1636,8 +1638,10 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
             />
           </div>
 
-          {/* Sport filter */}
-          <div className="flex gap-2 px-5 pt-4 pb-4 overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sticky top-0 z-20 bg-base">
+          {/* Sport filter. Polster in Pixeln statt rem: die Datumszeile darunter
+              klebt bei top-[77px], das ergibt sich aus dieser Reihe (pt+pb+
+              min-h+Rahmen) — wer hier etwas aendert, muss dort mitziehen. */}
+          <div className="flex gap-2 px-5 pt-[16px] pb-[16px] overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sticky top-0 z-20 bg-base">
             {SPORTS.map((s) => {
               const active = s === "All" ? filter.length === 0 : filter.includes(s);
               return (
@@ -1853,7 +1857,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                 </div>
               </div>
 
-              <main className="px-5 pt-5 flex flex-col gap-[18px] pb-6 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
+              <main className="px-5 pt-4 flex flex-col gap-[18px] pb-6 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
                 {favoriteEvents.length === 0 && (
                   <div className="text-center py-10 md:col-span-full">
                     <p className="text-[15px] text-text mb-1">{L.noFavYet}</p>
@@ -1868,6 +1872,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                       open={isDayOpen(day.date, i === 0)}
                       onToggle={() => toggleDay(day.date, i === 0)}
                       L={L}
+                      stickyTopClass="top-0"
                     />
                     {isDayOpen(day.date, i === 0) && (
                       <div className="flex flex-col gap-[18px] mt-2 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
