@@ -1611,12 +1611,12 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
       </header>
 
       {/* Tab bar */}
-      <div className="flex px-5 border-b border-border md:justify-center md:gap-10">
+      <div className="flex gap-2 overflow-x-auto px-5 border-b border-border md:justify-center md:gap-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {TABS.map((id) => (
           <button
             key={id}
             onClick={() => setTab(id)}
-            className={`flex-1 md:flex-none text-[13px] font-semibold py-3 border-b-2 transition-colors ${
+            className={`shrink-0 md:flex-none text-[13px] font-semibold py-3 border-b-2 transition-colors ${
               tab === id
                 ? "border-accent text-text"
                 : "border-transparent text-faint"
@@ -1658,7 +1658,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                 <button
                   key={s}
                   onClick={() => toggleSport(s, filter, setFilter)}
-                  className={`text-[13px] font-medium px-3.5 py-1.5 rounded-full border transition-colors ${
+                  className={`inline-flex items-center min-h-[44px] text-[13px] font-medium px-4 rounded-full border transition-colors shrink-0 ${
                     active
                       ? "bg-accent border-accent text-white"
                       : "border-borderStrong text-muted"
@@ -1939,7 +1939,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                   onClick={() =>
                     toggleSport(s, fighterSportFilter, setFighterSportFilter)
                   }
-                  className={`text-[13px] font-medium px-3.5 py-1.5 rounded-full border transition-colors ${
+                  className={`inline-flex items-center min-h-[44px] text-[13px] font-medium px-4 rounded-full border transition-colors shrink-0 ${
                     active
                       ? "bg-accent border-accent text-white"
                       : "border-borderStrong text-muted"
