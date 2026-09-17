@@ -75,6 +75,7 @@ components/
   LegalShell.tsx        Zweisprachiger Rahmen der Rechtsseiten
   NativeAppBridge.tsx   No-op im Web; blendet in der Capacitor-App den Splash aus
 scripts/                Prüfskripte, von Hand und in der CI
+                        (u.a. check-design-tokens.ts — siehe "Konventionen")
 supabase/               SQL-Schema, Migrationen, Seeds, E-Mail-Templates
 ```
 
@@ -364,6 +365,37 @@ ANDROID_CERT_SHA256              SHA-256 des App-Signaturschlüssels, für die
   `panel` `#151516`, `accent` `#C1272D`, `text` `#EDEAE4`. Keine rohen Hex-Werte im JSX.
 - Schriften: Oswald (Headlines), Inter (Fließtext) — über `next/font` in `app/layout.tsx`.
 - Dark-Theme only. Es gibt keinen Light-Mode.
+
+### Die Farb-Tokens sind erzwungen, nicht nur empfohlen
+
+`scripts/check-design-tokens.ts` prüft zwei Dinge und **blockiert die CI**, wenn eins
+davon bricht:
+
+1. **Kein `[#xxxxxx]` in Tailwind-Klassen** irgendwo unter `app/` oder `components/`.
+2. **Jede Textfarbe erreicht auf `base` und `panel` mindestens 4,5:1** (WCAG AA für
+   normalen Text). Die Werte liest das Skript aus `tailwind.config.ts`, es hält also
+   keine Kopie.
+
+```bash
+npx tsx scripts/check-design-tokens.ts
+```
+
+Grund für die Prüfung: Zwei Textfarben waren genau so am durchgerechneten Token-System
+vorbeigelaufen — `#5A5A5E` mit 2,66:1 und `#4A4A4E` mit 2,07:1, beide als rohe
+Hex-Werte im JSX. Jedes Token im System nimmt die Hürde; die rohen Werte taten es nicht.
+
+**Markenfarben fremder Anbieter** (`#4285F4` für Google, `#1877F2` für Facebook,
+`#5865F2` für Discord und die übrigen OAuth-Logos) bleiben erlaubt. Sie stehen als
+SVG-Attribut in Stringform, nicht in einer Tailwind-Klasse, und fallen deshalb nicht
+unter Prüfung 1 — ein Token dafür wäre eine Lüge über ihre Herkunft.
+
+**Wer ein neues Text-Token anlegt, trägt es in `TEXT_TOKENS` im Prüfskript nach.**
+Die Liste ist von Hand gepflegt; ein Token, das dort fehlt, wird nicht geprüft.
+
+Rahmenfarben stehen bewusst nicht in dieser Liste: Für sie gilt 4,5:1 nicht.
+`borderStrong` (`#3A3A3C`) erreicht auf `panel` nur 1,61:1 und ist trotzdem in Ordnung,
+weil die Kartengrenze von der Füllung getragen wird (`panel` gegen `base`) und der
+Strich sie nur verstärkt.
 
 ## Nicht tun
 
