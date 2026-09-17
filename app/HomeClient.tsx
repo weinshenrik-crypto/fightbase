@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useStoredLang, setStoredLang } from "@/lib/clientStore";
 import Image from "next/image";
 import Link from "next/link";
@@ -327,7 +327,7 @@ function DayHeading({
       onClick={onToggle}
       aria-expanded={open}
       aria-label={`${weekday} ${day} ${monthLong} — ${open ? L.hideDay : L.showDay}`}
-      className="md:col-span-full w-full flex items-baseline gap-3 pt-3 first:pt-0 text-left group"
+      className="sticky top-[77px] z-10 bg-base self-start w-full flex items-baseline gap-3 py-3 text-left group"
     >
       <span
         aria-hidden
@@ -495,7 +495,7 @@ function EventCard({
           {e.broadcaster !== "-" ? ` · ${e.broadcaster}` : ""}
         </p>
 
-        {isOpen ? (
+        {isOpen && (
           <div onClick={(ev) => ev.stopPropagation()} className="cursor-auto">
             {e.note && (
               <p className="text-[12px] text-dim leading-relaxed mb-2">
@@ -568,12 +568,6 @@ function EventCard({
               Permalink ↗
             </Link>
           </div>
-        ) : (
-          (e.note || links.length > 0) && (
-            <p className="text-[12px] text-faint">
-              {links.length > 0 ? L.tapForDetailsWatch : L.tapForDetails}
-            </p>
-          )
         )}
       </div>
     </div>
@@ -647,8 +641,6 @@ const STRINGS = {
     tabAccount: "Account",
     noEvents: "No events.",
     adjustFilter: "Adjust the filter.",
-    tapForDetails: "Tap for details",
-    tapForDetailsWatch: "Tap for details & where to watch",
     watchOn: "Watch on",
     today: "today",
     past: "past",
@@ -784,8 +776,6 @@ const STRINGS = {
     tabAccount: "Konto",
     noEvents: "Keine Events.",
     adjustFilter: "Filter anpassen.",
-    tapForDetails: "Antippen für Details",
-    tapForDetailsWatch: "Antippen für Details & wo man's schauen kann",
     watchOn: "Schauen auf",
     today: "heute",
     past: "vergangen",
@@ -1590,10 +1580,6 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
           <h1 className="font-display font-bold text-[28px] tracking-wide text-text">
             FIGHTBASE
           </h1>
-          <p className="text-[13px] text-faint mt-1">
-            Boxing · MMA · Muay Thai · Kickboxing · Jiu-Jitsu · Judo ·
-            Wrestling · Karate · Taekwondo
-          </p>
         </div>
         <div className="flex gap-1 shrink-0 border border-border rounded-md p-0.5">
           {(["en", "de"] as Lang[]).map((l) => (
@@ -1651,7 +1637,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
           </div>
 
           {/* Sport filter */}
-          <div className="flex gap-2 px-5 pt-4 pb-4 flex-wrap border-b border-border">
+          <div className="flex gap-2 px-5 pt-4 pb-4 overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sticky top-0 z-20 bg-base">
             {SPORTS.map((s) => {
               const active = s === "All" ? filter.length === 0 : filter.includes(s);
               return (
@@ -1679,7 +1665,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
               </div>
             )}
             {groupByDay(filtered).map((day, i) => (
-              <Fragment key={day.date}>
+              <section key={day.date} className="md:col-span-full">
                 <DayHeading
                   date={day.date}
                   count={day.events.length}
@@ -1687,27 +1673,30 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                   onToggle={() => toggleDay(day.date, i === 0)}
                   L={L}
                 />
-                {isDayOpen(day.date, i === 0) &&
-                  day.events.map((e) => (
-                  <EventCard
-                    key={e.id}
-                    e={e}
-                    isFav={isFavorited("promotion", e.promotion)}
-                    isEventFav={isFavorited("event", e.id)}
-                    onToggleEventFav={
-                      session ? () => toggleFavorite("event", e.id) : undefined
-                    }
-                    isOpen={expandedId === e.id}
-                    onToggle={() =>
-                      setExpandedId(expandedId === e.id ? null : e.id)
-                    }
-                    onSelectFighter={setSelectedFighter}
-                    fightersData={fightersData}
-                    showDate={false}
-                    L={L}
-                  />
-                ))}
-              </Fragment>
+                {isDayOpen(day.date, i === 0) && (
+                  <div className="flex flex-col gap-[18px] mt-3 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
+                    {day.events.map((e) => (
+                      <EventCard
+                        key={e.id}
+                        e={e}
+                        isFav={isFavorited("promotion", e.promotion)}
+                        isEventFav={isFavorited("event", e.id)}
+                        onToggleEventFav={
+                          session ? () => toggleFavorite("event", e.id) : undefined
+                        }
+                        isOpen={expandedId === e.id}
+                        onToggle={() =>
+                          setExpandedId(expandedId === e.id ? null : e.id)
+                        }
+                        onSelectFighter={setSelectedFighter}
+                        fightersData={fightersData}
+                        showDate={false}
+                        L={L}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
             ))}
           </main>
 
@@ -1872,7 +1861,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                   </div>
                 )}
                 {groupByDay(favoriteEvents).map((day, i) => (
-                  <Fragment key={day.date}>
+                  <section key={day.date} className="md:col-span-full">
                     <DayHeading
                       date={day.date}
                       count={day.events.length}
@@ -1880,25 +1869,28 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                       onToggle={() => toggleDay(day.date, i === 0)}
                       L={L}
                     />
-                    {isDayOpen(day.date, i === 0) &&
-                      day.events.map((e) => (
-                  <EventCard
-                    key={e.id}
-                    e={e}
-                    isFav={true}
-                    isEventFav={isFavorited("event", e.id)}
-                    onToggleEventFav={() => toggleFavorite("event", e.id)}
-                    isOpen={expandedId === e.id}
-                    onToggle={() =>
-                      setExpandedId(expandedId === e.id ? null : e.id)
-                    }
-                    onSelectFighter={setSelectedFighter}
-                    fightersData={fightersData}
-                    showDate={false}
-                    L={L}
-                  />
-                    ))}
-                  </Fragment>
+                    {isDayOpen(day.date, i === 0) && (
+                      <div className="flex flex-col gap-[18px] mt-3 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
+                        {day.events.map((e) => (
+                          <EventCard
+                            key={e.id}
+                            e={e}
+                            isFav={true}
+                            isEventFav={isFavorited("event", e.id)}
+                            onToggleEventFav={() => toggleFavorite("event", e.id)}
+                            isOpen={expandedId === e.id}
+                            onToggle={() =>
+                              setExpandedId(expandedId === e.id ? null : e.id)
+                            }
+                            onSelectFighter={setSelectedFighter}
+                            fightersData={fightersData}
+                            showDate={false}
+                            L={L}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </section>
                 ))}
               </main>
             </>
@@ -1927,7 +1919,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
             )}
           </div>
 
-          <div className="flex gap-2 px-5 pt-4 pb-4 flex-wrap border-b border-border">
+          <div className="flex gap-2 px-5 pt-4 pb-4 overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {SPORTS.map((s) => {
               const active =
                 s === "All"
