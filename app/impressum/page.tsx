@@ -1,6 +1,7 @@
 import LegalShell from "@/components/LegalShell";
 
 export const metadata = {
+  alternates: { canonical: "/impressum" },
   title: "Impressum — Fightbase",
 };
 

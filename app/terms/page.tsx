@@ -2,6 +2,7 @@ import Link from "next/link";
 import LegalShell from "@/components/LegalShell";
 
 export const metadata = {
+  alternates: { canonical: "/terms" },
   title: "Terms of Use — Fightbase",
   description:
     "Die Regeln für die Nutzung von Fightbase: was die Eventdaten sind und was nicht, Forenregeln, Konten und Haftung.",
