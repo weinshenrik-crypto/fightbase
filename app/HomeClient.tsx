@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useStoredLang, setStoredLang } from "@/lib/clientStore";
 import Image from "next/image";
 import Link from "next/link";
@@ -311,12 +311,14 @@ function DayHeading({
   open,
   onToggle,
   L,
+  stickyTopClass = "top-[77px]",
 }: {
   date: string;
   count: number;
   open: boolean;
   onToggle: () => void;
   L: Strings;
+  stickyTopClass?: string;
 }) {
   const { weekday, day, monthLong } = formatDate(date);
   const dLeft = daysUntil(date);
@@ -327,7 +329,7 @@ function DayHeading({
       onClick={onToggle}
       aria-expanded={open}
       aria-label={`${weekday} ${day} ${monthLong} — ${open ? L.hideDay : L.showDay}`}
-      className="md:col-span-full w-full flex items-baseline gap-3 pt-3 first:pt-0 text-left group"
+      className={`sticky ${stickyTopClass} z-10 bg-base w-full flex items-baseline gap-3 py-3 text-left group`}
     >
       <span
         aria-hidden
@@ -337,7 +339,7 @@ function DayHeading({
       >
         ▶
       </span>
-      <h2 className="font-display font-semibold text-[15px] uppercase tracking-[0.09em] text-text whitespace-nowrap group-hover:text-accentText transition-colors">
+      <h2 className="font-display font-semibold text-[15px] uppercase tracking-[0.09em] text-text whitespace-nowrap group-hover:text-accentText transition-colors duration-150 motion-reduce:transition-none">
         {weekday} {day} {monthLong}
       </h2>
       <span
@@ -495,7 +497,7 @@ function EventCard({
           {e.broadcaster !== "-" ? ` · ${e.broadcaster}` : ""}
         </p>
 
-        {isOpen ? (
+        {isOpen && (
           <div onClick={(ev) => ev.stopPropagation()} className="cursor-auto">
             {e.note && (
               <p className="text-[12px] text-dim leading-relaxed mb-2">
@@ -538,7 +540,7 @@ function EventCard({
               </div>
             )}
             {links.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-1 border-t border-[#2E2E30] mt-1.5">
+              <div className="flex flex-wrap gap-1.5 pt-1 border-t border-borderStrong mt-1.5">
                 {links.map((l) =>
                   l.url ? (
                     <a
@@ -553,7 +555,7 @@ function EventCard({
                   ) : (
                     <span
                       key={l.label}
-                      className="text-[12px] px-2.5 py-1 rounded-md border border-[#2E2E30] text-faint"
+                      className="text-[12px] px-2.5 py-1 rounded-md border border-borderStrong text-faint"
                     >
                       {l.label}
                     </span>
@@ -568,12 +570,6 @@ function EventCard({
               Permalink ↗
             </Link>
           </div>
-        ) : (
-          (e.note || links.length > 0) && (
-            <p className="text-[11px] text-[#5A5A5E]">
-              {links.length > 0 ? L.tapForDetailsWatch : L.tapForDetails}
-            </p>
-          )
         )}
       </div>
     </div>
@@ -647,8 +643,6 @@ const STRINGS = {
     tabAccount: "Account",
     noEvents: "No events.",
     adjustFilter: "Adjust the filter.",
-    tapForDetails: "Tap for details",
-    tapForDetailsWatch: "Tap for details & where to watch",
     watchOn: "Watch on",
     today: "today",
     past: "past",
@@ -784,8 +778,6 @@ const STRINGS = {
     tabAccount: "Konto",
     noEvents: "Keine Events.",
     adjustFilter: "Filter anpassen.",
-    tapForDetails: "Antippen für Details",
-    tapForDetailsWatch: "Antippen für Details & wo man's schauen kann",
     watchOn: "Schauen auf",
     today: "heute",
     past: "vergangen",
@@ -1578,7 +1570,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
   return (
     <div className="max-w-[480px] md:max-w-3xl lg:max-w-5xl mx-auto min-h-screen pb-10">
       {/* Header */}
-      <header className="px-5 pt-7 pb-4 border-b border-border flex items-center gap-3">
+      <header className="px-5 pt-5 pb-2 border-b border-border flex items-center gap-3">
         <Image
           src="/logo-header.png"
           alt="Fightbase logo"
@@ -1590,10 +1582,6 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
           <h1 className="font-display font-bold text-[28px] tracking-wide text-text">
             FIGHTBASE
           </h1>
-          <p className="text-[13px] text-faint mt-1">
-            Boxing · MMA · Muay Thai · Kickboxing · Jiu-Jitsu · Judo ·
-            Wrestling · Karate · Taekwondo
-          </p>
         </div>
         <div className="flex gap-1 shrink-0 border border-border rounded-md p-0.5">
           {(["en", "de"] as Lang[]).map((l) => (
@@ -1611,12 +1599,12 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
       </header>
 
       {/* Tab bar */}
-      <div className="flex px-5 border-b border-border md:justify-center md:gap-10">
+      <div className="flex gap-2 overflow-x-auto px-5 border-b border-border md:justify-center md:gap-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {TABS.map((id) => (
           <button
             key={id}
             onClick={() => setTab(id)}
-            className={`flex-1 md:flex-none text-[13px] font-semibold py-3 border-b-2 transition-colors ${
+            className={`shrink-0 md:flex-none text-[13px] font-semibold py-3 border-b-2 transition-colors ${
               tab === id
                 ? "border-accent text-text"
                 : "border-transparent text-faint"
@@ -1639,7 +1627,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
       {tab === "events" && (
         <>
           {/* Search */}
-          <div className="px-5 pt-4">
+          <div className="px-5 pt-3">
             <input
               type="text"
               aria-label="Search events, fighters, promotions…"
@@ -1650,18 +1638,20 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
             />
           </div>
 
-          {/* Sport filter */}
-          <div className="flex gap-2 px-5 pt-4 pb-4 flex-wrap border-b border-border">
+          {/* Sport filter. Polster in Pixeln statt rem: die Datumszeile darunter
+              klebt bei top-[77px], das ergibt sich aus dieser Reihe (pt+pb+
+              min-h+Rahmen) — wer hier etwas aendert, muss dort mitziehen. */}
+          <div className="flex gap-2 px-5 pt-[16px] pb-[16px] overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sticky top-0 z-20 bg-base">
             {SPORTS.map((s) => {
               const active = s === "All" ? filter.length === 0 : filter.includes(s);
               return (
                 <button
                   key={s}
                   onClick={() => toggleSport(s, filter, setFilter)}
-                  className={`text-[13px] font-medium px-3.5 py-1.5 rounded-full border transition-colors ${
+                  className={`inline-flex items-center min-h-[44px] text-[13px] font-medium px-4 rounded-full border transition-colors shrink-0 ${
                     active
                       ? "bg-accent border-accent text-white"
-                      : "border-[#3A3A3C] text-muted"
+                      : "border-borderStrong text-muted"
                   }`}
                 >
                   {s}
@@ -1671,7 +1661,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
           </div>
 
           {/* Timeline */}
-          <main className="px-5 pt-5 flex flex-col gap-[18px] md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
+          <main className="px-5 pt-4 flex flex-col gap-[18px] md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
             {filtered.length === 0 && (
               <div className="text-center py-10 md:col-span-full">
                 <p className="text-[15px] text-text mb-1">{L.noEvents}</p>
@@ -1679,7 +1669,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
               </div>
             )}
             {groupByDay(filtered).map((day, i) => (
-              <Fragment key={day.date}>
+              <section key={day.date} className="md:col-span-full">
                 <DayHeading
                   date={day.date}
                   count={day.events.length}
@@ -1687,32 +1677,35 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                   onToggle={() => toggleDay(day.date, i === 0)}
                   L={L}
                 />
-                {isDayOpen(day.date, i === 0) &&
-                  day.events.map((e) => (
-                  <EventCard
-                    key={e.id}
-                    e={e}
-                    isFav={isFavorited("promotion", e.promotion)}
-                    isEventFav={isFavorited("event", e.id)}
-                    onToggleEventFav={
-                      session ? () => toggleFavorite("event", e.id) : undefined
-                    }
-                    isOpen={expandedId === e.id}
-                    onToggle={() =>
-                      setExpandedId(expandedId === e.id ? null : e.id)
-                    }
-                    onSelectFighter={setSelectedFighter}
-                    fightersData={fightersData}
-                    showDate={false}
-                    L={L}
-                  />
-                ))}
-              </Fragment>
+                {isDayOpen(day.date, i === 0) && (
+                  <div className="flex flex-col gap-[18px] mt-2 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
+                    {day.events.map((e) => (
+                      <EventCard
+                        key={e.id}
+                        e={e}
+                        isFav={isFavorited("promotion", e.promotion)}
+                        isEventFav={isFavorited("event", e.id)}
+                        onToggleEventFav={
+                          session ? () => toggleFavorite("event", e.id) : undefined
+                        }
+                        isOpen={expandedId === e.id}
+                        onToggle={() =>
+                          setExpandedId(expandedId === e.id ? null : e.id)
+                        }
+                        onSelectFighter={setSelectedFighter}
+                        fightersData={fightersData}
+                        showDate={false}
+                        L={L}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
             ))}
           </main>
 
           <footer className="px-5 pt-6">
-            <p className="text-[11px] text-[#4A4A4E] leading-relaxed">
+            <p className="text-[12px] text-faint leading-relaxed">
               {L.footerNote}
             </p>
           </footer>
@@ -1781,7 +1774,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                           className={`text-[12px] px-2.5 py-1 rounded-md border transition-colors ${
                             isFav
                               ? "border-accent text-text"
-                              : "border-[#2E2E30] bg-panel text-faint"
+                              : "border-borderStrong bg-panel text-faint"
                           }`}
                         >
                           {isFav ? "★" : "☆"} {s}
@@ -1805,7 +1798,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                           className={`text-[12px] px-2.5 py-1 rounded-md border transition-colors ${
                             isFav
                               ? "border-accent text-text"
-                              : "border-[#2E2E30] bg-panel text-faint"
+                              : "border-borderStrong bg-panel text-faint"
                           }`}
                         >
                           {isFav ? "★" : "☆"} {p}
@@ -1864,7 +1857,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                 </div>
               </div>
 
-              <main className="px-5 pt-5 flex flex-col gap-[18px] pb-6 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
+              <main className="px-5 pt-4 flex flex-col gap-[18px] pb-6 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
                 {favoriteEvents.length === 0 && (
                   <div className="text-center py-10 md:col-span-full">
                     <p className="text-[15px] text-text mb-1">{L.noFavYet}</p>
@@ -1872,33 +1865,37 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                   </div>
                 )}
                 {groupByDay(favoriteEvents).map((day, i) => (
-                  <Fragment key={day.date}>
+                  <section key={day.date} className="md:col-span-full">
                     <DayHeading
                       date={day.date}
                       count={day.events.length}
                       open={isDayOpen(day.date, i === 0)}
                       onToggle={() => toggleDay(day.date, i === 0)}
                       L={L}
+                      stickyTopClass="top-0"
                     />
-                    {isDayOpen(day.date, i === 0) &&
-                      day.events.map((e) => (
-                  <EventCard
-                    key={e.id}
-                    e={e}
-                    isFav={true}
-                    isEventFav={isFavorited("event", e.id)}
-                    onToggleEventFav={() => toggleFavorite("event", e.id)}
-                    isOpen={expandedId === e.id}
-                    onToggle={() =>
-                      setExpandedId(expandedId === e.id ? null : e.id)
-                    }
-                    onSelectFighter={setSelectedFighter}
-                    fightersData={fightersData}
-                    showDate={false}
-                    L={L}
-                  />
-                    ))}
-                  </Fragment>
+                    {isDayOpen(day.date, i === 0) && (
+                      <div className="flex flex-col gap-[18px] mt-2 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
+                        {day.events.map((e) => (
+                          <EventCard
+                            key={e.id}
+                            e={e}
+                            isFav={true}
+                            isEventFav={isFavorited("event", e.id)}
+                            onToggleEventFav={() => toggleFavorite("event", e.id)}
+                            isOpen={expandedId === e.id}
+                            onToggle={() =>
+                              setExpandedId(expandedId === e.id ? null : e.id)
+                            }
+                            onSelectFighter={setSelectedFighter}
+                            fightersData={fightersData}
+                            showDate={false}
+                            L={L}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </section>
                 ))}
               </main>
             </>
@@ -1927,7 +1924,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
             )}
           </div>
 
-          <div className="flex gap-2 px-5 pt-4 pb-4 flex-wrap border-b border-border">
+          <div className="flex gap-2 px-5 pt-4 pb-4 overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {SPORTS.map((s) => {
               const active =
                 s === "All"
@@ -1939,10 +1936,10 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                   onClick={() =>
                     toggleSport(s, fighterSportFilter, setFighterSportFilter)
                   }
-                  className={`text-[13px] font-medium px-3.5 py-1.5 rounded-full border transition-colors ${
+                  className={`inline-flex items-center min-h-[44px] text-[13px] font-medium px-4 rounded-full border transition-colors shrink-0 ${
                     active
                       ? "bg-accent border-accent text-white"
-                      : "border-[#3A3A3C] text-muted"
+                      : "border-borderStrong text-muted"
                   }`}
                 >
                   {s}
@@ -2687,7 +2684,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
             <Link
               key={s}
               href={`/sport/${sportSlug(s)}`}
-              className="text-[12px] px-2.5 py-1 rounded-md border border-[#2E2E30] text-faint hover:border-accent hover:text-text transition-colors"
+              className="text-[12px] px-2.5 py-1 rounded-md border border-borderStrong text-faint hover:border-accent hover:text-text transition-colors"
             >
               {s}
             </Link>
@@ -2704,7 +2701,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
             <Link
               key={p}
               href={`/promotion/${promotionSlug(p)}`}
-              className="text-[12px] px-2.5 py-1 rounded-md border border-[#2E2E30] text-faint hover:border-accent hover:text-text transition-colors"
+              className="text-[12px] px-2.5 py-1 rounded-md border border-borderStrong text-faint hover:border-accent hover:text-text transition-colors"
             >
               {p}
             </Link>

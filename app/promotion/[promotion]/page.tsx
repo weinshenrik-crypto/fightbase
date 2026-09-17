@@ -186,7 +186,7 @@ export default async function PromotionPage({
               <Link
                 key={p}
                 href={`/promotion/${promotionSlug(p)}`}
-                className="text-[12px] px-2.5 py-1 rounded-md border border-[#2E2E30] text-faint hover:border-accent hover:text-text transition-colors"
+                className="text-[12px] px-2.5 py-1 rounded-md border border-borderStrong text-faint hover:border-accent hover:text-text transition-colors"
               >
                 {p}
               </Link>

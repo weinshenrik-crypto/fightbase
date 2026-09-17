@@ -236,7 +236,7 @@ export default async function EventPage(
             ) : (
               <span
                 key={l.label}
-                className="text-[13px] px-3.5 py-2 rounded-md border border-[#2E2E30] text-faint"
+                className="text-[13px] px-3.5 py-2 rounded-md border border-borderStrong text-faint"
               >
                 {l.label}
               </span>

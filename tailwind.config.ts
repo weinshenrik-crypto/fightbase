@@ -13,6 +13,13 @@ const config: Config = {
         panelFav: "#181213",
         border: "#232324",
         borderFav: "#5A1A1C",
+        // Hellerer Rahmen fuer Trenner innerhalb einer Karte und fuer
+        // hervorgehobene Zustaende. Ersetzt die rohen #2E2E30 und #3A3A3C, die
+        // vorher im JSX standen. 1.61:1 auf panel liegt unter den 3:1 fuer
+        // bedeutungstragende UI-Grenzen — vertretbar, weil die Kartengrenze
+        // von der Flaeche getragen wird (panel gegen base) und der Strich sie
+        // nur verstaerkt.
+        borderStrong: "#3A3A3C",
         text: "#EDEAE4",
         muted: "#B7B7BA",
         faint: "#8A8A8E",
