@@ -1568,7 +1568,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
   return (
     <div className="max-w-[480px] md:max-w-3xl lg:max-w-5xl mx-auto min-h-screen pb-10">
       {/* Header */}
-      <header className="px-5 pt-7 pb-4 border-b border-border flex items-center gap-3">
+      <header className="px-5 pt-5 pb-2 border-b border-border flex items-center gap-3">
         <Image
           src="/logo-header.png"
           alt="Fightbase logo"
@@ -1625,7 +1625,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
       {tab === "events" && (
         <>
           {/* Search */}
-          <div className="px-5 pt-4">
+          <div className="px-5 pt-3">
             <input
               type="text"
               aria-label="Search events, fighters, promotions…"
@@ -1657,7 +1657,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
           </div>
 
           {/* Timeline */}
-          <main className="px-5 pt-5 flex flex-col gap-[18px] md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
+          <main className="px-5 pt-4 flex flex-col gap-[18px] md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
             {filtered.length === 0 && (
               <div className="text-center py-10 md:col-span-full">
                 <p className="text-[15px] text-text mb-1">{L.noEvents}</p>
@@ -1674,7 +1674,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                   L={L}
                 />
                 {isDayOpen(day.date, i === 0) && (
-                  <div className="flex flex-col gap-[18px] mt-3 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
+                  <div className="flex flex-col gap-[18px] mt-2 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
                     {day.events.map((e) => (
                       <EventCard
                         key={e.id}
@@ -1870,7 +1870,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                       L={L}
                     />
                     {isDayOpen(day.date, i === 0) && (
-                      <div className="flex flex-col gap-[18px] mt-3 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
+                      <div className="flex flex-col gap-[18px] mt-2 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-5 lg:grid-cols-3">
                         {day.events.map((e) => (
                           <EventCard
                             key={e.id}
