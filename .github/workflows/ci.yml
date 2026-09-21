@@ -59,6 +59,12 @@ jobs:
       - name: Farb-Tokens pruefen
         run: npx tsx scripts/check-design-tokens.ts
 
+      # Die erste zweistufige Quelle: Sitemap, dann jede Einzelseite. Bricht
+      # Stufe zwei still, meldet sie "0 neue Events" statt eines Fehlers.
+      # Laeuft gegen gestubbte Antworten, braucht also kein Netz.
+      - name: ONE-Quelle pruefen
+        run: npx tsx scripts/check-one-source.ts
+
       # Blockierend, seit die acht set-state-in-effect-Fehler weg sind.
       # Warnungen bleiben Warnungen — eslint beendet sich dafuer mit 0.
       - name: Lint

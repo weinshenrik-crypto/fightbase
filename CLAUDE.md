@@ -61,7 +61,7 @@ app/
 lib/
   events.ts             Typ FightEvent, Sportarten und reine Helfer — keine Daten
   eventsDb.ts           Die einzige Stelle, die Events liest
-  eventSources/         Quellen des automatischen Imports, eine Datei je Verband
+  eventSources/         Quellen des automatischen Imports, eine Datei je Quelle
   resultsSource.ts      Ergebnisse aus Wikipedia-Wikitext
   sportGuides.ts        Redaktionstexte der Sport-Landingpages
   promotionGuides.ts    dito für die Promotion-Seiten
@@ -135,7 +135,7 @@ Nicht indexiert (`robots: noindex`).
 ### Automatischer Import
 
 Der Cron-Job `/api/cron/import` (täglich 9:00 UTC, `vercel.json`) trägt Termine
-aus den vier Verbandskalendern unten selbst ein. Eine Quelle je Datei unter
+aus den Quellen unten selbst ein. Eine Quelle je Datei unter
 `lib/eventSources/`, der Abgleich steckt in `lib/eventSources/plan.ts`.
 
 **Vor dem ersten Lauf muss `supabase/migration-event-import.sql` im
@@ -159,9 +159,12 @@ Drei Regeln, auf die man sich verlassen kann:
 - **Abgeglichen wird über `(source, source_key)`, nicht über den Slug.** Sonst
   entstünde bei jeder Umbenennung eines Turniers eine zweite Zeile. Der Slug
   einer bestehenden Zeile bleibt dadurch stabil.
-- **Es werden keine Kämpfe erfunden.** `fighter_a`/`fighter_b`, `starts_at` und
-  `undercard` bleiben leer — die Verbandskalender nennen Monate im Voraus weder
-  Paarungen noch Anfangszeiten.
+- **Es werden keine Kämpfe erfunden.** `fighter_a`/`fighter_b` und `undercard`
+  bleiben leer — die Kalender nennen Monate im Voraus keine Paarungen.
+  `starts_at` bleibt bei den Verbandsquellen ebenfalls leer, weil sie keine
+  Zeiten nennen; ONE liefert eine und sie wird übernommen. Geschätzt wird nie.
+  Der Abgleich fasst `starts_at` nur an, wenn die Quelle selbst eine Zeit
+  mitbringt — sonst würde ein Lauf eine von Hand eingetragene Uhrzeit löschen.
 
 Alternativ kann der Job vom NAS aus angestoßen werden statt per Vercel-Cron —
 fertige n8n-Workflows liegen unter `homeserver/n8n-workflows/`, die Anleitung
@@ -187,6 +190,7 @@ Sammel-Kalender. Was sich bewährt hat:
 | Jiu-Jitsu | `ibjjf.com/api/v1/events/calendar.json` | Kompletter Kalender als JSON. Braucht `X-Requested-With: XMLHttpRequest`, sonst `{"error":"Denied"}`. Beste Quelle im ganzen Projekt. |
 | Judo | `ijf.org/calendar` | Vollständig, Senioren und Nachwuchs gemischt — nur Senior/Elite eintragen. |
 | Karate | `wkf.net/karate-one` | Premier League, Series A und Youth League, zwei Jahre im Voraus. |
+| Muay Thai, Kickboxen | `onefc.com/sitemap_index.xml` + `ld+json` je Einzelseite | Zweistufig: Die Events-Seite ist JS-gerendert, die Sitemap nicht. Einzige Quelle mit **Anfangszeit** und Zeitzone. Cloudflare drosselt schnelle Serien — deshalb 200 ms Pause und ein Wiederholungsversuch. |
 | Ringen | `uww.org/events`, nur der `ld+json`-Block | `uww.org/calendar` existiert nicht (404). Die Tabelle auf `/events` wird seit dem Umbau im September 2026 erst im Browser gefüllt — im HTML stehen leere `<tr>`. Lesbar bleibt der Suchmaschinen-Block (`@graph` → `ItemList` → `SportsEvent`), und der führt nur die **nächsten drei** Termine. |
 
 IBJJF, IJF und WKF sind JS-gerendert; ein simpler Fetch liefert bei WKF und IJF
@@ -201,11 +205,22 @@ Filter sind dort schwächer als bei den anderen Quellen: Altersklasse und
 Turniertyp kommen nur noch aus dem Turniernamen, weil der Block keine eigenen
 Spalten dafür hat (Begründung im Kopf von `lib/eventSources/uww.ts`).
 
-**Muay Thai lässt sich nicht befüllen.** Geprüft: die RWS-Event-Seite
-(`rank.rajadamnern.com/events`) ist leer, und ONE kündigt seine Karten erst
-kurzfristig an. Die Stadionprogramme in Bangkok werden tagesaktuell angesetzt.
-Nicht durch Hochrechnen von Wochenrhythmen "lösen" — die Sport-Landingpage
-erklärt diese Lücke inzwischen offen.
+**Muay Thai kommt von ONE, nicht von einem Verband.** Hier stand lange, die
+Sportart lasse sich nicht befüllen. Das war falsch: Geprüft worden war
+`rank.rajadamnern.com` — die Ranglisten-Subdomain, nicht ein Kalender. Und ONE
+veröffentlicht seine Lumpinee-Karten **drei Monate im Voraus**, samt Uhrzeit
+und Ort. Sie stehen nur nicht im HTML, weil `onefc.com/events` JS-gerendert
+ist. Lesbar sind sie über die **Sitemap** plus den `ld+json`-Block auf jeder
+Einzelseite (siehe `lib/eventSources/one.ts`).
+
+Die Weltverbände **IFMA** (Muay Thai) und **WAKO** (Kickboxen) liefern zwar
+sauber lesbare Daten — IFMA sogar per REST-API unter
+`muaythai.sport/wp-json/tribe/events/v1/events` —, führen aber nur je drei
+Termine, davon einen im Nachwuchsbereich. Für einen täglichen Abruf zu wenig;
+wenn die Kalender wachsen, ist der Weg dorthin kurz.
+
+Weiterhin gilt: Termine **nicht** durch Hochrechnen von Wochenrhythmen
+erfinden. Was ONE nicht veröffentlicht, steht nicht im Kalender.
 
 **Achtung beim lokalen Build:** `npm run build` bedient sich aus
 `.next/cache/fetch-cache`. Wer gerade Events in Supabase geändert hat und dann
