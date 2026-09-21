@@ -29,6 +29,22 @@ export type SourceEvent = {
   sourceKey: string;
   /** Belegseite beim Verband selbst. */
   sourceUrl: string;
+  /**
+   * Anfangszeit, wenn — und nur wenn — die Quelle sie selbst nennt.
+   *
+   * Der Absatz oben schliesst Zeiten aus, weil Verbandskalender keine liefern
+   * und eine geschaetzte Anfangszeit schlechter ist als keine. Fuer ONE gilt
+   * das nicht: Die Einzelseiten tragen ein vollstaendiges startDate samt
+   * Zeitzone ("2026-09-25T18:30:00+07:00"). Das ist keine Schaetzung, sondern
+   * die Angabe der Quelle.
+   *
+   * Optional, damit die vier Verbandsquellen unveraendert bleiben — und damit
+   * der Importer bei ihnen keine von Hand eingetragene Zeit ueberschreibt
+   * (siehe MANAGED in plan.ts).
+   */
+  startsAt?: string;
+  /** IANA-Zone des Austragungsorts, nur zusammen mit `startsAt`. */
+  timezone?: string;
 };
 
 /** Warum ein Eintrag der Quelle nicht übernommen wurde. */

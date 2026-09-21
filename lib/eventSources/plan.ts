@@ -31,6 +31,9 @@ export type ImportRow = {
   source: string;
   source_key: string;
   source_url: string;
+  /** Nur gesetzt, wenn die Quelle selbst eine Anfangszeit nennt (ONE). */
+  starts_at?: string;
+  timezone?: string;
 };
 
 /** Was schon in der Tabelle steht, soweit der Abgleich es braucht. */
@@ -47,6 +50,8 @@ export type ExistingRow = {
   source: string | null;
   source_key: string | null;
   source_url: string | null;
+  starts_at?: string | null;
+  timezone?: string | null;
 };
 
 export type PlannedInsert = { kind: "insert"; row: ImportRow };
@@ -91,6 +96,8 @@ function toRow(e: SourceEvent, source: string): ImportRow {
     source,
     source_key: e.sourceKey,
     source_url: e.sourceUrl,
+    ...(e.startsAt ? { starts_at: e.startsAt } : {}),
+    ...(e.timezone ? { timezone: e.timezone } : {}),
   };
 }
 
@@ -222,11 +229,31 @@ export function buildPlan(
       row.slug = match.slug;
       const before = match as unknown as Record<string, unknown>;
       const after = row as unknown as Record<string, unknown>;
-      const changes = MANAGED.map((field) => ({
-        field,
-        from: String(before[field] ?? ""),
-        to: String(after[field] ?? ""),
-      })).filter((c) => c.from !== c.to);
+      // Der Typ steht hier ausdrücklich, weil unten zwei Felder dazukommen,
+      // die nicht in MANAGED stehen — sonst erbte `changes` deren engen
+      // Union-Typ und ließe sie nicht zu.
+      const changes: { field: string; from: string; to: string }[] = MANAGED.map(
+        (field) => ({
+          field: field as string,
+          from: String(before[field] ?? ""),
+          to: String(after[field] ?? ""),
+        })
+      ).filter((c) => c.from !== c.to);
+
+      // Anfangszeit gesondert, und nur wenn die Quelle sie wirklich mitbringt.
+      //
+      // starts_at gehoert bewusst NICHT in MANAGED: Die vier Verbandskalender
+      // liefern keine Zeiten. Stuende das Feld in der Liste, wuerde jeder Lauf
+      // bei deren Zeilen "" gegen eine von Hand eingetragene Uhrzeit
+      // vergleichen und sie ueberschreiben — genau der Schaden, den die Regel
+      // "Handzeilen sind tabu" verhindern soll. So bleibt eine fremde Zeit
+      // unangetastet, waehrend eine Verlegung bei ONE trotzdem ankommt.
+      for (const field of ["starts_at", "timezone"] as const) {
+        if (after[field] == null) continue;
+        const from = String(before[field] ?? "");
+        const to = String(after[field]);
+        if (from !== to) changes.push({ field, from, to });
+      }
 
       if (changes.length === 0) plan.unchanged++;
       else plan.updates.push({ kind: "update", row, changes });
