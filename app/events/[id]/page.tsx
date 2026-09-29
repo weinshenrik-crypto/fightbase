@@ -13,6 +13,7 @@ import {
   venueLocality,
 } from "@/lib/events";
 import { getEvents, getEventBySlug } from "@/lib/eventsDb";
+import { socialMeta } from "@/lib/socialMeta";
 import EventTime from "@/components/EventTime";
 import FighterIllustration from "@/components/FighterIllustration";
 
@@ -57,8 +58,14 @@ export async function generateMetadata(
     title,
     description,
     alternates: { canonical: `/events/${event.id}` },
-    openGraph: { title, description, type: "website" },
-    twitter: { card: "summary", title, description },
+    // image: "generated" — das Vorschaubild kommt aus opengraph-image.tsx
+    // und traegt den Namen dieses Events statt des allgemeinen Logos.
+    ...socialMeta({
+      title,
+      description,
+      path: `/events/${event.id}`,
+      image: "generated",
+    }),
   };
 }
 
