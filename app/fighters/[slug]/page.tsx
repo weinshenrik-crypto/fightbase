@@ -10,6 +10,7 @@ import {
   daysUntil,
 } from "@/lib/events";
 import { getEvents } from "@/lib/eventsDb";
+import { socialMeta } from "@/lib/socialMeta";
 import FighterIllustration from "@/components/FighterIllustration";
 
 // Fighter bios/records can change any time (admin edits, self-registration),
@@ -65,8 +66,7 @@ export async function generateMetadata(
     title,
     description,
     alternates: { canonical: `/fighters/${params.slug}` },
-    openGraph: { title, description, type: "profile" },
-    twitter: { card: "summary", title, description },
+    ...socialMeta({ title, description, path: `/fighters/${params.slug}`, type: "profile" }),
   };
 }
 

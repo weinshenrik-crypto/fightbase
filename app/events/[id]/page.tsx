@@ -13,6 +13,7 @@ import {
   venueLocality,
 } from "@/lib/events";
 import { getEvents, getEventBySlug } from "@/lib/eventsDb";
+import { socialMeta } from "@/lib/socialMeta";
 import EventTime from "@/components/EventTime";
 import FighterIllustration from "@/components/FighterIllustration";
 
@@ -57,8 +58,7 @@ export async function generateMetadata(
     title,
     description,
     alternates: { canonical: `/events/${event.id}` },
-    openGraph: { title, description, type: "website" },
-    twitter: { card: "summary", title, description },
+    ...socialMeta({ title, description, path: `/events/${event.id}` }),
   };
 }
 

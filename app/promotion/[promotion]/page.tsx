@@ -13,6 +13,7 @@ import {
 } from "@/lib/events";
 import { getEvents } from "@/lib/eventsDb";
 import { PROMOTION_GUIDES } from "@/lib/promotionGuides";
+import { socialMeta } from "@/lib/socialMeta";
 
 // Muss ein Literal sein — Next.js liest diesen Wert statisch aus und
 // erkennt keine importierten Bezeichner. Entspricht EVENTS_REVALIDATE.
@@ -38,8 +39,7 @@ export async function generateMetadata({
     title,
     description,
     alternates: { canonical: `/promotion/${slug}` },
-    openGraph: { title, description, type: "website" },
-    twitter: { card: "summary", title, description },
+    ...socialMeta({ title, description, path: `/promotion/${slug}` }),
   };
 }
 
