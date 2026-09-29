@@ -22,6 +22,10 @@ export type FightEvent = {
   // Undercard bouts announced so far — only added once officially confirmed
   // by the promotion, never guessed. Most cards this far out aren't full yet.
   undercard?: string[];
+  // Die Seite der Organisation, von der dieser Termin stammt. Nur bei
+  // importierten Zeilen gesetzt. Sie ist der Beleg: Wer dem Kalender nicht
+  // glaubt, klickt und sieht das Datum beim Veranstalter selbst.
+  sourceUrl?: string;
 };
 
 
@@ -199,6 +203,7 @@ export const PROMOTION_LINKS: Record<string, string> = {
   "Queensberry Promotions": "https://queensberry.co.uk",
   "Riyadh Season": "https://riyadhseason.sa",
   "ONE Championship": "https://www.onefc.com",
+  ONE: "https://www.onefc.com",
   IBJJF: "https://ibjjf.com",
 };
 
@@ -207,6 +212,20 @@ export const PROMOTION_LINKS: Record<string, string> = {
 export function venueLocality(venue: string) {
   const parts = venue.split(",").map((p) => p.trim());
   return parts.length > 1 ? parts[parts.length - 1] : null;
+}
+
+/**
+ * Der Host einer Quell-URL als Beschriftung, z.B. "onefc.com".
+ *
+ * "www." faellt weg, weil es niemand liest. Bei einer kaputten URL kommt null
+ * zurueck — dann wird kein Link gezeigt, statt einen toten anzubieten.
+ */
+export function sourceHost(url: string): string | null {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "") || null;
+  } catch {
+    return null;
+  }
 }
 
 export function watchLinks(broadcaster: string) {

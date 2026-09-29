@@ -11,6 +11,7 @@ import {
   fighterSlug,
   PROMOTION_LINKS,
   venueLocality,
+  sourceHost,
 } from "@/lib/events";
 import { getEvents, getEventBySlug } from "@/lib/eventsDb";
 import { socialMeta } from "@/lib/socialMeta";
@@ -99,6 +100,7 @@ export default async function EventPage(
   const locality = venueLocality(event.venue);
   const organizerUrl = PROMOTION_LINKS[event.promotion];
   const head = eventHeadline(event);
+  const sourceLabel = event.sourceUrl ? sourceHost(event.sourceUrl) : null;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -141,7 +143,10 @@ export default async function EventPage(
         ← Back to Fightbase
       </Link>
 
-      <div className="mt-6 mb-1 flex items-center gap-3 text-[13px] text-dim">
+      {/* flex-wrap: Auf einem schmalen Display quetschte diese Zeile vier
+          Angaben in vier Spalten, von denen jede umbrach ("MUAY / THAI",
+          "18:30 GMT+7 · 13:30 your / time"). Umbrechen darf sie als Ganzes. */}
+      <div className="mt-6 mb-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-dim">
         <span className="text-accentText font-semibold uppercase tracking-wide">
           {event.sport}
         </span>
@@ -201,13 +206,47 @@ export default async function EventPage(
       <h1 className="font-display font-bold text-[26px] text-text mb-1">
         {head.headline}
       </h1>
+      {/* Die Promotion verlinkt auf die Organisation selbst.
+          Vorher trug diese Seite ueberhaupt keinen Link nach aussen: Bei einem
+          ONE-Event stand "onefc.com" nur als Wort im Beschreibungstext, ohne
+          dass man hinkam. */}
       <p className="text-[15px] text-muted mb-1">
-        {head.sub ? `${head.sub} · ${event.promotion}` : event.promotion}
+        {head.sub ? `${head.sub} · ` : ""}
+        {organizerUrl ? (
+          <a
+            href={organizerUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-accentText"
+          >
+            {event.promotion} ↗
+          </a>
+        ) : (
+          event.promotion
+        )}
       </p>
-      <p className="text-[13px] text-faint mb-5">
+      <p className="text-[13px] text-faint mb-1">
         {event.venue}
         {event.broadcaster !== "-" ? ` · ${event.broadcaster}` : ""}
       </p>
+
+      {/* Der Beleg. Steht bei jedem importierten Termin in der Datenbank
+          (source_url) und wurde bisher nirgends angezeigt — obwohl genau das
+          der Unterschied zu einem Kalender ist, dem man glauben muss. */}
+      {sourceLabel && event.sourceUrl ? (
+        <p className="text-[12px] text-dim mb-5">
+          <a
+            href={event.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-accentText"
+          >
+            Check this date at {sourceLabel} ↗
+          </a>
+        </p>
+      ) : (
+        <div className="mb-5" />
+      )}
 
       {event.note && (
         <p className="text-[14px] text-muted leading-relaxed mb-5">
