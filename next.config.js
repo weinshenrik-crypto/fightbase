@@ -77,6 +77,15 @@ const nextConfig = {
         destination: "/promotion/wkf",
         permanent: true,
       },
+      // Und derselbe Fall ein drittes Mal: "ONE" (so schreibt es der Import)
+      // und "ONE Championship" (so wurde es von Hand eingetragen) standen als
+      // zwei Promotions nebeneinander. Zusammengelegt in
+      // supabase/migration-one-promotion.sql.
+      {
+        source: "/promotion/one-championship",
+        destination: "/promotion/one",
+        permanent: true,
+      },
     ];
   },
 };

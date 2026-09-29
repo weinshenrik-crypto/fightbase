@@ -77,7 +77,8 @@ components/
   LegalShell.tsx        Zweisprachiger Rahmen der Rechtsseiten und von /about
   NativeAppBridge.tsx   No-op im Web; blendet in der Capacitor-App den Splash aus
 scripts/                Prüfskripte, von Hand und in der CI
-                        (u.a. check-design-tokens.ts — siehe "Konventionen")
+                        (u.a. check-design-tokens.ts — siehe "Konventionen",
+                        check-promotion-names.ts — siehe "Events pflegen")
 supabase/               SQL-Schema, Migrationen, Seeds, E-Mail-Templates
 ```
 
@@ -133,6 +134,28 @@ Die Seite prueft **keine** Rechte. Wer schreiben darf, entscheiden die
 RLS-Policies der `events`-Tabelle (`role = 'admin'` im Profil). Ein Nicht-Admin
 sieht das Formular und bekommt beim Speichern eine Fehlermeldung von Postgres.
 Nicht indexiert (`robots: noindex`).
+
+### Ein Veranstalter, ein Name
+
+Dreimal standen zwei Schreibweisen derselben Organisation nebeneinander:
+`IJF` / `IJF Judo Grand Slam`, `WKF` / `WKF Karate 1`, `ONE` /
+`ONE Championship`. Jedes Mal entstanden daraus zwei dünne Promotion-Seiten,
+und `PROMOTION_LINKS` musste doppelt gepflegt werden — was es nie wurde: Die
+14 importierten ONE-Zeilen hatten monatelang keinen Veranstalter-Link, auch
+nicht im JSON-LD.
+
+`scripts/check-promotion-names.ts` blockiert das jetzt in der CI. Es prüft
+zuerst die Erkennung gegen genau diese drei Fälle (ohne Netz), dann die
+laufende Tabelle. Zwei Veranstalter, die wirklich verschieden sind und nur
+gleich anfangen, kommen in die `ALLOWED`-Liste im Skript — mit Begründung.
+
+**Welcher Name gewinnt, entscheidet der Import**, nicht der Geschmack: Steht
+in `lib/eventSources/*.ts` `promotion: "ONE"`, dann muss die Tabelle "ONE"
+heißen, sonst legt der nächste tägliche Lauf die Spaltung wieder an.
+
+Zusammenlegen geht in zwei Schritten — eine Datei nach `supabase/` (Vorlage:
+`migration-one-promotion.sql`) und eine Weiterleitung der alten URL in
+`next.config.js`.
 
 ### Automatischer Import
 

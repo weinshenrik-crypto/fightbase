@@ -263,6 +263,50 @@ export function promotionSlug(promotion: string) {
     .replace(/(^-|-$)/g, "");
 }
 
+/**
+ * Paare von Promotion-Namen, die dieselbe Organisation meinen.
+ *
+ * Dreimal derselbe Fehler: "IJF" neben "IJF Judo Grand Slam", "WKF" neben
+ * "WKF Karate 1", "ONE" neben "ONE Championship". Jedes Mal entstanden zwei
+ * duenne Promotion-Seiten fuer denselben Veranstalter, und jedes Mal fiel es
+ * erst Wochen spaeter auf.
+ *
+ * Zwei Muster reichen, um alle drei zu fangen:
+ *   - gleicher Slug (dann kollidieren sogar die URLs), oder
+ *   - der eine Name ist der Anfang des anderen, an einer Wortgrenze.
+ *
+ * Die Wortgrenze ist noetig, damit "ONE" nicht jedes Wort trifft, das mit
+ * "one" beginnt. `allowed` nimmt Paare auf, die wirklich verschieden sind —
+ * ohne diese Tuer muesste man sonst die Pruefung ganz abschalten.
+ */
+export function promotionNameCollisions(
+  names: string[],
+  allowed: Array<[string, string]> = []
+): Array<[string, string]> {
+  const ok = new Set(
+    allowed.map(([a, b]) => [a, b].sort().join("\u0000"))
+  );
+  const out: Array<[string, string]> = [];
+  for (let i = 0; i < names.length; i++) {
+    for (let j = i + 1; j < names.length; j++) {
+      const a = names[i];
+      const b = names[j];
+      if (ok.has([a, b].sort().join("\u0000"))) continue;
+      const sameSlug = promotionSlug(a) === promotionSlug(b);
+      const [short, long] =
+        a.length <= b.length ? [a, b] : [b, a];
+      const lowerShort = short.toLowerCase();
+      const lowerLong = long.toLowerCase();
+      const prefix =
+        lowerShort !== lowerLong &&
+        lowerLong.startsWith(lowerShort) &&
+        /[^a-z0-9]/.test(lowerLong.charAt(lowerShort.length));
+      if (sameSlug || prefix) out.push([short, long]);
+    }
+  }
+  return out;
+}
+
 function allPromotionNames(events: FightEvent[]) {
   return Array.from(new Set(events.map((e) => e.promotion)));
 }
