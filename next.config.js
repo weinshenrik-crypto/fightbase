@@ -12,7 +12,7 @@ const nextConfig = {
   // Deployment, und die Route bricht auf Vercel mit ENOENT ab, waehrend sie
   // lokal laeuft.
   outputFileTracingIncludes: {
-    "/events/[id]/opengraph-image": ["./assets/fonts/**"],
+    "/events/[id]/opengraph-image": ["./assets/fonts/**", "./assets/fighter-silhouette.png"],
   },
 
   // Vercel setzt HSTS bereits selbst, der Rest fehlte.
