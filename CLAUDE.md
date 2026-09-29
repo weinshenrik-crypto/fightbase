@@ -262,6 +262,47 @@ mit "no fabricated fights". Termine gehören belegt, und im Zweifel lieber wegge
 Kampftermine verschieben sich häufig — vor dem Eintragen gegen die Promotion selbst
 prüfen, nicht gegen einen Sammel-Kalender.
 
+## Linkvorschau (Open Graph)
+
+Jede Seite erzeugt ihre Vorschaukarte selbst — `lib/ogCard.tsx` zeichnet sie,
+die `opengraph-image.tsx` je Ordner liefern nur den Inhalt:
+
+```
+app/opengraph-image.tsx                    Startseite + alles ohne eigene
+app/about/opengraph-image.tsx
+app/events/[id]/opengraph-image.tsx        mit zwei Figuren bei Paarungen
+app/sport/[sport]/opengraph-image.tsx
+app/promotion/[promotion]/opengraph-image.tsx
+app/fighters/[slug]/opengraph-image.tsx
+```
+
+**Zwei Fallen, beide an der gebauten Seite gemessen:**
+
+1. **Die Dateikonvention überschreibt ein gesetztes `openGraph.images` nicht.**
+   Wer in `generateMetadata` ein Bild einträgt, verdeckt damit die erzeugte
+   Karte. `lib/socialMeta.ts` setzt deshalb **gar kein** `images` mehr, und
+   `app/layout.tsx` auch nicht.
+2. **Wer ein eigenes `openGraph` definiert, erbt die Bilddatei des
+   Elternordners nicht.** `/impressum` bekommt `app/opengraph-image.tsx`, weil
+   es kein `openGraph` setzt; `/about` bekam gar nichts, bis es eine eigene
+   Datei hatte. Neue Seite mit `socialMeta()` heißt also: eigene
+   `opengraph-image.tsx` dazu.
+
+Die Schriften liegen als **TTF** unter `assets/fonts/` (Satori liest kein
+woff2, und `next/font` gibt die Datei nicht heraus). `assets/fighter-silhouette.png`
+ist aus `public/fighter-mask.png` erzeugt — gleiche Alphawerte, RGB auf das
+`text`-Token: Die Seite legt die Figur als CSS-Maske über eine Farbfläche, und
+Masken kennt Satori nicht.
+
+**Jede neue Kartenroute braucht einen Eintrag in `outputFileTracingIncludes`**
+(`next.config.js`). Die Pfade stehen als String im Code; was Next nicht als
+Import sieht, landet nicht im Deployment, und die Route bricht auf Vercel mit
+ENOENT ab, während sie lokal läuft.
+
+`public/og-image.png` wird nicht mehr verlinkt, bleibt aber liegen: Bei
+Netzwerken, die eine ältere Vorschau gespeichert haben, zeigt der alte Link
+sonst ins Leere.
+
 ## Supabase
 
 Projekt-Ref: `ewfqauarkzzhdckkbdzt`
