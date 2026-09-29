@@ -26,6 +26,7 @@ type EventRow = {
   undercard: string[] | null;
   starts_at: string | null;
   timezone: string | null;
+  source_url: string | null;
 };
 
 // Zurück in die FightEvent-Form, damit der gesamte bestehende Code
@@ -49,6 +50,7 @@ function toFightEvent(row: EventRow): FightEvent {
     ...(row.undercard && row.undercard.length > 0
       ? { undercard: row.undercard }
       : {}),
+    ...(row.source_url ? { sourceUrl: row.source_url } : {}),
   };
 }
 

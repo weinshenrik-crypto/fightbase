@@ -25,6 +25,7 @@ import {
   type FightEvent,
 } from "@/lib/events";
 import FighterIllustration from "@/components/FighterIllustration";
+import EventTime from "@/components/EventTime";
 import ConfirmEmailPending from "@/components/ConfirmEmailPending";
 
 function FighterAvatar({
@@ -432,11 +433,15 @@ function EventCard({
         <div className="flex justify-between items-center mb-1.5">
           <span className="text-[11px] font-semibold text-muted uppercase tracking-[0.08em]">
             {e.sport}
-            {!showDate && startTime && (
-              <span className="text-faint normal-case tracking-normal font-normal tabular-nums">
+            {!showDate && e.startsAt && (
+              <>
                 {" \u00b7 "}
-                {startTime}
-              </span>
+                <EventTime
+                  startsAt={e.startsAt}
+                  timezone={e.timezone}
+                  className="text-faint normal-case tracking-normal font-normal tabular-nums"
+                />
+              </>
             )}
           </span>
           <div className="flex items-center gap-2">
