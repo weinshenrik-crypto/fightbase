@@ -59,14 +59,7 @@ export async function generateMetadata(
     title,
     description,
     alternates: { canonical: `/events/${event.id}` },
-    // image: "generated" — das Vorschaubild kommt aus opengraph-image.tsx
-    // und traegt den Namen dieses Events statt des allgemeinen Logos.
-    ...socialMeta({
-      title,
-      description,
-      path: `/events/${event.id}`,
-      image: "generated",
-    }),
+    ...socialMeta({ title, description, path: `/events/${event.id}` }),
   };
 }
 
@@ -109,7 +102,9 @@ export default async function EventPage(
     startDate: event.date,
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-    image: ["https://fightbase.io/og-image.png"],
+    // Die erzeugte Karte dieses Events statt des allgemeinen Logos — Google
+    // zeigt dieses Bild im Suchergebnis und in der Event-Ansicht.
+    image: [`https://fightbase.io/events/${event.id}/opengraph-image`],
     location: {
       "@type": "Place",
       name: event.venue,

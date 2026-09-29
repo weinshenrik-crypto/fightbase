@@ -11,9 +11,23 @@ const nextConfig = {
   // String faellt durch. Ohne diesen Eintrag liegt assets/fonts/ nicht im
   // Deployment, und die Route bricht auf Vercel mit ENOENT ab, waehrend sie
   // lokal laeuft.
-  outputFileTracingIncludes: {
-    "/events/[id]/opengraph-image": ["./assets/fonts/**", "./assets/fighter-silhouette.png"],
-  },
+  outputFileTracingIncludes: (() => {
+    // Jede Route, die eine Vorschaukarte zeichnet, braucht die Schriften und
+    // die Silhouette. Die Pfade stehen in lib/ogCard.tsx als String, und was
+    // Next nicht als Import sieht, verfolgt es nicht — ohne diese Eintraege
+    // bricht die Route auf Vercel mit ENOENT ab, waehrend sie lokal laeuft.
+    const files = ["./assets/fonts/**", "./assets/fighter-silhouette.png"];
+    return Object.fromEntries(
+      [
+        "/opengraph-image",
+        "/about/opengraph-image",
+        "/events/[id]/opengraph-image",
+        "/sport/[sport]/opengraph-image",
+        "/promotion/[promotion]/opengraph-image",
+        "/fighters/[slug]/opengraph-image",
+      ].map((route) => [route, files])
+    );
+  })(),
 
   // Vercel setzt HSTS bereits selbst, der Rest fehlte.
   // Bewusst ohne Content-Security-Policy: Next.js injiziert Inline-Skripte für

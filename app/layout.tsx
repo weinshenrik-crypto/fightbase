@@ -40,7 +40,9 @@ export const metadata: Metadata = {
     description,
     url: "https://fightbase.io",
     siteName: "Fightbase",
-    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+    // Bewusst ohne `images`: Die Karte kommt aus app/opengraph-image.tsx.
+    // Ein hier gesetzter Eintrag wuerde sie verdecken — die Dateikonvention
+    // ueberschreibt ein ausdrueckliches `images` naemlich nicht.
     locale: "en_US",
     type: "website",
   },
@@ -48,7 +50,6 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title,
     description,
-    images: ["/og-image.png"],
   },
   verification: {
     google: "_ZN1RLgp5aww1vvK9tYT-P7dYhMxRIHmExlsDGNpgeI",
