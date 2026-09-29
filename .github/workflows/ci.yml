@@ -65,6 +65,14 @@ jobs:
       - name: ONE-Quelle pruefen
         run: npx tsx scripts/check-one-source.ts
 
+      # Zwei Namen fuer denselben Veranstalter. Dreimal passiert (IJF, WKF,
+      # ONE), jedes Mal entstanden zwei duenne Promotion-Seiten. Die Erkennung
+      # prueft sich zuerst selbst gegen diese drei Faelle — das laeuft ohne
+      # Netz. Der Abgleich mit der Tabelle laeuft nur mit hinterlegten
+      # Secrets und wird sonst uebersprungen.
+      - name: Promotion-Namen pruefen
+        run: npx tsx scripts/check-promotion-names.ts
+
       # Blockierend, seit die acht set-state-in-effect-Fehler weg sind.
       # Warnungen bleiben Warnungen — eslint beendet sich dafuer mit 0.
       - name: Lint
