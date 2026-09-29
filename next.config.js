@@ -4,6 +4,17 @@ const nextConfig = {
   // für jeden, der nach Framework-spezifischen Lücken scannt.
   poweredByHeader: false,
 
+  // Die Schriftdateien fuer die Event-Vorschaubilder.
+  //
+  // app/events/[id]/opengraph-image.tsx liest Oswald mit readFile() zur
+  // Laufzeit. Next verfolgt nur, was importiert wird — ein Dateipfad als
+  // String faellt durch. Ohne diesen Eintrag liegt assets/fonts/ nicht im
+  // Deployment, und die Route bricht auf Vercel mit ENOENT ab, waehrend sie
+  // lokal laeuft.
+  outputFileTracingIncludes: {
+    "/events/[id]/opengraph-image": ["./assets/fonts/**"],
+  },
+
   // Vercel setzt HSTS bereits selbst, der Rest fehlte.
   // Bewusst ohne Content-Security-Policy: Next.js injiziert Inline-Skripte für
   // die Hydration, eine CSP bräuchte also Nonces per Middleware. Das ist ein

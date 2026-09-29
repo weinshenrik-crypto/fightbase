@@ -40,20 +40,36 @@ export function socialMeta({
   description,
   path,
   type = "website",
+  image = "shared",
 }: {
   title: string;
   description: string;
   /** Pfad ab der Wurzel, z.B. "/sport/muay-thai". */
   path: string;
   type?: "website" | "profile";
+  /**
+   * "shared" — das gemeinsame og-image.png.
+   * "generated" — die Route hat eine eigene opengraph-image.tsx.
+   *
+   * Der Unterschied ist noetig, weil Next eine Bilddatei nach Konvention
+   * *nicht* ueber ein hier gesetztes `images` legt: Gemessen an der gebauten
+   * Seite trug /events/steko-1 weiter og-image.png, obwohl daneben ein
+   * fertiges opengraph-image.tsx lag. Wer beides setzt, bekommt das
+   * allgemeine Bild — also hier gar keins setzen und der Datei das Feld
+   * ueberlassen.
+   */
+  image?: "shared" | "generated";
 }): Pick<Metadata, "openGraph" | "twitter"> {
+  const images = image === "shared" ? { images: [OG_IMAGE] } : {};
+  const twitterImages =
+    image === "shared" ? { images: [OG_IMAGE.url] } : {};
   return {
     openGraph: {
       title,
       description,
       url: path,
       siteName: "Fightbase",
-      images: [OG_IMAGE],
+      ...images,
       locale: "en_US",
       type,
     },
@@ -64,7 +80,7 @@ export function socialMeta({
       card: "summary_large_image",
       title,
       description,
-      images: [OG_IMAGE.url],
+      ...twitterImages,
     },
   };
 }

@@ -58,7 +58,14 @@ export async function generateMetadata(
     title,
     description,
     alternates: { canonical: `/events/${event.id}` },
-    ...socialMeta({ title, description, path: `/events/${event.id}` }),
+    // image: "generated" — das Vorschaubild kommt aus opengraph-image.tsx
+    // und traegt den Namen dieses Events statt des allgemeinen Logos.
+    ...socialMeta({
+      title,
+      description,
+      path: `/events/${event.id}`,
+      image: "generated",
+    }),
   };
 }
 
