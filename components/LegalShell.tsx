@@ -9,8 +9,12 @@ export type Lang = "en" | "de";
 const BACK = { en: "← Back to Fightbase", de: "← Zurück zu Fightbase" };
 
 /**
- * Rahmen für die drei Rechtsseiten (Impressum, Datenschutz, Nutzungs-
- * bedingungen).
+ * Rahmen für die eigenständigen Textseiten: die drei Rechtsseiten
+ * (Impressum, Datenschutz, Nutzungsbedingungen) und /about.
+ *
+ * Der Name stammt von den Rechtsseiten, für die er gebaut wurde. Was er
+ * leistet — zwei fertige Sprachfassungen, eine Auswahl, ein Zurück-Link —
+ * ist aber nichts Rechtliches, und /about braucht genau das.
  *
  * Die Seitensprache liegt als Client-State in localStorage unter
  * "fightbase:lang" — dieselbe Stelle, die auch HomeClient benutzt. Die

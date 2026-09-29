@@ -52,6 +52,8 @@ app/
   sport/[sport]/        Eine SEO-Landingpage pro Sportart
   promotion/[promotion]/ Eine SEO-Landingpage pro Promotion
   impressum/ datenschutz/ terms/   Rechtstexte, alle über LegalShell
+  about/                Was Fightbase ist, woher die Termine kommen, was
+                        fehlt — die Seite, auf die Marketing-Posts verlinken
   admin/events/         Pflegemaske für die events-Tabelle
   api/cron/notify/      Vercel-Cron: Event-Erinnerungen via Resend
   api/cron/import/      Vercel-Cron: Termine aus den Verbandskalendern
@@ -72,7 +74,7 @@ components/
   EventTime.tsx         Startzeit am Austragungsort, dahinter die des Betrachters
   FighterIllustration.tsx  Generierte Darstellung statt Foto (siehe "Nicht tun")
   CookieBanner.tsx      Hinweis auf technisch notwendige Speicherung
-  LegalShell.tsx        Zweisprachiger Rahmen der Rechtsseiten
+  LegalShell.tsx        Zweisprachiger Rahmen der Rechtsseiten und von /about
   NativeAppBridge.tsx   No-op im Web; blendet in der Capacitor-App den Splash aus
 scripts/                Prüfskripte, von Hand und in der CI
                         (u.a. check-design-tokens.ts — siehe "Konventionen")

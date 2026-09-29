@@ -783,6 +783,19 @@ const STRINGS = {
     cookieAccept: "Got it",
     legalImprint: "Legal Notice",
     legalPrivacy: "Privacy Policy",
+    legalAbout: "About",
+    // Was Fightbase von einem Promotion-Kalender unterscheidet. Stand bis
+    // hierher nirgends auf der Seite — wer ueber einen geteilten Link kam,
+    // sah eine Liste und keinen Grund, ihr zu trauen.
+    //
+    // Absichtlich ohne "no tracking": Die Seite misst Reichweite ueber
+    // Vercel Analytics (offengelegt in /datenschutz, Abschnitt 6). Eine
+    // Zeile, die mit Ehrlichkeit wirbt, darf nicht selbst geschoent sein.
+    pitchLead:
+      "You shouldn't need a dozen tabs to know when the next fight is.",
+    pitchClaim:
+      "Nine combat sports, one calendar. Free, no ads, nothing made up.",
+    pitchMore: "How it works",
   },
   de: {
     tabEvents: "Events",
@@ -922,6 +935,12 @@ const STRINGS = {
     cookieAccept: "Verstanden",
     legalImprint: "Impressum",
     legalPrivacy: "Datenschutz",
+    legalAbout: "Über Fightbase",
+    pitchLead:
+      "Man sollte kein Dutzend Tabs brauchen, um zu wissen, wann der nächste Kampf ist.",
+    pitchClaim:
+      "Neun Kampfsportarten, ein Kalender. Kostenlos, ohne Werbung, nichts erfunden.",
+    pitchMore: "Wie das funktioniert",
   },
 } as const;
 
@@ -1640,6 +1659,23 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
 
       {tab === "events" && (
         <>
+          {/* Positionierung
+              Steht nur auf dem Events-Tab: Das ist die Ansicht, in der ein
+              Besucher landet, der einem geteilten Link gefolgt ist. Auf den
+              uebrigen Tabs ist die Frage "was ist das hier" schon
+              beantwortet, dort waere es nur Hoehe. */}
+          <div className="px-5 pt-4 pb-1">
+            <p className="text-[14px] md:text-[15px] text-text leading-snug">
+              {L.pitchLead}
+            </p>
+            <p className="text-[13px] text-faint leading-snug mt-1">
+              {L.pitchClaim}{" "}
+              <Link href="/about" className="text-accentText">
+                {L.pitchMore} →
+              </Link>
+            </p>
+          </div>
+
           {/* Search */}
           <div className="px-5 pt-3">
             <input
@@ -2724,6 +2760,9 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
       </div>
 
       <div className="px-5 py-6 flex gap-4 justify-center border-t border-border mt-4">
+        <Link href="/about" className="text-[12px] text-dim">
+          {L.legalAbout}
+        </Link>
         <Link href="/impressum" className="text-[12px] text-dim">
           {L.legalImprint}
         </Link>
