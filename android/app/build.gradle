@@ -77,6 +77,51 @@ gradle.taskGraph.whenReady { graph ->
     }
 }
 
+// Die Offline-Seite muss im Build liegen, sonst zeigt die App bei fehlender
+// Verbindung Chromes Fehlerseite samt Adresszeile.
+//
+// Capacitor loest server.errorPath zu "https://localhost/error.html" auf
+// (Bridge.getErrorUrl()) und laesst das vom eigenen lokalen Server aus
+// app/src/main/assets/public/ ausliefern. Genau dieser Ordner steht in
+// android/.gitignore — er entsteht erst durch `npx cap sync android`. Ein
+// frischer Checkout baut also eine App ohne Offline-Seite, ohne dass
+// irgendetwas warnt.
+//
+// Genau so ist es passiert: Auf dem Emulator lief alles ausser der
+// Offline-Seite, weil der letzte Sync aelter war als native-web/error.html.
+// Deshalb prueft der Vergleich unten auch den Inhalt und nicht nur, ob die
+// Datei da ist.
+gradle.taskGraph.whenReady { graph ->
+    def buildsApp = graph.allTasks.any { it.name.startsWith('package') || it.name.startsWith('bundle') }
+    if (!buildsApp) return
+
+    def hint = "\n\nBeheben mit:\n  npx cap sync android\n\n" +
+        "Der Ordner app/src/main/assets/public/ ist gitignored (Capacitors\n" +
+        "eigene Vorlage) und entsteht erst durch den Sync. Nach jeder Aenderung\n" +
+        "an native-web/ muss er neu laufen, sonst baut Gradle die alte Fassung\n" +
+        "mit ein."
+
+    def syncedConfig = file('src/main/assets/capacitor.config.json')
+    if (!syncedConfig.exists()) {
+        throw new GradleException("capacitor.config.json fehlt im Build." + hint)
+    }
+
+    def source = rootProject.file('../native-web/error.html')
+    def synced = file('src/main/assets/public/error.html')
+    if (!synced.exists()) {
+        throw new GradleException(
+            "Die Offline-Seite fehlt im Build (app/src/main/assets/public/error.html).\n" +
+            "Die App wuerde bei fehlender Verbindung Chromes Fehlerseite zeigen." + hint
+        )
+    }
+    if (source.exists() && source.text != synced.text) {
+        throw new GradleException(
+            "Die Offline-Seite im Build ist nicht die aus native-web/error.html.\n" +
+            "Der letzte Sync ist aelter als die Datei." + hint
+        )
+    }
+}
+
 repositories {
     flatDir{
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
