@@ -380,6 +380,20 @@ Upload-Schlüssel: Beim AAB signiert Google die Auslieferung selbst neu. Mehrere
 Fingerabdrücke gehen kommagetrennt (z.B. zusätzlich der Upload-Schlüssel, damit
 ein selbst gebautes Release auch verifiziert).
 
+**Nur `fightbase.io` steht im autoVerify-Filter, `www` bewusst nicht.** Vercel
+leitet www mit 308 um, Googles Prüfdienst folgt dem nicht und meldet
+`ERROR_CODE_REDIRECT`. Auf **Android 11 und älter** reißt ein solcher Host
+alles mit — laut Android-Doku wird die App nur dann Standard-Handler, „if it
+finds a matching Digital Asset Links file for *all* hosts in the manifest".
+Bei `minSdk 24` waren die Deep Links dort also komplett tot, auch für die
+nackte Domain. Genau deshalb musste die Verifizierung auf dem Emulator von
+Hand erzwungen werden.
+
+`scripts/check-app-links.ts` fragt denselben Dienst ab, den Android beim
+Installieren nutzt, und blockiert die CI, wenn ein Host im Filter nicht
+verknüpft ist. Wer www wieder aufnehmen will, muss vorher
+`/.well-known/assetlinks.json` dort ohne Weiterleitung ausliefern.
+
 Zum Testen ohne Play Console lassen sich die Links auf dem Gerät von Hand
 erlauben: Einstellungen → Apps → Fightbase → Standardmäßig öffnen.
 
