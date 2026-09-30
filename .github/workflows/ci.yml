@@ -81,6 +81,14 @@ jobs:
       - name: Offline-Seite der App pruefen
         run: npx tsx scripts/check-android-offline-page.ts
 
+      # Jeder Host im autoVerify-Filter muss bei Googles Pruefdienst verknuepft
+      # sein. Auf Android 11 und aelter reisst ein fehlschlagender Host die
+      # Verifizierung aller anderen mit — die Deep Links waeren dort komplett
+      # tot, ohne dass irgendetwas warnt. Ist der Dienst nicht erreichbar,
+      # wird der Teil uebersprungen statt rot zu werden.
+      - name: App-Links pruefen
+        run: npx tsx scripts/check-app-links.ts
+
       # Blockierend, seit die acht set-state-in-effect-Fehler weg sind.
       # Warnungen bleiben Warnungen — eslint beendet sich dafuer mit 0.
       - name: Lint

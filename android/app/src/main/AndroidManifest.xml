@@ -45,7 +45,27 @@
                 -->
                 <data android:scheme="https" />
                 <data android:host="fightbase.io" />
-                <data android:host="www.fightbase.io" />
+                <!--
+                    www.fightbase.io steht hier bewusst NICHT mehr.
+
+                    Vercel leitet www mit 308 auf die nackte Domain um. Googles
+                    Pruefdienst folgt der Weiterleitung nicht, sondern meldet
+                    ERROR_CODE_REDIRECT — fuer www gibt es also keine gueltige
+                    Verknuepfung, und das laesst sich ohne Umbau am Hosting
+                    auch nicht herstellen.
+
+                    Auf Android 11 und aelter reisst ein solcher Host alles
+                    mit: "the system establishes your app as the default
+                    handler for the specified URL patterns only if it finds a
+                    matching Digital Asset Links file for *all* hosts in the
+                    manifest". minSdk ist 24 — dort waeren die Deep Links also
+                    komplett tot gewesen, auch fuer fightbase.io. Ab Android 12
+                    wird je Host geprueft, dort blieb nur www uebrig.
+
+                    Ein Link auf www oeffnet jetzt den Browser, der auf die
+                    nackte Domain weiterleitet. Die Seite verlinkt selbst
+                    ueberall ohne www.
+                -->
             </intent-filter>
         </activity>
 
