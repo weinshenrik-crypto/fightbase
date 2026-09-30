@@ -339,6 +339,19 @@ mehr braucht die App lokal nicht:
 `out/` ist gitignored und wäre für andere verschwunden; deshalb ein eigener,
 eingecheckter Ordner.
 
+**Die Offline-Seite kommt nur durch `npx cap sync android` in den Build.**
+Capacitor löst `server.errorPath` zu `https://localhost/error.html` auf
+(`Bridge.getErrorUrl()`) und liefert das aus
+`android/app/src/main/assets/public/` aus — ein Ordner, der in
+`android/.gitignore` steht. Auf dem Emulator lief deshalb alles außer der
+Offline-Seite: Der letzte Sync war älter als `native-web/error.html`.
+
+`android/app/build.gradle` bricht den Build jetzt ab, wenn die Datei fehlt
+**oder** sich von `native-web/error.html` unterscheidet, und nennt den Befehl.
+`scripts/check-android-offline-page.ts` hält in der CI fest, dass dieser
+Riegel da bleibt und die Seite ohne Ressourcen von außen auskommt — sie wird
+genau dann gebraucht, wenn nichts geladen werden kann.
+
 `MainActivity.java` ist nicht mehr leer. Zwei Dinge, die Capacitor 8 in dieser
 Lage nicht mitbringt:
 
@@ -393,7 +406,15 @@ cd android
 1. **`versionCode` in `android/app/build.gradle` erhöhen.** Play verlangt eine
    streng steigende Zahl; ein AAB mit einer schon hochgeladenen Nummer wird
    abgelehnt. `versionName` ist frei und nur für Menschen.
-2. `./gradlew bundleRelease` — braucht `android/keystore.properties`, die auf
+2. **`npx cap sync android`** — kopiert `native-web/` nach
+   `android/app/src/main/assets/public/`. Der Ordner ist gitignored
+   (Capacitors eigene Vorlage), ein frischer Checkout hat ihn also nicht.
+   Ohne den Sync baut Gradle eine App **ohne Offline-Seite**, und bei
+   fehlender Verbindung erscheint Chromes Fehlerseite. Genau so ist es
+   einmal passiert. Seit dem Riegel in `android/app/build.gradle` bricht der
+   Build stattdessen mit einer Meldung ab, die den Befehl nennt — der Sync
+   gehört trotzdem vor jeden Build.
+3. `./gradlew bundleRelease` — braucht `android/keystore.properties`, die auf
    den Keystore zeigt. Beide gibt es nur lokal.
 
    Vorher `JAVA_HOME` setzen, sonst bricht es mit „Unable to locate a Java
@@ -408,7 +429,7 @@ cd android
    sagt, was fehlt. Bis September 2026 war das eine nackte
    `NullPointerException` in `signReleaseBundle` — falls die je wiederkommt,
    ist die Prüfung in `android/app/build.gradle` verloren gegangen.
-3. Das AAB liegt unter
+4. Das AAB liegt unter
    `android/app/build/outputs/bundle/release/app-release.aab` und geht in der
    Play Console nach Test and release → Testing → Internal testing → Create
    new release. Dort muss danach die neue Nummer stehen — das ist die

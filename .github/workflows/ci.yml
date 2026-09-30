@@ -73,6 +73,14 @@ jobs:
       - name: Promotion-Namen pruefen
         run: npx tsx scripts/check-promotion-names.ts
 
+      # Die Offline-Seite der Android-App. Prueft, dass der Riegel in
+      # android/app/build.gradle noch da ist (ohne ihn baut ein frischer
+      # Checkout stillschweigend eine App ohne Offline-Seite) und dass die
+      # Seite selbst ohne Ressourcen von aussen auskommt. Braucht weder Netz
+      # noch Android SDK.
+      - name: Offline-Seite der App pruefen
+        run: npx tsx scripts/check-android-offline-page.ts
+
       # Blockierend, seit die acht set-state-in-effect-Fehler weg sind.
       # Warnungen bleiben Warnungen — eslint beendet sich dafuer mit 0.
       - name: Lint
