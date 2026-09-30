@@ -426,11 +426,34 @@ function EventCard({
       )}
       <div
         onClick={onToggle}
-        className={`rounded-[10px] border p-3.5 px-4 cursor-pointer ${
+        className={`relative overflow-hidden rounded-[10px] border p-3.5 px-4 cursor-pointer ${
           showDate ? "flex-1" : "h-full"
         } ${isFav ? "border-borderFav bg-panelFav" : "border-border bg-panel"}`}
       >
-        <div className="flex justify-between items-center mb-1.5">
+        {/* Die Sportart als Schriftzug im Karteninneren.
+            Nur 16 der 164 Events haben eine angekuendigte Paarung und damit
+            zwei Figuren — alle anderen Karten waren reiner Text auf Schwarz.
+            Derselbe Griff wie auf den Teilen-Karten (lib/ogCard.tsx): Die
+            Sportart gibt jeder Karte ein Gesicht und behauptet nichts, was
+            nicht stimmt.
+
+            aria-hidden, weil die Sportart direkt darueber schon als Text
+            steht — ein Screenreader wuerde sie sonst zweimal vorlesen. */}
+        {/* Groesse nach Wortlaenge, damit der Schriftzug in die Karte passt
+            statt an beiden Raendern abgeschnitten zu werden: "MMA" vertraegt
+            84px, "Kickboxing" nur 42. Oswald braucht rund 0.55em je
+            Grossbuchstabe, und eine Karte ist im engsten Fall ~280px breit. */}
+        <span
+          aria-hidden
+          style={{
+            fontSize: Math.min(84, Math.round(250 / (e.sport.length * 0.55))),
+          }}
+          className="pointer-events-none select-none absolute right-3 bottom-1 font-display font-bold uppercase leading-none tracking-tight text-text opacity-[0.06] whitespace-nowrap"
+        >
+          {e.sport}
+        </span>
+
+        <div className="relative flex justify-between items-center mb-1.5">
           <span className="text-[11px] font-semibold text-muted uppercase tracking-[0.08em]">
             {e.sport}
             {!showDate && e.startsAt && (
@@ -476,7 +499,7 @@ function EventCard({
         </div>
 
         {e.fighters && (
-          <div className="flex items-center justify-between mb-2 px-1">
+          <div className="relative flex items-center justify-between mb-2 px-1">
             <FighterAvatar
               name={e.fighters[0]}
               photoUrl={fightersData[e.fighters[0]]?.photo_url}
@@ -499,7 +522,7 @@ function EventCard({
             selbst per Tastatur unerreichbar bleibt.
             stopPropagation, damit ein Klick auf den Titel navigiert statt
             zusaetzlich die Karte aufzuklappen. */}
-        <h2 className="font-display font-semibold text-[18px] leading-tight mb-1">
+        <h2 className="relative font-display font-semibold text-[18px] leading-tight mb-1">
           <Link
             href={`/events/${e.id}`}
             onClick={(ev) => ev.stopPropagation()}
@@ -508,10 +531,10 @@ function EventCard({
             {headline}
           </Link>
         </h2>
-        <p className="text-[13px] text-muted mb-0.5">
+        <p className="relative text-[13px] text-muted mb-0.5">
           {sub ? `${sub} · ${e.promotion}` : e.promotion}
         </p>
-        <p className="text-[12px] text-faint mb-1.5">
+        <p className="relative text-[12px] text-faint mb-1.5">
           {e.venue}
           {e.broadcaster !== "-" ? ` · ${e.broadcaster}` : ""}
         </p>
