@@ -439,16 +439,18 @@ function EventCard({
 
             aria-hidden, weil die Sportart direkt darueber schon als Text
             steht — ein Screenreader wuerde sie sonst zweimal vorlesen. */}
-        {/* Groesse nach Wortlaenge, damit der Schriftzug in die Karte passt
-            statt an beiden Raendern abgeschnitten zu werden: "MMA" vertraegt
-            84px, "Kickboxing" nur 42. Oswald braucht rund 0.55em je
-            Grossbuchstabe, und eine Karte ist im engsten Fall ~280px breit. */}
+        {/* Eine Groesse fuer alle Sportarten, bemessen an der engsten Karte.
+            Eine Groesse je Wortlaenge sah uneinheitlich aus — "MMA" riesig,
+            "Kickboxing" klein.
+
+            Im Browser gemessen statt geschaetzt: Die schmalste Karte ist
+            292px breit (vierspaltig ab 1280px Viewport). Das laengste Wort
+            ist "KICKBOXING" und misst bei 52px 253px — bleibt also auch dort
+            vollstaendig sichtbar, mit Luft nach links. Bei 56px waeren es
+            272px und es stiesse an den Rand. */}
         <span
           aria-hidden
-          style={{
-            fontSize: Math.min(84, Math.round(250 / (e.sport.length * 0.55))),
-          }}
-          className="pointer-events-none select-none absolute right-3 bottom-1 font-display font-bold uppercase leading-none tracking-tight text-text opacity-[0.06] whitespace-nowrap"
+          className="pointer-events-none select-none absolute right-3 bottom-1 font-display font-bold uppercase leading-none tracking-tight text-text opacity-[0.06] text-[52px] whitespace-nowrap"
         >
           {e.sport}
         </span>
