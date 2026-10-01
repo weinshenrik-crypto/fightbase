@@ -351,7 +351,7 @@ function DayHeading({
         {dLeft === 0
           ? L.today
           : dLeft > 0
-          ? `${L.daysPrefix}${dLeft}${L.daysSuffix}`
+          ? inDays(dLeft, L)
           : L.past}
       </span>
       <span aria-hidden className="flex-1 h-px bg-border" />
@@ -479,7 +479,7 @@ function EventCard({
               {dLeft === 0
                 ? L.today
                 : dLeft > 0
-                ? `${L.daysPrefix}${dLeft}${L.daysSuffix}`
+                ? inDays(dLeft, L)
                 : L.past}
             </span>
             )}
@@ -696,6 +696,7 @@ const STRINGS = {
     hideDay: "Hide events",
     daysPrefix: "in ",
     daysSuffix: " days",
+    daySuffixOne: " day",
     anonymous: "Anonymous",
     by: "by",
     footerNote:
@@ -844,6 +845,7 @@ const STRINGS = {
     hideDay: "Termine ausblenden",
     daysPrefix: "in ",
     daysSuffix: " Tagen",
+    daySuffixOne: " Tag",
     anonymous: "Anonym",
     by: "von",
     footerNote:
@@ -975,6 +977,17 @@ const STRINGS = {
 } as const;
 
 type Strings = { [K in keyof (typeof STRINGS)["en"]]: string };
+
+/**
+ * "in 1 day" statt "in 1 days".
+ *
+ * Die Mehrzahl stand bisher auch bei einem einzigen Tag da — auf jeder
+ * Tages-Ueberschrift, die morgen faellig war, und im Fighterprofil beim
+ * naechsten Kampf. Faellt erst auf, wenn man es sieht, und dann sofort.
+ */
+function inDays(n: number, L: Strings) {
+  return `${L.daysPrefix}${n}${n === 1 ? L.daySuffixOne : L.daysSuffix}`;
+}
 
 type ForumThread = {
   id: string;
@@ -2150,9 +2163,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
                     <span className="text-text">
                       {next.main} · {next.promotion}
                     </span>{" "}
-                    · {L.daysPrefix}
-                    {daysUntil(next.date)}
-                    {L.daysSuffix}
+                    · {inDays(daysUntil(next.date), L)}
                   </p>
                 ) : (
                   <p className="text-[12px] text-dim">{L.noUpcoming}</p>
