@@ -32,3 +32,7 @@ homeserver/.env
 *.jks
 *.keystore
 keystore.properties
+
+# Erzeugte Play-Store-Grafiken. Die Textdatei daneben ist eingecheckt,
+# die Bilder nicht — sie lassen sich jederzeit neu rendern.
+play-assets/*.png
