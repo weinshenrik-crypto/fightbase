@@ -13,10 +13,17 @@ android {
         applicationId "io.fightbase.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        // versionCode 1 liegt bereits im internen Test-Track. Play verlangt
-        // eine streng steigende Zahl, sonst wird das naechste AAB abgelehnt.
-        versionCode 2
-        versionName "1.1"
+        // Play verlangt eine streng steigende Zahl, sonst wird das naechste
+        // AAB abgelehnt. 1 und 2 liegen bereits im internen Test-Track; 2 ist
+        // der Stand vom 16. September, also vor der Offline-Seite und vor dem
+        // Deep-Link-Fix.
+        //
+        // Diese Zahl gehoert ins Repo und nicht nur auf einen Rechner: Genau
+        // daran ist das Release schon einmal gescheitert ("Versionscode 1
+        // wurde bereits verwendet"), weil die Erhoehung in einem Commit
+        // steckte, den der Arbeitsbaum noch nicht hatte.
+        versionCode 3
+        versionName "1.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
