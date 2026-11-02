@@ -330,7 +330,7 @@ function DayHeading({
       onClick={onToggle}
       aria-expanded={open}
       aria-label={`${weekday} ${day} ${monthLong} — ${open ? L.hideDay : L.showDay}`}
-      className={`sticky ${stickyTopClass} z-10 bg-base w-full flex items-baseline gap-3 py-3 text-left group`}
+      className={`sticky ${stickyTopClass} z-10 bg-base w-full flex items-baseline gap-2 min-[360px]:gap-3 py-3 text-left group`}
     >
       <span
         aria-hidden
@@ -343,8 +343,15 @@ function DayHeading({
       <h2 className="font-display font-semibold text-[15px] uppercase tracking-[0.09em] text-text whitespace-nowrap group-hover:text-accentText transition-colors duration-150 motion-reduce:transition-none">
         {weekday} {day} {monthLong}
       </h2>
+      {/* Unter 360px faellt diese Angabe weg. Datum und Anzahl sind beide
+          whitespace-nowrap, die Trennlinie gibt schon auf null nach — auf
+          Deutsch war die Zeile bei 320px trotzdem 336px breit, und die Seite
+          liess sich seitlich schieben. Gekuerzt statt versteckt sah schlechter
+          aus ("in 11 Tage…", "vergang…"). Ab 360px aendert sich nichts: gleicher
+          Abstand, gleicher Text. truncate bleibt als Netz fuer laengere
+          Uebersetzungen. */}
       <span
-        className={`text-[12px] whitespace-nowrap ${
+        className={`text-[12px] whitespace-nowrap min-w-0 truncate max-[359px]:hidden ${
           soon ? "text-accentText font-semibold" : "text-dim"
         }`}
       >
@@ -2800,7 +2807,14 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
         </div>
       </div>
 
-      <div className="px-5 py-6 flex gap-4 justify-center border-t border-border mt-4">
+      {/* flex-wrap, nicht nur flex: Auf Deutsch heissen die vier Links
+          "Ueber Fightbase", "Impressum", "Datenschutz" und
+          "Nutzungsbedingungen" und passen unter ~400px nicht in eine Zeile.
+          Ohne Umbruch stand die zentrierte Zeile links *und* rechts ueber
+          (gemessen bei 360px: Seite 363px breit, erster Link bei -3.5px) —
+          in der Android-WebView liess sich die Seite dadurch seitlich
+          schieben. */}
+      <div className="px-5 py-6 flex flex-wrap gap-x-4 gap-y-2 justify-center border-t border-border mt-4">
         <Link href="/about" className="text-[12px] text-dim">
           {L.legalAbout}
         </Link>
