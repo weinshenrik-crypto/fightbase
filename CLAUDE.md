@@ -445,9 +445,11 @@ cd android
    ist die Prüfung in `android/app/build.gradle` verloren gegangen.
 4. Das AAB liegt unter
    `android/app/build/outputs/bundle/release/app-release.aab` und geht in der
-   Play Console nach Test and release → Testing → Internal testing → Create
+   Play Console nach Test and release → Testing → **Closed testing** → Create
    new release. Dort muss danach die neue Nummer stehen — das ist die
-   Kontrolle, ob wirklich der frische Build hochgeladen wurde.
+   Kontrolle, ob wirklich der frische Build hochgeladen wurde. Nicht der
+   interne Track: Nur Releases im geschlossenen Test zaehlen fuer den
+   Produktionszugriff (siehe unten).
 
 **Nur nötig, wenn sich etwas Natives geändert hat.** Alles unter `app/`,
 `lib/` und `components/` ist über die WebView sofort in der App live und
@@ -459,8 +461,20 @@ Vor dem ersten Release mit Deep Links muss `ANDROID_CERT_SHA256` gesetzt sein
 Signierung liest `android/keystore.properties` (gitignored). Diese Datei und
 `android/app/fightbase-release.jks` existieren **nur lokal** — ohne sie kein Release-Build.
 
-Play Console: Paketname `io.fightbase.app`, Entwicklerkonto `weinshenrik@gmail.com`.
-Interner Test-Track ist aktiv, Produktion noch nicht eingereicht.
+Play Console: Paketname `io.fightbase.app`, Entwicklerkonto `weinshenrik@gmail.com`
+(privates Konto). Aktiv ist der **geschlossene** Test — nicht der interne.
+Der Unterschied ist keine Wortklauberei: Nur der geschlossene Test zahlt auf
+die Bedingungen ein, die Google vor dem Produktionszugriff stellt.
+
+Produktion steht auf "Inaktiv". Stand 2. November 2026 fordert die Console:
+
+1. ✓ Release im geschlossenen Test veröffentlicht
+2. ○ Mindestens **12 Tester** im geschlossenen Test (angemeldet: 2)
+3. ○ Den Test mit diesen 12 Testern mindestens **14 Tage** laufen lassen
+
+Die 14 Tage beginnen erst, wenn der zwölfte Tester drin ist. Am Build oder am
+AAB liegt es also nicht — wer hier weiterkommen will, braucht Tester, keinen
+neuen Release.
 
 ## Env-Variablen
 
