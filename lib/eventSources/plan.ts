@@ -133,6 +133,27 @@ function overlaps(a: Set<string>, b: Set<string>): boolean {
 }
 
 /**
+ * Bezeichnen zwei Zeitangaben denselben Zeitpunkt?
+ *
+ * Postgres gibt starts_at als timestamptz in UTC zurück
+ * ("2026-11-13T11:30:00+00:00"), die Quelle nennt dieselbe Zeit mit
+ * Ortsoffset ("2026-11-13T18:30:00+07:00"). Ein Textvergleich hielt das für
+ * eine Verlegung: Der Importer schrieb dieselben zehn ONE-Zeilen in jedem
+ * Lauf neu, warf dabei über `revalidateTag` täglich den ganzen Event-Cache
+ * weg, und sein Bericht meldete dauerhaft "10 updated" — eine echte
+ * Verlegung wäre darin nicht aufgefallen.
+ *
+ * Ein unlesbarer Wert gilt bewusst als Unterschied: Dann steht in der Spalte
+ * etwas, das dort nicht hingehört, und ein Überschreiben mit der Quelle ist
+ * die richtige Reaktion.
+ */
+function sameInstant(a: string, b: string): boolean {
+  const ta = Date.parse(a);
+  const tb = Date.parse(b);
+  return Number.isFinite(ta) && Number.isFinite(tb) && ta === tb;
+}
+
+/**
  * Steht dieselbe Veranstaltung schon von Hand in der Tabelle?
  *
  * Der Anlass ist konkret: Im Kalender liegen kuratierte Zeilen wie
@@ -252,7 +273,9 @@ export function buildPlan(
         if (after[field] == null) continue;
         const from = String(before[field] ?? "");
         const to = String(after[field]);
-        if (from !== to) changes.push({ field, from, to });
+        if (from === to) continue;
+        if (field === "starts_at" && sameInstant(from, to)) continue;
+        changes.push({ field, from, to });
       }
 
       if (changes.length === 0) plan.unchanged++;

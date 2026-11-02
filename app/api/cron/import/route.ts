@@ -30,8 +30,12 @@ export const maxDuration = 60;
 //
 // Lokal und ausführlicher geht dasselbe über scripts/import-dry-run.ts.
 
+// starts_at und timezone gehören dazu, obwohl der Importer sie nur für ONE
+// schreibt: Ohne sie sieht der Abgleich in plan.ts die vorhandene Anfangszeit
+// nicht und meldet sie in jedem Lauf als neu.
 const COLUMNS =
-  "slug,date,sport,promotion,title,main,venue,broadcaster,note,source,source_key,source_url";
+  "slug,date,sport,promotion,title,main,venue,broadcaster,note,source," +
+  "source_key,source_url,starts_at,timezone";
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get("authorization");

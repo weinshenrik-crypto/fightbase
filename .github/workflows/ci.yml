@@ -65,6 +65,14 @@ jobs:
       - name: ONE-Quelle pruefen
         run: npx tsx scripts/check-one-source.ts
 
+      # Der Schreibplan des Imports. Haengt am Vergleich der Anfangszeit:
+      # Postgres liefert starts_at in UTC, die Quelle mit Ortsoffset. Ein
+      # Textvergleich hielt das fuer eine Verlegung und schrieb dieselben zehn
+      # ONE-Zeilen taeglich neu — sichtbar war das nur im Bericht, den niemand
+      # liest. Laeuft ohne Netz und ohne Datenbank.
+      - name: Import-Plan pruefen
+        run: npx tsx scripts/check-import-plan.ts
+
       # Zwei Namen fuer denselben Veranstalter. Dreimal passiert (IJF, WKF,
       # ONE), jedes Mal entstanden zwei duenne Promotion-Seiten. Die Erkennung
       # prueft sich zuerst selbst gegen diese drei Faelle — das laeuft ohne

@@ -57,8 +57,11 @@ async function loadExisting(): Promise<{ rows: ExistingRow[]; note: string }> {
       note: "ohne Datenbank (NEXT_PUBLIC_SUPABASE_URL/-ANON_KEY nicht gesetzt) — alles erscheint als Neuanlage",
     };
   }
+  // Dieselben Spalten wie COLUMNS in der Cron-Route — liest der Trockenlauf
+  // weniger, rechnet er einen anderen Plan durch als der Ernstfall.
   const res = await fetch(
-    `${url}/rest/v1/events?select=slug,date,sport,promotion,title,main,venue,broadcaster,note,source,source_key,source_url`,
+    `${url}/rest/v1/events?select=slug,date,sport,promotion,title,main,venue,` +
+      `broadcaster,note,source,source_key,source_url,starts_at,timezone`,
     { headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: "no-store" }
   );
   if (!res.ok) {
