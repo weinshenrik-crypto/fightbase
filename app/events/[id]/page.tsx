@@ -11,6 +11,7 @@ import {
   fighterSlug,
   PROMOTION_LINKS,
   venueLocality,
+  venueLine,
   sourceHost,
 } from "@/lib/events";
 import { getEvents, getEventBySlug } from "@/lib/eventsDb";
@@ -54,7 +55,9 @@ export async function generateMetadata(
   const title = sub
     ? `${headline} — ${sub} | Fightbase`
     : `${headline} | Fightbase`;
-  const description = `${event.title} (${event.promotion}) on ${event.date} at ${event.venue}. ${event.note}`;
+  // "at <Ort>" nur, wenn es einen gibt — sonst stand hier "on 2026-12-11 . ".
+  const where = event.venue ? ` at ${event.venue}` : "";
+  const description = `${event.title} (${event.promotion}) on ${event.date}${where}. ${event.note}`;
   return {
     title,
     description,
@@ -105,13 +108,20 @@ export default async function EventPage(
     // Die erzeugte Karte dieses Events statt des allgemeinen Logos — Google
     // zeigt dieses Bild im Suchergebnis und in der Event-Ansicht.
     image: [`https://fightbase.io/events/${event.id}/opengraph-image`],
-    location: {
-      "@type": "Place",
-      name: event.venue,
-      ...(locality
-        ? { address: { "@type": "PostalAddress", addressLocality: locality } }
-        : {}),
-    },
+    // Ohne Austragungsort gar kein location-Feld. Ein Place mit leerem Namen
+    // ist ein ungueltiges Event — schlechter als ein fehlendes optionales
+    // Feld, denn Google verwirft dann die ganzen Strukturdaten der Seite.
+    ...(event.venue
+      ? {
+          location: {
+            "@type": "Place",
+            name: event.venue,
+            ...(locality
+              ? { address: { "@type": "PostalAddress", addressLocality: locality } }
+              : {}),
+          },
+        }
+      : {}),
     organizer: {
       "@type": "Organization",
       name: event.promotion,
@@ -221,8 +231,7 @@ export default async function EventPage(
         )}
       </p>
       <p className="text-[13px] text-faint mb-1">
-        {event.venue}
-        {event.broadcaster !== "-" ? ` · ${event.broadcaster}` : ""}
+        {venueLine(event.venue, event.broadcaster)}
       </p>
 
       {/* Der Beleg. Steht bei jedem importierten Termin in der Datenbank

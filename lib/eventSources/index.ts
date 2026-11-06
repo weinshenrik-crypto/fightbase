@@ -10,10 +10,11 @@
 //
 // Absichtlich nicht dabei:
 //
-//   Boxen — kein Verbandskalender, der die Rolle der IBJJF/IJF/WKF/UWW
-//   übernehmen könnte, und die großen Karten entstehen ohnehin
-//   verhandlungsweise. Bleibt Handarbeit, und genau dafür ist die
-//   "no fabricated fights"-Zusage da.
+//   Boxen über Matchroom hinaus — es gibt keinen Verbandskalender, der die
+//   Rolle der IBJJF/IJF/WKF/UWW übernehmen könnte, und die übrigen großen
+//   Promotionen sind nicht lesbar: Top Rank und Ring Magazine rendern ihren
+//   Spielplan erst im Browser, PBC, Golden Boy und BoxRec antworten mit 403.
+//   Was dort läuft, bleibt Handarbeit (Einzelheiten in matchroom.ts).
 //
 //   IFMA und WAKO — die Weltverbände für Muay Thai und Kickboxen. Beide
 //   liefern sauber lesbare Daten (IFMA sogar per REST-API), führen aber nur
@@ -26,16 +27,19 @@ import { ibjjf } from "./ibjjf";
 import { ijf } from "./ijf";
 import { wkf } from "./wkf";
 import { uww } from "./uww";
+import { matchroom } from "./matchroom";
 import { one } from "./one";
 
 export * from "./types";
 
 // Reihenfolge = Reihenfolge im Protokoll. IBJJF zuerst, weil es die
-// verlässlichste Quelle ist. ONE zuletzt, weil es als einzige Quelle viele
-// Einzelseiten holt und damit den Großteil der Laufzeit ausmacht — steht sie
-// hinten, sind die vier schnellen Quellen schon durch, wenn das Zeitbudget
-// der Route knapp wird.
-export const SOURCES: EventSource[] = [ibjjf, ijf, wkf, uww, one];
+// verlässlichste Quelle ist. Danach die beiden, die viele Einzelseiten holen
+// und damit den Großteil der Laufzeit ausmachen — hinten, damit die vier
+// schnellen Verbandsquellen schon durch sind, wenn das Zeitbudget der Route
+// knapp wird. Matchroom vor ONE, weil es früher abbricht (rund neun Abrufe
+// gegen dreißig): Reicht die Zeit nicht für beide, fehlt so nur die Quelle
+// mit den wöchentlich wiederkehrenden Karten, nicht die mit den seltenen.
+export const SOURCES: EventSource[] = [ibjjf, ijf, wkf, uww, matchroom, one];
 
 export function sourceById(id: string): EventSource | null {
   return SOURCES.find((s) => s.id === id) ?? null;

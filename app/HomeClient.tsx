@@ -22,6 +22,7 @@ import {
   upcomingFightsFor,
   sortForCalendar,
   venueTime,
+  venueLine,
   type FightEvent,
 } from "@/lib/events";
 import FighterIllustration from "@/components/FighterIllustration";
@@ -544,8 +545,7 @@ function EventCard({
           {sub ? `${sub} · ${e.promotion}` : e.promotion}
         </p>
         <p className="relative text-[12px] text-faint mb-1.5">
-          {e.venue}
-          {e.broadcaster !== "-" ? ` · ${e.broadcaster}` : ""}
+          {venueLine(e.venue, e.broadcaster)}
         </p>
 
         {isOpen && (

@@ -102,7 +102,9 @@ Arbeitsbaum schmutzig. Beide Pfade stehen ohnehin in `tsconfig.json` unter
 
 Events liegen in der Supabase-Tabelle `events`, **nicht mehr im Code**. Neue Termine
 gehen also ohne Deploy live: Zeile im Supabase Table Editor anlegen (`slug`, `date`,
-`sport`, `promotion`, `title`, `main` sind Pflicht), fertig.
+`sport`, `promotion`, `title`, `main` sind Pflicht), fertig. `venue` darf leer
+bleiben — die Oberfläche und die Strukturdaten kommen seit der Matchroom-Quelle
+damit zurecht (siehe unten).
 
 Die Seiten holen die Events per ISR alle 60 Minuten neu. Wer nicht warten will,
 schiebt die Änderung sofort live:
@@ -216,6 +218,7 @@ Sammel-Kalender. Was sich bewährt hat:
 | Judo | `ijf.org/calendar` | Vollständig, Senioren und Nachwuchs gemischt — nur Senior/Elite eintragen. |
 | Karate | `wkf.net/karate-one` | Premier League, Series A und Youth League, zwei Jahre im Voraus. |
 | Muay Thai, Kickboxen | `onefc.com/sitemap_index.xml` + `ld+json` je Einzelseite | Zweistufig: Die Events-Seite ist JS-gerendert, die Sitemap nicht. Einzige Quelle mit **Anfangszeit** und Zeitzone. Cloudflare drosselt schnelle Serien — deshalb 200 ms Pause und ein Wiederholungsversuch. |
+| Boxen | `matchroomboxing.com/events/` + die Einzelseiten | Nur Matchroom. Die Uebersicht traegt die aktuellen Karten, kommende zuerst; die Einzelseite nennt Datum und Paarung als **Fliesstext**, nicht als Strukturdaten. Austragungsort nur im Ticketlink, und nur bei etwa jeder dritten Karte. |
 | Ringen | `uww.org/events`, nur der `ld+json`-Block | `uww.org/calendar` existiert nicht (404). Die Tabelle auf `/events` wird seit dem Umbau im September 2026 erst im Browser gefüllt — im HTML stehen leere `<tr>`. Lesbar bleibt der Suchmaschinen-Block (`@graph` → `ItemList` → `SportsEvent`), und der führt nur die **nächsten drei** Termine. |
 
 IBJJF, IJF und WKF sind JS-gerendert; ein simpler Fetch liefert bei WKF und IJF
@@ -246,6 +249,28 @@ wenn die Kalender wachsen, ist der Weg dorthin kurz.
 
 Weiterhin gilt: Termine **nicht** durch Hochrechnen von Wochenrhythmen
 erfinden. Was ONE nicht veröffentlicht, steht nicht im Kalender.
+
+**Boxen deckt nur Matchroom ab.** Hier stand lange, Boxen bleibe vollständig
+Handarbeit. Für den Sport als Ganzes stimmt das weiter — geprüft am
+6. November 2026:
+
+| Promotion | Befund |
+|---|---|
+| Matchroom | lesbar, siehe oben |
+| Top Rank | `/events/upcoming` ist eine Nuxt-Anwendung: 612 KB Seite, davon 1327 Zeichen sichtbarer Text, kein einziges Datum im HTML |
+| Ring Magazine | JS-gerendert; im HTML steht nur das historische Archiv, nicht der Spielplan |
+| Queensberry | keine Event-Links auf der Seite |
+| PBC, Golden Boy, BoxRec | antworten mit **403** — daran nicht vorbeibauen, dieselbe Linie wie bei `athena.uww.org` |
+
+**Matchroom nennt den Austragungsort meist nicht.** Er steht nur im
+Ticketlink (`events365.com/…tickets_<stadt>_<halle>_…`) und damit bei etwa
+jeder dritten Karte. Das ist hier **kein** Ausschlussgrund, anders als bei
+ONE: Dort ist der Ort der eigentliche Inhalt (welches Stadion in Bangkok),
+bei einer Boxkarte sind es die Namen. `venueLine()` in `lib/events.ts` baut
+die Zeile "Ort · Sender" deshalb ohne führendes Trennzeichen, und die
+Event-Detailseite lässt bei leerem Ort das `location`-Feld im JSON-LD ganz
+weg — ein `Place` ohne Namen wäre ein ungültiges Event, und Google verwürfe
+dann die Strukturdaten der ganzen Seite.
 
 **Achtung beim lokalen Build:** `npm run build` bedient sich aus
 `.next/cache/fetch-cache`. Wer gerade Events in Supabase geändert hat und dann

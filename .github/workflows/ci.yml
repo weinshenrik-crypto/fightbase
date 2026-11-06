@@ -65,6 +65,13 @@ jobs:
       - name: ONE-Quelle pruefen
         run: npx tsx scripts/check-one-source.ts
 
+      # Die einzige Boxquelle, die sich lesen laesst — und die einzige, die
+      # Fliesstext statt Strukturdaten parst ("fight card Friday 11 December
+      # 2026"). Ein Layoutwechsel bei Matchroom faellt sonst nicht auf: Die
+      # Quelle meldet dann brav "0 neue Events". Laeuft ohne Netz.
+      - name: Matchroom-Quelle pruefen
+        run: npx tsx scripts/check-matchroom-source.ts
+
       # Der Schreibplan des Imports. Haengt am Vergleich der Anfangszeit:
       # Postgres liefert starts_at in UTC, die Quelle mit Ortsoffset. Ein
       # Textvergleich hielt das fuer eine Verlegung und schrieb dieselben zehn

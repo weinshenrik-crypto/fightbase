@@ -215,6 +215,21 @@ export function venueLocality(venue: string) {
 }
 
 /**
+ * Die Zeile unter dem Titel: "Ort · Sender".
+ *
+ * Beide Angaben koennen fehlen — der Sender steht dann als "-" in der
+ * Tabelle, der Ort als leerer String. Matchroom nennt den Austragungsort auf
+ * den meisten Kartenseiten gar nicht (Begruendung im Kopf von
+ * lib/eventSources/matchroom.ts), und ohne diese Funktion stand dort ein
+ * fuehrendes " · " vor dem Sender.
+ */
+export function venueLine(venue: string, broadcaster: string): string {
+  return [venue.trim(), broadcaster !== "-" ? broadcaster.trim() : ""]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+/**
  * Der Host einer Quell-URL als Beschriftung, z.B. "onefc.com".
  *
  * "www." faellt weg, weil es niemand liest. Bei einer kaputten URL kommt null
