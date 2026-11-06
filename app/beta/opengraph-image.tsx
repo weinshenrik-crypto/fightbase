@@ -16,7 +16,7 @@ export default async function Image() {
     {
       eyebrow: "ANDROID BETA",
       headline: "Test the Fightbase app",
-      byline: "12 testers needed, 14 days, two minutes of your time",
+      byline: "Two minutes on an Android phone helps it reach the Play Store",
       footnote: "Free, no ads, no account required.",
       watermark: "Fightbase",
     },

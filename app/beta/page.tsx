@@ -16,22 +16,24 @@ import { socialMeta } from "@/lib/socialMeta";
 // der richtigen Reihenfolge zeigt — und die auf der eigenen Domain liegt,
 // statt in einem Beitrag zweimal erklaert zu werden.
 //
-// Warum der Grund offen dasteht: Ein nackter "teste meine App"-Link hat keinen
-// Anlass, "Google verlangt 12 Tester ueber 14 Tage" hat einen, und er stimmt.
-// Das ist auch die Linie aus CLAUDE.md — kein Astroturfing, die Seite sagt,
-// wer das gebaut hat und warum sie fragt.
+// Bewusst **ohne Zahlen**: weder wie viele Tester es schon gibt noch wie viele
+// Google verlangt. Der Stand aendert sich taeglich, und eine Seite, die zwei
+// Tester behauptet, waehrend es neun sind, beschaedigt genau das Vertrauen, um
+// das sie bittet. Googles Schwellen wiederum sind seine Formalien, nicht der
+// Grund, warum jemand die App haben will — sie machen aus einer Einladung eine
+// Quotenbitte. Es bleibt: Die App steckt im geschlossenen Test, und durch den
+// kommt sie nur mit Testern.
 //
-// Bewusst **ohne** aktuellen Testerstand: Die Zahl aendert sich taeglich, und
-// eine Seite, die "im Moment sind es zwei" behauptet, waehrend es neun sind,
-// beschaedigt genau das Vertrauen, um das sie bittet. Die 12 und die 14 Tage
-// sind Googles Regel und veralten nicht.
+// Was bleiben muss, ist die Offenheit darueber, wer fragt: Die Seite sagt, dass
+// Fightbase von einer Person gebaut wird und dies eine Bitte um Hilfe ist —
+// die Linie aus CLAUDE.md, kein Astroturfing.
 
 const GROUP_URL = "https://groups.google.com/g/fightbase-closed-testers";
 const PLAY_TEST_URL = "https://play.google.com/apps/testing/io.fightbase.app";
 
 const title = "Test the Fightbase Android app";
 const description =
-  "Fightbase needs 12 testers before the Android app can go live on Google Play. Two steps, both free: join the tester group, then opt in on Google Play.";
+  "The Fightbase Android app is in closed testing. Two steps, both free and about a minute each: join the tester group, then opt in on Google Play.";
 
 export const metadata = {
   title: `${title} | Fightbase`,
@@ -100,11 +102,9 @@ export default function Beta() {
         needed, nothing to pay.
       </P>
       <P>
-        Before Google lets it into the Play Store properly, it wants{" "}
-        <strong className="text-text">12 people to test it for 14 days</strong>.
-        There aren&apos;t enough yet, and that is the only thing standing between
-        the app and the store — so if you have an Android phone and two minutes,
-        this genuinely helps.
+        It is still in closed testing — the stage Google asks for before an app
+        goes into the Play Store properly. Testers are what gets it through, so
+        if you have an Android phone and two minutes, this genuinely helps.
       </P>
 
       <H>What you need</H>
@@ -168,13 +168,10 @@ export default function Beta() {
         Werbung, kein Konto nötig, kostet nichts.
       </P>
       <P>
-        Bevor Google sie richtig in den Play Store lässt, verlangt es{" "}
-        <strong className="text-text">
-          12 Tester über 14 Tage hinweg
-        </strong>
-        . So viele sind es noch nicht, und mehr steht zwischen der App und dem
-        Store nicht — wenn du ein Android-Telefon und zwei Minuten hast, hilft
-        das also wirklich.
+        Sie steckt noch im geschlossenen Test — der Stufe, die Google verlangt,
+        bevor eine App richtig in den Play Store darf. Durch diese Stufe kommt
+        sie nur mit Testern. Wenn du also ein Android-Telefon und zwei Minuten
+        hast, hilft das wirklich.
       </P>
 
       <H>Was du brauchst</H>
