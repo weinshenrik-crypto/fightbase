@@ -21,6 +21,7 @@ const nextConfig = {
       [
         "/opengraph-image",
         "/about/opengraph-image",
+        "/beta/opengraph-image",
         "/events/[id]/opengraph-image",
         "/sport/[sport]/opengraph-image",
         "/promotion/[promotion]/opengraph-image",
