@@ -121,13 +121,31 @@ export async function GET(req: Request) {
     }
 
     if (plan.inserts.length > 0) {
-      const { error } = await db.from("events").insert(plan.inserts.map((i) => i.row));
-      if (error) {
-        entry.insertError = error.message;
-        entry.inserts = 0;
-      } else {
-        inserted += plan.inserts.length;
+      const rows = plan.inserts.map((i) => i.row);
+      const { error } = await db.from("events").insert(rows);
+      if (!error) {
+        inserted += rows.length;
         wrote = true;
+      } else {
+        // Ein Stapel, eine verletzte Bedingung — und Postgres bricht den
+        // ganzen INSERT ab, keine einzige Zeile kommt an. Deshalb im
+        // Fehlerfall noch einmal einzeln: Die gesunden Zeilen landen
+        // trotzdem, und der Bericht nennt die eine, die klemmt, statt nur
+        // "irgendwas war". Ein Doppeleintrag kann dabei nicht entstehen,
+        // `slug` ist unique — eine schon angelegte Zeile faellt mit einer
+        // Kollisionsmeldung auf, statt still ein zweites Mal zu erscheinen.
+        entry.batchError = error.message;
+        const failed: string[] = [];
+        let ok = 0;
+        for (const row of rows) {
+          const single = await db.from("events").insert(row);
+          if (single.error) failed.push(`${row.slug}: ${single.error.message}`);
+          else ok++;
+        }
+        inserted += ok;
+        if (ok > 0) wrote = true;
+        entry.inserts = ok;
+        if (failed.length > 0) entry.insertErrors = failed;
       }
     }
 
@@ -159,6 +177,33 @@ export async function GET(req: Request) {
   // hier stünden frisch importierte Termine bis zu eine Stunde lang nicht in
   // den Listen.
   if (wrote) revalidateTag("events", { expire: 0 });
+
+  // Der Bericht hatte bisher keinen Empfaenger. Ein Cron-Aufruf wertet die
+  // Antwort nicht aus, und Vercel protokolliert nur die Statuszeile — ein Lauf,
+  // der nichts anlegte, sah damit genauso aus wie einer, der alles anlegte.
+  // Im November 2026 wurde deshalb wochenlang ein Ausfall gesucht, den es nie
+  // gab: Die Termine fehlten nicht, sie wurden absichtlich uebersprungen, und
+  // niemand konnte das sehen. Seitdem steht das Ergebnis in den
+  // Runtime-Logs — `vercel logs --environment production`.
+  const summary = report
+    .map((r) =>
+      r.error
+        ? `${String(r.source)}=FEHLER`
+        : `${String(r.source)}=+${String(r.inserts)}/~${String(r.updates)}/=${String(r.unchanged)}`
+    )
+    .join(" ");
+  console.log(
+    `[import]${dry ? " dry" : ""} inserted=${inserted} updated=${updated} ${summary}`
+  );
+
+  // Alles, was schiefging, noch einmal einzeln und als Fehler — damit ein
+  // Filter auf Fehlerstufe (`vercel logs --level error`) es findet.
+  const problems = report.filter(
+    (r) => r.error || r.batchError || r.insertErrors || r.updateErrors
+  );
+  if (problems.length > 0) {
+    console.error(`[import] ${problems.length} Quelle(n) mit Problemen:`, JSON.stringify(problems));
+  }
 
   return NextResponse.json({
     dry,

@@ -68,8 +68,8 @@ export const SPORT_GUIDES: Record<string, SportGuide> = {
         body: "Lumpinee and Rajadamnern in Bangkok are the sport's two historic stadiums and run cards most nights of the week. Rajadamnern World Series is their flagship Saturday production, using open scoring and a shorter format built for broadcast. ONE Championship stages Muay Thai world titles on its Fight Night and Friday Fights cards, also out of Lumpinee. Outside Thailand, Thai Fight, Yokkao and Enfusion carry the sport in Europe and Asia.",
       },
       {
-        heading: "Why this calendar is short",
-        body: "Most Muay Thai happens on a rolling nightly schedule that is set days ahead, not months, and individual bouts are often confirmed the same week. Listing every stadium card would bury the events that people actually plan around. We list the announced title fights and broadcast series instead, which is why this page is shorter than the MMA or boxing ones.",
+        heading: "How far ahead the dates are known",
+        body: "ONE Championship announces its Lumpinee cards around three months in advance, with the date, the start time and the venue, so most of what you see here is fixed long before fight week. What this page does not list is the nightly stadium programme: Lumpinee and Rajadamnern run cards most nights, matched days ahead rather than months, and listing every one of them would bury the events people actually plan around. Nothing here is extrapolated from a weekly rhythm — a card that has not been announced is not on this page.",
       },
     ],
   },
