@@ -339,6 +339,25 @@ Provider werden im Supabase-Dashboard konfiguriert, nicht im Code.
 Schema-Änderungen kommen als neue Datei nach `supabase/` und werden im Dashboard-SQL-Editor
 ausgeführt — es gibt keine automatisierte Migrations-Pipeline.
 
+### RLS ist zeilenweise, nicht spaltenweise
+
+`schema.sql` legt für `profiles` die Regel `for select using (true)` an. Das
+erlaubt **jede Spalte jeder Zeile** — auch `email`, und zwar der Rolle `anon`,
+also dem `NEXT_PUBLIC_SUPABASE_ANON_KEY`, der bauartbedingt in jedem
+Browser-Bundle steht. Am 6. November 2026 ließen sich so die Adressen aller
+elf Konten mit einem Aufruf abrufen, während die Oberfläche
+„your email stays private" verspricht.
+
+Die Regel muss bleiben: Das Forum bindet Autorennamen über
+`profiles(username)` ein und braucht dafür Lesezugriff auf **fremde** Zeilen.
+Beschränkt wird deshalb über **Spaltenrechte**
+(`supabase/migration-profiles-email-private.sql`) — PostgREST hält sich daran.
+
+`scripts/check-profile-privacy.ts` prüft das gegen die laufende Datenbank und
+blockiert die CI, wenn `email` wieder offen steht. Wer eine neue Tabelle mit
+personenbezogenen Spalten anlegt, sollte denselben Weg gehen: Zeilenregel für
+den Zugriff, Spaltenrecht für das, was niemanden angeht.
+
 ## Android-App (Capacitor)
 
 Die App bündelt **kein** lokales Web-Build. `capacitor.config.ts` zeigt per `server.url`

@@ -88,6 +88,15 @@ jobs:
       - name: Promotion-Namen pruefen
         run: npx tsx scripts/check-promotion-names.ts
 
+      # Die E-Mail-Adressen in profiles waren mit dem oeffentlichen anon key
+      # lesbar — der Schluessel steht bauartbedingt in jedem Browser-Bundle,
+      # und die Oberflaeche verspricht "your email stays private". Behoben
+      # ueber Spaltenrechte (supabase/migration-profiles-email-private.sql);
+      # das hier ist der Regressionsschutz. Laeuft nur mit hinterlegten
+      # Secrets und wird sonst uebersprungen.
+      - name: E-Mails in profiles pruefen
+        run: npx tsx scripts/check-profile-privacy.ts
+
       # Die Offline-Seite der Android-App. Prueft, dass der Riegel in
       # android/app/build.gradle noch da ist (ohne ihn baut ein frischer
       # Checkout stillschweigend eine App ohne Offline-Seite) und dass die
