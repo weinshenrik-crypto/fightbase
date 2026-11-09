@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { jsonLdHtml } from "@/lib/jsonLd";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -142,7 +143,7 @@ export default async function EventPage(
     <div className="max-w-[480px] md:max-w-2xl mx-auto min-h-screen px-5 py-10 font-body text-text">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       <Link href="/" className="text-[13px] text-accentText">
         ← Back to Fightbase

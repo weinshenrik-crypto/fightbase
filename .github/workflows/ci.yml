@@ -97,6 +97,13 @@ jobs:
       - name: E-Mails in profiles pruefen
         run: npx tsx scripts/check-profile-privacy.ts
 
+      # JSON.stringify maskiert kein "<". Ein Kaempfername mit "</script>"
+      # darin war damit gespeichertes XSS auf der Kaempferseite — Profile legt
+      # seit migration-self-register.sql jeder angemeldete Nutzer selbst an.
+      # Prueft den Helfer und dass ihn auch alle benutzen. Ohne Netz.
+      - name: JSON-LD-Maskierung pruefen
+        run: npx tsx scripts/check-jsonld-escaping.ts
+
       # Die Offline-Seite der Android-App. Prueft, dass der Riegel in
       # android/app/build.gradle noch da ist (ohne ihn baut ein frischer
       # Checkout stillschweigend eine App ohne Offline-Seite) und dass die

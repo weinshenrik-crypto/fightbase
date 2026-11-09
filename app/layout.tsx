@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { jsonLdHtml } from "@/lib/jsonLd";
 import { Oswald, Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
@@ -78,7 +79,7 @@ export default function RootLayout({
       <body className="font-body">
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
         />
         {children}
         <CookieBanner />

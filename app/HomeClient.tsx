@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { jsonLdHtml } from "@/lib/jsonLd";
 import { useStoredLang, setStoredLang } from "@/lib/clientStore";
 import Image from "next/image";
 import Link from "next/link";
@@ -2747,7 +2748,7 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
+            __html: jsonLdHtml({
               "@context": "https://schema.org",
               "@type": "FAQPage",
               mainEntity: FAQ.map((f) => ({
