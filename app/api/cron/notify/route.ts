@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { daysUntil, formatDate, type FightEvent } from "@/lib/events";
 import { getEvents } from "@/lib/eventsDb";
+import { eventMatchesFavorite, type Fav as MatchFav } from "@/lib/favorites";
 
 // Runs once a day (see vercel.json). For each event, two things can trigger
 // an email: the event just got added to the calendar ("new_event"), or it's
@@ -15,15 +16,7 @@ export const dynamic = "force-dynamic";
 
 const REMINDER_DAYS = 3;
 
-type Fav = { user_id: string; type: string; value: string };
-
-function eventMatchesFavorite(e: FightEvent, fav: Fav) {
-  if (fav.type === "sport") return e.sport === fav.value;
-  if (fav.type === "promotion") return e.promotion === fav.value;
-  if (fav.type === "event") return e.id === fav.value;
-  if (fav.type === "fighter") return !!e.fighters?.includes(fav.value);
-  return false;
-}
+type Fav = MatchFav & { user_id: string };
 
 function eventRow(e: FightEvent, label: string) {
   const { weekday, day, month } = formatDate(e.date);

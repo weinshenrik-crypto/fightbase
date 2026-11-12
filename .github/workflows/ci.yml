@@ -38,6 +38,12 @@ jobs:
       # die Einzelabfrage kein cache:"no-store" benutzt. Mit no-store kippt die
       # Detailseite beim On-demand-Rendern von statisch auf dynamisch, und jeder
       # unbekannte Slug antwortet mit 500 statt 404.
+      # Kalenderdateien (lib/ics.ts): Escaping, Faltung nach Bytes, stabile
+      # UID, keine geratene Uhrzeit. Ein falsch escaptes Komma reicht, damit
+      # manche Kalender das ganze Abo verwerfen.
+      - name: Kalenderdateien pruefen
+        run: npx tsx scripts/check-ics.ts
+
       - name: Event-Lookup pruefen
         run: npx tsx scripts/check-event-lookup.ts
 
