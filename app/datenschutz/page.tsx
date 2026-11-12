@@ -108,7 +108,33 @@ export default function Datenschutz() {
         </p>
       </Section>
 
-      <Section title="6. Reach Measurement (Vercel Analytics)">
+      <Section title="6. Calendar Subscriptions">
+        <p className="mb-2">
+          You can add single events or whole sports and promotions to your own
+          calendar. We do not store anything about you for this. If you use the
+          Google Calendar button, your browser opens Google Calendar with the
+          event details filled in; Google then processes this under its own
+          privacy policy.
+        </p>
+        <p className="mb-2">
+          If you subscribe to your favorites while logged in, we create a
+          random, private link and store it with your account. Your calendar
+          service (e.g. Google, Apple or Microsoft) then fetches this link from
+          our server at regular intervals and thereby receives the list of
+          events matching your favorites. Your email address and username are
+          not included. Anyone who knows the link can see this event list, so
+          only share it on purpose. &ldquo;Reset link&rdquo; replaces it and the
+          old link stops working; deleting your account deletes it.
+        </p>
+        <p>
+          Legal basis: Art. 6(1)(b) GDPR (performance of a contract). The
+          calendar service processes the data under its own privacy policy.
+          The fetches are logged by our host like any other page request (see
+          section 2).
+        </p>
+      </Section>
+
+      <Section title="7. Reach Measurement (Vercel Analytics)">
         <p className="mb-2">
           We use Vercel Analytics to see how many people visit which pages. It
           works without cookies and without a cross-site identifier: no profile
@@ -127,7 +153,7 @@ export default function Datenschutz() {
         </p>
       </Section>
 
-      <Section title="7. Local Storage in Your Browser">
+      <Section title="8. Local Storage in Your Browser">
         <p>
           Fightbase stores the following data locally in your browser
           (localStorage), not on our servers:
@@ -148,7 +174,7 @@ export default function Datenschutz() {
         </p>
       </Section>
 
-      <Section title="8. Forum">
+      <Section title="9. Forum">
         <p>
           Content you post in the forum (threads, replies) is publicly visible
           to all visitors and linked to your chosen username. You can delete
@@ -156,7 +182,7 @@ export default function Datenschutz() {
         </p>
       </Section>
 
-      <Section title="9. Your Rights">
+      <Section title="10. Your Rights">
         <p>You have the right, at any time, to:</p>
         <ul className="list-disc pl-5 mt-2 space-y-1">
           <li>Access your stored data (Art. 15 GDPR)</li>
@@ -172,7 +198,7 @@ export default function Datenschutz() {
         </p>
       </Section>
 
-      <Section title="10. Right to Complain">
+      <Section title="11. Right to Complain">
         <p>
           You have the right to lodge a complaint with a data protection
           supervisory authority regarding the processing of your personal data,
@@ -182,13 +208,13 @@ export default function Datenschutz() {
         </p>
       </Section>
 
-      <Section title="11. Changes">
+      <Section title="12. Changes">
         <p>
           This privacy policy may be updated as the site evolves. The version
           published on this page always applies.
         </p>
         <p className="mt-2 text-[12px] text-dim">
-          Last updated: September 2026
+          Last updated: November 2026
         </p>
       </Section>
     </>
@@ -274,7 +300,34 @@ export default function Datenschutz() {
         </p>
       </Section>
 
-      <Section title="6. Reichweitenmessung (Vercel Analytics)">
+      <Section title="6. Kalender-Abos">
+        <p className="mb-2">
+          Du kannst einzelne Events oder ganze Sportarten und Promotions in
+          deinen eigenen Kalender übernehmen. Dafür speichern wir nichts über
+          dich. Nutzt du den Knopf für Google Kalender, öffnet dein Browser
+          Google Kalender mit den Eventdaten; Google verarbeitet das nach seiner
+          eigenen Datenschutzerklärung.
+        </p>
+        <p className="mb-2">
+          Abonnierst du als angemeldeter Nutzer deine Favoriten, erzeugen wir
+          einen zufälligen, privaten Link und speichern ihn zu deinem Konto.
+          Dein Kalenderdienst (z. B. Google, Apple oder Microsoft) ruft diesen
+          Link danach regelmäßig von unserem Server ab und erhält dabei die
+          Liste der Events, die zu deinen Favoriten passen. Deine
+          E-Mail-Adresse und dein Benutzername sind nicht enthalten. Wer den
+          Link kennt, kann diese Eventliste sehen — gib ihn also nur bewusst
+          weiter. &bdquo;Link zurücksetzen&ldquo; ersetzt ihn, der alte
+          funktioniert danach nicht mehr; mit deinem Konto wird er gelöscht.
+        </p>
+        <p>
+          Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Erfüllung eines
+          Vertrags). Der Kalenderdienst verarbeitet die Daten nach seiner
+          eigenen Datenschutzerklärung. Die Abrufe protokolliert unser Hoster
+          wie jeden anderen Seitenaufruf (siehe Abschnitt 2).
+        </p>
+      </Section>
+
+      <Section title="7. Reichweitenmessung (Vercel Analytics)">
         <p className="mb-2">
           Wir nutzen Vercel Analytics, um zu sehen, wie viele Menschen welche
           Seiten aufrufen. Das funktioniert ohne Cookies und ohne
@@ -294,7 +347,7 @@ export default function Datenschutz() {
         </p>
       </Section>
 
-      <Section title="7. Speicherung in deinem Browser">
+      <Section title="8. Speicherung in deinem Browser">
         <p>
           Fightbase speichert die folgenden Daten lokal in deinem Browser
           (localStorage), nicht auf unseren Servern:
@@ -318,7 +371,7 @@ export default function Datenschutz() {
         </p>
       </Section>
 
-      <Section title="8. Forum">
+      <Section title="9. Forum">
         <p>
           Was du im Forum schreibst (Themen, Antworten), ist für alle Besucher
           öffentlich sichtbar und mit deinem gewählten Benutzernamen verknüpft.
@@ -326,7 +379,7 @@ export default function Datenschutz() {
         </p>
       </Section>
 
-      <Section title="9. Deine Rechte">
+      <Section title="10. Deine Rechte">
         <p>Du hast jederzeit das Recht auf:</p>
         <ul className="list-disc pl-5 mt-2 space-y-1">
           <li>Auskunft über deine gespeicherten Daten (Art. 15 DSGVO)</li>
@@ -342,7 +395,7 @@ export default function Datenschutz() {
         </p>
       </Section>
 
-      <Section title="10. Beschwerderecht">
+      <Section title="11. Beschwerderecht">
         <p>
           Du hast das Recht, dich über die Verarbeitung deiner
           personenbezogenen Daten bei einer Datenschutz-Aufsichtsbehörde zu
@@ -352,13 +405,13 @@ export default function Datenschutz() {
         </p>
       </Section>
 
-      <Section title="11. Änderungen">
+      <Section title="12. Änderungen">
         <p>
           Diese Datenschutzerklärung kann angepasst werden, wenn sich die Seite
           weiterentwickelt. Es gilt jeweils die auf dieser Seite
           veröffentlichte Fassung.
         </p>
-        <p className="mt-2 text-[12px] text-dim">Stand: September 2026</p>
+        <p className="mt-2 text-[12px] text-dim">Stand: November 2026</p>
       </Section>
     </>
   );

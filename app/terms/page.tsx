@@ -49,6 +49,14 @@ export default function Terms() {
           promotion&apos;s own website. We accept no liability for costs
           arising from a listing that turned out to be outdated or incorrect.
         </p>
+        <p className="mt-2">
+          The same applies to events in your own calendar. A single event you
+          added is a copy and does not change when the listing does. A
+          subscription updates, but on your calendar service&apos;s schedule:
+          Google Calendar, for example, refreshes only about once a day. End
+          times in calendar entries are estimated, because promotions do not
+          announce them.
+        </p>
       </Section>
 
       <Section title="3. No Affiliation With the Promotions">
@@ -65,8 +73,8 @@ export default function Terms() {
       <Section title="4. Accounts">
         <p className="mb-2">
           You can use Fightbase without an account. An account is only needed
-          for favorites that follow you between devices, email reminders and
-          the forum. You are responsible for keeping access to your account
+          for favorites that follow you between devices, email reminders, a
+          calendar subscription of your favorites and the forum. You are responsible for keeping access to your account
           secure, and for everything posted through it.
         </p>
         <p>
@@ -171,7 +179,7 @@ export default function Terms() {
         </p>
       </Section>
 
-      <p className="mt-2 text-[12px] text-dim">Last updated: September 2026</p>
+      <p className="mt-2 text-[12px] text-dim">Last updated: November 2026</p>
     </>
   );
 
@@ -203,6 +211,14 @@ export default function Terms() {
           dass ein Eintrag veraltet oder falsch war, übernehmen wir keine
           Haftung.
         </p>
+        <p className="mt-2">
+          Das gilt auch für Termine in deinem eigenen Kalender. Ein einzeln
+          eingetragenes Event ist eine Kopie und ändert sich nicht mit, wenn
+          sich der Eintrag hier ändert. Ein Abo aktualisiert sich, aber im
+          Takt deines Kalenderdienstes: Google Kalender etwa nur ungefähr
+          einmal am Tag. Endzeiten in Kalendereinträgen sind geschätzt, weil
+          die Veranstalter sie nicht ankündigen.
+        </p>
       </Section>
 
       <Section title="3. Keine Verbindung zu den Veranstaltern">
@@ -220,7 +236,8 @@ export default function Terms() {
       <Section title="4. Konten">
         <p className="mb-2">
           Fightbase lässt sich ohne Konto nutzen. Ein Konto brauchst du nur für
-          geräteübergreifende Favoriten, E-Mail-Erinnerungen und das Forum. Für
+          geräteübergreifende Favoriten, E-Mail-Erinnerungen, ein Kalender-Abo
+          deiner Favoriten und das Forum. Für
           den sicheren Zugang zu deinem Konto und für alles, was darüber
           gepostet wird, bist du selbst verantwortlich.
         </p>
@@ -335,7 +352,7 @@ export default function Terms() {
         </p>
       </Section>
 
-      <p className="mt-2 text-[12px] text-dim">Stand: September 2026</p>
+      <p className="mt-2 text-[12px] text-dim">Stand: November 2026</p>
     </>
   );
 
