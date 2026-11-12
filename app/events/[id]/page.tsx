@@ -18,6 +18,7 @@ import {
 import { getEvents, getEventBySlug } from "@/lib/eventsDb";
 import { socialMeta } from "@/lib/socialMeta";
 import EventTime from "@/components/EventTime";
+import { EventCalendarButtons } from "@/components/CalendarButtons";
 import FighterIllustration from "@/components/FighterIllustration";
 
 // Fighter photos can be added/changed any time, so revalidate frequently
@@ -269,6 +270,12 @@ export default async function EventPage(
               Pre Card {i + 1}: {fight}
             </p>
           ))}
+        </div>
+      )}
+
+      {dLeft >= 0 && (
+        <div className="mb-3">
+          <EventCalendarButtons event={event} />
         </div>
       )}
 

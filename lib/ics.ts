@@ -10,7 +10,8 @@
 //   eine Dauer nennt und ein Termin ohne Ende in manchen Kalendern als
 //   Strich von null Minuten erscheint. Sie steht deshalb im Termin selbst.
 //
-// Nur serverseitig importieren (benutzt Buffer).
+// Laeuft auch im Browser (TextEncoder statt Buffer): HomeClient baut den
+// Google-Link fuer die Event-Karte selbst.
 
 import { eventHeadline, type FightEvent } from "./events";
 
@@ -18,6 +19,8 @@ const SITE = "https://fightbase.io";
 const ESTIMATED_DURATION_MS = 3 * 60 * 60 * 1000;
 /** So weit reicht ein Feed zurueck, damit ein gerade gelaufenes Event nicht sofort verschwindet. */
 const PAST_DAYS = 7;
+
+const encoder = new TextEncoder();
 
 export function eventUrl(e: FightEvent): string {
   return `${SITE}/events/${e.id}`;
@@ -42,7 +45,7 @@ export function foldLine(line: string): string {
   let current = "";
   let bytes = 0;
   for (const ch of Array.from(line)) {
-    const size = Buffer.byteLength(ch, "utf8");
+    const size = encoder.encode(ch).length;
     const limit = parts.length === 0 ? 75 : 74; // Folgezeilen tragen das Leerzeichen
     if (bytes + size > limit) {
       parts.push(current);
@@ -91,7 +94,8 @@ function description(e: FightEvent, t: Timing): string {
   return [
     sub,
     e.promotion,
-    e.broadcaster,
+    // "-" und "TBA" sind Platzhalter der Tabelle, kein Sender (wie in watchLinks).
+    e.broadcaster === "-" || e.broadcaster === "TBA" ? "" : e.broadcaster,
     t.allDay ? "" : "End time estimated",
     eventUrl(e),
   ]
@@ -135,11 +139,18 @@ function daysFrom(now: Date, iso: string): number {
   return Math.round((new Date(iso + "T00:00:00Z").getTime() - today) / 86400000);
 }
 
-/** Ein vollstaendiger Kalender mit CRLF-Zeilenenden. */
+/**
+ * Ein vollstaendiger Kalender mit CRLF-Zeilenenden.
+ *
+ * Abos zeigen nur Events ab sieben Tagen in der Vergangenheit. `allDates`
+ * schaltet das ab — fuer den Einzeltermin, den man auch nachtraeglich
+ * eintragen koennen soll.
+ */
 export function buildCalendar(
   events: FightEvent[],
   name: string,
-  now: Date = new Date()
+  now: Date = new Date(),
+  { allDates = false }: { allDates?: boolean } = {}
 ): string {
   const lines = [
     "BEGIN:VCALENDAR",
@@ -151,7 +162,7 @@ export function buildCalendar(
     "REFRESH-INTERVAL;VALUE=DURATION:PT6H",
     "X-PUBLISHED-TTL:PT6H",
     ...events
-      .filter((e) => daysFrom(now, e.date) >= -PAST_DAYS)
+      .filter((e) => allDates || daysFrom(now, e.date) >= -PAST_DAYS)
       .flatMap((e) => eventToVevent(e, now)),
     "END:VCALENDAR",
   ];

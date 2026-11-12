@@ -133,6 +133,16 @@ check("escapeText", escapeText("a,b;c\\d\ne") === "a\\,b\\;c\\\\d\\ne");
   );
 }
 
+// --- Einzeltermin und Platzhalter ---------------------------------------
+{
+  const old = { ...tournament, id: "old", date: "2026-01-10" };
+  const single = buildCalendar([old], "X", NOW, { allDates: true });
+  check("allDates: altes Event enthalten", single.includes("UID:old@"));
+  check("DTSTAMP ist jetzt, nicht der Eventtag", single.includes("DTSTAMP:20261201T120000Z"));
+  const dash = eventToVevent({ ...fight, broadcaster: "-" }, NOW);
+  check("Sender-Platzhalter '-' nicht in der Beschreibung", !unfold(dash.join("\r\n")).includes("\\n-\\n"));
+}
+
 // --- Google-Link ----------------------------------------------------------
 {
   const withTime = new URL(googleEventUrl(fight)).searchParams;

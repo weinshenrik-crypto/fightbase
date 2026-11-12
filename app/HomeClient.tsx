@@ -28,6 +28,7 @@ import {
 } from "@/lib/events";
 import FighterIllustration from "@/components/FighterIllustration";
 import EventTime from "@/components/EventTime";
+import { EventCalendarButtons } from "@/components/CalendarButtons";
 import ConfirmEmailPending from "@/components/ConfirmEmailPending";
 
 function FighterAvatar({
@@ -613,6 +614,11 @@ function EventCard({
                     </span>
                   )
                 )}
+              </div>
+            )}
+            {daysUntil(e.date) >= 0 && (
+              <div className="mt-2">
+                <EventCalendarButtons event={e} compact />
               </div>
             )}
             <Link
