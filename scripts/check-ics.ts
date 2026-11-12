@@ -15,7 +15,10 @@ import {
   eventToVevent,
   foldLine,
   googleEventUrl,
+  googleSubscribeUrl,
+  webcalUrl,
 } from "../lib/ics";
+import { personalFeed } from "../lib/personalFeed";
 import { eventMatchesFavorite } from "../lib/favorites";
 import type { FightEvent } from "../lib/events";
 
@@ -167,8 +170,41 @@ check("escapeText", escapeText("a,b;c\\d\ne") === "a\\,b\\;c\\\\d\\ne");
   check("Fav unbekannter Typ", !eventMatchesFavorite(fight, { type: "weird", value: "ONE" }));
 }
 
-if (failures > 0) {
-  console.error(`\n${failures} Pruefung(en) fehlgeschlagen.`);
-  process.exit(1);
+// --- Abo-Links (Review I2) -----------------------------------------------
+{
+  const pub = "/api/calendar/sport/judo.ics";
+  check("webcal oeffentlich", webcalUrl(pub) === "webcal://fightbase.io/api/calendar/sport/judo.ics");
+  const priv = "/api/calendar/u/abc.ics";
+  const cid = new URL(googleSubscribeUrl(priv, { https: true })).searchParams.get("cid");
+  check("persoenlicher Feed: Google-Abo ueber https, nie webcal/http", cid === "https://fightbase.io/api/calendar/u/abc.ics");
 }
-console.log("ICS: alle Pruefungen bestanden.");
+
+// --- Persoenlicher Feed: Datenbankfehler (Review I1) ----------------------
+// Ein leerer 200-Feed bei einem DB-Fehler loescht beim naechsten Abruf alle
+// Termine aus dem Kalender. Bei Fehlern muss 503 kommen — dann behalten
+// Kalender ihre letzte gute Fassung.
+async function feedChecks() {
+  const ok = { data: [{ type: "sport", value: "Muay Thai" }], error: null };
+  const boom = { data: null, error: { message: "timeout" } };
+  const user = { data: { user_id: "u1" }, error: null };
+
+  const r1 = await personalFeed({ lookupToken: async () => user, loadFavorites: async () => boom, events: [fight], now: NOW });
+  check(`Favoriten-Fehler -> 503 (war ${r1.status})`, r1.status === 503);
+
+  const r2 = await personalFeed({ lookupToken: async () => boom, loadFavorites: async () => ok, events: [fight], now: NOW });
+  check(`Token-Abfrage-Fehler -> 503 (war ${r2.status})`, r2.status === 503);
+
+  const r3 = await personalFeed({ lookupToken: async () => ({ data: null, error: null }), loadFavorites: async () => ok, events: [fight], now: NOW });
+  check(`unbekannter Token -> 404 (war ${r3.status})`, r3.status === 404);
+
+  const r4 = await personalFeed({ lookupToken: async () => user, loadFavorites: async () => ok, events: [fight, tournament], now: NOW });
+  check("gueltig -> 200 mit passendem Event", r4.status === 200 && !!r4.body?.includes("UID:one-fight-night-40@") && !r4.body?.includes("UID:ibjjf-european-2026@"));
+}
+
+feedChecks().then(() => {
+  if (failures > 0) {
+    console.error(`\n${failures} Pruefung(en) fehlgeschlagen.`);
+    process.exit(1);
+  }
+  console.log("ICS: alle Pruefungen bestanden.");
+});

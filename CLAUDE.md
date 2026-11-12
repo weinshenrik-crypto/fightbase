@@ -319,6 +319,14 @@ Dazu der Google-Link (`googleEventUrl`), den die Knöpfe in
   im SQL-Editor ausführen; bis dahin antwortet `POST /api/calendar/token` mit
   503 `migration_missing`, und der Knopf sagt "Noch nicht verfügbar".
   `scripts/check-profile-privacy.ts` prüft, dass `anon` keine Tokens liest.
+- **Der persönliche Feed antwortet bei Datenbankfehlern mit 503, nie mit
+  einem leeren Kalender** (`lib/personalFeed.ts`). Kalender ersetzen ein Abo
+  beim Abruf komplett — ein leerer 200-Feed löschte alle Termine, bis zum
+  nächsten Abruf. Vor der Migration heißt das auch: jeder Token gibt 503.
+- **Für den persönlichen Feed gibt es kein `webcal://`.** Kalenderdienste
+  machen daraus meist `http://` und kennen das HSTS des Browsers nicht; der
+  Token ginge im Klartext raus. Google bekommt die `https`-Adresse, Apple und
+  Outlook den kopierten https-Link. Die öffentlichen Feeds behalten webcal.
 - **Google Kalender aktualisiert Abos nur etwa alle 12 bis 24 Stunden** und
   ignoriert `REFRESH-INTERVAL` und mitgeschickte Erinnerungen. Daran lässt sich
   nichts ändern; die Knöpfe sagen es.

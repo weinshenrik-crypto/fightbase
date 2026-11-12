@@ -184,3 +184,20 @@ export function googleEventUrl(e: FightEvent): string {
   if (e.venue.trim()) params.set("location", e.venue.trim());
   return `https://calendar.google.com/calendar/render?${params}`;
 }
+
+/** Abo-Link fuer Apple-Kalender und Outlook. Nur fuer oeffentliche Feeds. */
+export function webcalUrl(path: string): string {
+  return `webcal://fightbase.io${path}`;
+}
+
+/**
+ * Abo-Link fuer Google Kalender.
+ *
+ * `https`: fuer den persoenlichen Feed. Kalenderdienste machen aus webcal://
+ * meist http:// und kennen das HSTS des Browsers nicht — der erste Abruf
+ * ginge dann samt Token im Klartext raus. Google nimmt auch https:// an.
+ */
+export function googleSubscribeUrl(path: string, { https = false }: { https?: boolean } = {}): string {
+  const feed = https ? `https://fightbase.io${path}` : webcalUrl(path);
+  return `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(feed)}`;
+}

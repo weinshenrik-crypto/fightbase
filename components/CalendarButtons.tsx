@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useIsNativeApp, useStoredLang } from "@/lib/clientStore";
-import { googleEventUrl } from "@/lib/ics";
+import { googleEventUrl, googleSubscribeUrl, webcalUrl } from "@/lib/ics";
 import type { FightEvent } from "@/lib/events";
 
 // Knoepfe, die Events in den Kalender bringen. Zwei Formen:
@@ -65,13 +65,6 @@ const primary =
 const secondary =
   "text-[13px] font-medium px-3.5 py-2 rounded-md border border-borderStrong text-text";
 
-export function webcalUrl(path: string): string {
-  return `webcal://${SITE_HOST}${path}`;
-}
-
-export function googleSubscribeUrl(path: string): string {
-  return `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl(path))}`;
-}
 
 const secondaryCompact =
   "text-[12px] font-medium px-2.5 py-1 rounded-md border border-borderStrong text-text";
@@ -101,8 +94,20 @@ export function EventCalendarButtons({
   );
 }
 
-/** `feedPath`: Pfad ohne Host, z.B. "/api/calendar/sport/jiu-jitsu.ics". */
-export function FeedCalendarButtons({ feedPath }: { feedPath: string }) {
+/**
+ * `feedPath`: Pfad ohne Host, z.B. "/api/calendar/sport/jiu-jitsu.ics".
+ *
+ * `personal`: Der Feed traegt einen geheimen Token. Dann kein webcal://
+ * (wird meist zu http://, der Token ginge im Klartext raus), und Google
+ * bekommt die https-Adresse. Apple und Outlook bleibt "Link kopieren".
+ */
+export function FeedCalendarButtons({
+  feedPath,
+  personal = false,
+}: {
+  feedPath: string;
+  personal?: boolean;
+}) {
   const L = STRINGS[useStoredLang()];
   const native = useIsNativeApp();
   const [copied, setCopied] = useState(false);
@@ -121,10 +126,10 @@ export function FeedCalendarButtons({ feedPath }: { feedPath: string }) {
   return (
     <div>
       <div className="flex flex-wrap gap-2">
-        <a href={googleSubscribeUrl(feedPath)} target="_blank" rel="noopener noreferrer" className={primary}>
+        <a href={googleSubscribeUrl(feedPath, { https: personal })} target="_blank" rel="noopener noreferrer" className={primary}>
           {L.subGoogle} ↗
         </a>
-        {!native && (
+        {!native && !personal && (
           <a href={webcalUrl(feedPath)} className={secondary}>
             {L.subOther}
           </a>
@@ -190,7 +195,7 @@ export function FavoritesCalendar({
       <p className="text-[12px] text-muted mb-2.5">{L.favIntro}</p>
       {state.kind === "ready" ? (
         <>
-          <FeedCalendarButtons feedPath={`/api/calendar/u/${state.token}.ics`} />
+          <FeedCalendarButtons feedPath={`/api/calendar/u/${state.token}.ics`} personal />
           <button
             type="button"
             onClick={() => load(true)}
