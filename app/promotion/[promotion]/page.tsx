@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FeedCalendarButtons } from "@/components/CalendarButtons";
 import { jsonLdHtml } from "@/lib/jsonLd";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -110,11 +111,15 @@ export default async function PromotionPage({
           href={officialUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[13px] text-accentText inline-block mb-8"
+          className="text-[13px] text-accentText inline-block mb-5"
         >
           {promotion} official site ↗
         </a>
       )}
+
+      <div className="mb-8">
+        <FeedCalendarButtons feedPath={`/api/calendar/promotion/${promotionSlug(promotion)}.ics`} />
+      </div>
 
       <div className="flex flex-col gap-3">
         {events.length === 0 && (
