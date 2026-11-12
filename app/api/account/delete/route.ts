@@ -38,6 +38,9 @@ export async function POST(req: Request) {
   await db.from("forum_posts").delete().eq("user_id", user.id);
   await db.from("forum_threads").delete().eq("created_by", user.id);
   await db.from("favorites").delete().eq("user_id", user.id);
+  // Vor der Migration gibt es die Tabelle nicht; der Fehler wird dann
+  // bewusst ignoriert, das cascade an profiles erledigt den Rest.
+  await db.from("calendar_tokens").delete().eq("user_id", user.id);
   await db.from("sent_notifications").delete().eq("user_id", user.id);
   await db.from("reports").delete().eq("reporter_id", user.id);
   await db.from("profiles").delete().eq("id", user.id);

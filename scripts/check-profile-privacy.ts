@@ -74,6 +74,26 @@ async function main() {
   const name = await ask("id,username");
   check(`username bleibt lesbar (HTTP ${name.status})`, name.status === 200);
 
+  // 4. Die Tokens des persoenlichen Kalender-Feeds (calendar_tokens). Wer
+  //    einen kennt, liest die Favoriten eines Kontos mit; anon darf keine
+  //    Zeile sehen. Vor der Migration gibt es die Tabelle nicht — dann nur
+  //    ein Hinweis, damit die CI nicht an einer ausstehenden Migration haengt.
+  const tok = await fetch(`${url}/rest/v1/calendar_tokens?select=token&limit=1`, {
+    headers: { apikey: key!, Authorization: `Bearer ${key!}` },
+    cache: "no-store",
+  });
+  const tokBody = await tok.text();
+  if (tok.status === 404 || /PGRST205|42P01/.test(tokBody)) {
+    console.log(
+      "Hinweis: calendar_tokens fehlt — supabase/migration-calendar-tokens.sql ausfuehren."
+    );
+  } else {
+    check(
+      `calendar_tokens ist mit dem anon key nicht lesbar (HTTP ${tok.status})`,
+      tok.status >= 400 || tokBody.trim() === "[]"
+    );
+  }
+
   if (failures > 0) {
     console.error(`\n${failures} Pruefung(en) fehlgeschlagen`);
     process.exit(1);

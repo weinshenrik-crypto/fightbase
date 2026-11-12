@@ -24,6 +24,16 @@ const STRINGS = {
     copy: "Copy link",
     copied: "Copied",
     refreshNote: "Google Calendar refreshes subscriptions about once a day.",
+    favTitle: "Your favorites in your calendar",
+    favIntro:
+      "One private link with every upcoming event that matches your favorites. New ones appear on their own.",
+    favButton: "Subscribe to my favorites",
+    favLoading: "One moment…",
+    favReset: "Reset link",
+    favResetNote: "Only reset if you shared the link by mistake — the old one stops working.",
+    favSignIn: "Please sign in again.",
+    favUnavailable: "Not available yet.",
+    favError: "That didn't work. Please try again.",
   },
   de: {
     google: "In Google Kalender",
@@ -33,6 +43,16 @@ const STRINGS = {
     copy: "Link kopieren",
     copied: "Kopiert",
     refreshNote: "Google Kalender aktualisiert Abos etwa einmal am Tag.",
+    favTitle: "Deine Favoriten im Kalender",
+    favIntro:
+      "Ein privater Link mit allen kommenden Events, die zu deinen Favoriten passen. Neue kommen von selbst dazu.",
+    favButton: "Favoriten im Kalender abonnieren",
+    favLoading: "Einen Moment…",
+    favReset: "Link zurücksetzen",
+    favResetNote: "Nur zurücksetzen, wenn du den Link versehentlich geteilt hast — der alte funktioniert danach nicht mehr.",
+    favSignIn: "Bitte melde dich neu an.",
+    favUnavailable: "Noch nicht verfügbar.",
+    favError: "Das hat nicht geklappt. Bitte versuch es noch einmal.",
   },
 } as const;
 
@@ -104,6 +124,87 @@ export function FeedCalendarButtons({ feedPath }: { feedPath: string }) {
         </button>
       </div>
       <p className="text-[12px] text-dim mt-2">{L.refreshNote}</p>
+    </div>
+  );
+}
+
+type FavState =
+  | { kind: "idle" }
+  | { kind: "loading" }
+  | { kind: "ready"; token: string }
+  | { kind: "error"; message: "favSignIn" | "favUnavailable" | "favError" };
+
+/**
+ * Das Abo der eigenen Favoriten. Der Token wird erst auf Knopfdruck geholt
+ * und nur im Zustand dieser Komponente gehalten, nicht im Browser-Speicher:
+ * Er ist ein Schluessel zu den Favoriten des Kontos.
+ *
+ * `getAccessToken` liefert das Zugangstoken der laufenden Supabase-Sitzung.
+ */
+export function FavoritesCalendar({
+  getAccessToken,
+}: {
+  getAccessToken: () => Promise<string | undefined>;
+}) {
+  const L = STRINGS[useStoredLang()];
+  const [state, setState] = useState<FavState>({ kind: "idle" });
+
+  async function load(rotate: boolean) {
+    setState({ kind: "loading" });
+    try {
+      const access = await getAccessToken();
+      if (!access) {
+        setState({ kind: "error", message: "favSignIn" });
+        return;
+      }
+      const res = await fetch(`/api/calendar/token${rotate ? "?rotate=1" : ""}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${access}` },
+      });
+      const body = (await res.json().catch(() => ({}))) as { token?: unknown };
+      if (res.status === 401) setState({ kind: "error", message: "favSignIn" });
+      else if (res.status === 503) setState({ kind: "error", message: "favUnavailable" });
+      else if (res.ok && typeof body.token === "string" && body.token)
+        setState({ kind: "ready", token: body.token });
+      else setState({ kind: "error", message: "favError" });
+    } catch {
+      setState({ kind: "error", message: "favError" });
+    }
+  }
+
+  return (
+    <div>
+      <p className="text-[11px] font-semibold text-dim uppercase tracking-wide mb-1.5">
+        {L.favTitle}
+      </p>
+      <p className="text-[12px] text-muted mb-2.5">{L.favIntro}</p>
+      {state.kind === "ready" ? (
+        <>
+          <FeedCalendarButtons feedPath={`/api/calendar/u/${state.token}.ics`} />
+          <button
+            type="button"
+            onClick={() => load(true)}
+            className="text-[12px] text-dim underline mt-2"
+          >
+            {L.favReset}
+          </button>
+          <p className="text-[11px] text-dim mt-1">{L.favResetNote}</p>
+        </>
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={() => load(false)}
+            disabled={state.kind === "loading"}
+            className={primary}
+          >
+            {state.kind === "loading" ? L.favLoading : L.favButton}
+          </button>
+          {state.kind === "error" && (
+            <p className="text-[12px] text-accentText mt-2">{L[state.message]}</p>
+          )}
+        </>
+      )}
     </div>
   );
 }

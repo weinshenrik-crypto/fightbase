@@ -28,7 +28,7 @@ import {
 } from "@/lib/events";
 import FighterIllustration from "@/components/FighterIllustration";
 import EventTime from "@/components/EventTime";
-import { EventCalendarButtons } from "@/components/CalendarButtons";
+import { EventCalendarButtons, FavoritesCalendar } from "@/components/CalendarButtons";
 import ConfirmEmailPending from "@/components/ConfirmEmailPending";
 
 function FighterAvatar({
@@ -1867,6 +1867,11 @@ export default function HomeClient({ events }: { events: FightEvent[] }) {
           ) : (
             <>
               <div className="px-5 pt-4 pb-4 border-b border-border flex flex-col gap-3.5">
+                <FavoritesCalendar
+                  getAccessToken={async () =>
+                    (await supabase.auth.getSession()).data.session?.access_token
+                  }
+                />
                 <div>
                   <p className="text-[11px] font-semibold text-dim uppercase tracking-wide mb-1.5">
                     {L.favSportsLabel}
