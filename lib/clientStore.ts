@@ -153,3 +153,26 @@ export function useHydrated(): boolean {
     () => false
   );
 }
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Ob die Seite in der Android-App (Capacitor-WebView) laeuft.
+ *
+ * Capacitor setzt `window.Capacitor` vor dem ersten Skript der Seite; der Wert
+ * aendert sich zur Laufzeit nicht. Serverseitig und vor der Hydration: false.
+ *
+ * Gebraucht von den Kalender-Knoepfen: Die WebView hat keinen
+ * DownloadListener (Capacitor 8 setzt keinen), ein .ics-Download bleibt dort
+ * also stumm, und webcal:// verpufft auf Geraeten ohne passende App.
+ */
+export function useIsNativeApp(): boolean {
+  return useSyncExternalStore(
+    neverChanges,
+    () => {
+      const cap = (window as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+      return !!cap?.isNativePlatform?.();
+    },
+    () => false
+  );
+}

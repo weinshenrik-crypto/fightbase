@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useStoredLang } from "@/lib/clientStore";
+import { useIsNativeApp, useStoredLang } from "@/lib/clientStore";
 import { googleEventUrl } from "@/lib/ics";
 import type { FightEvent } from "@/lib/events";
 
@@ -12,6 +12,10 @@ import type { FightEvent } from "@/lib/events";
 //
 // Google steht jeweils zuerst: Auf Android gibt es keinen Systemkalender, der
 // webcal:// abonniert, und die App ist bisher nur fuer Android da.
+//
+// In der App fallen .ics und webcal:// weg (useIsNativeApp): Der Google-Link
+// geht als Intent nach draussen und funktioniert, die anderen beiden blieben
+// in der WebView ohne jede Reaktion.
 
 const SITE_HOST = "fightbase.io";
 
@@ -81,15 +85,18 @@ export function EventCalendarButtons({
   compact?: boolean;
 }) {
   const L = STRINGS[useStoredLang()];
+  const native = useIsNativeApp();
   const cls = compact ? secondaryCompact : secondary;
   return (
     <div className={`flex flex-wrap ${compact ? "gap-1.5" : "gap-2"}`}>
       <a href={googleEventUrl(event)} target="_blank" rel="noopener noreferrer" className={cls}>
         {L.google} ↗
       </a>
-      <a href={`/api/calendar/event/${event.id}.ics`} download className={cls}>
-        {L.ics}
-      </a>
+      {!native && (
+        <a href={`/api/calendar/event/${event.id}.ics`} download className={cls}>
+          {L.ics}
+        </a>
+      )}
     </div>
   );
 }
@@ -97,6 +104,7 @@ export function EventCalendarButtons({
 /** `feedPath`: Pfad ohne Host, z.B. "/api/calendar/sport/jiu-jitsu.ics". */
 export function FeedCalendarButtons({ feedPath }: { feedPath: string }) {
   const L = STRINGS[useStoredLang()];
+  const native = useIsNativeApp();
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -116,9 +124,11 @@ export function FeedCalendarButtons({ feedPath }: { feedPath: string }) {
         <a href={googleSubscribeUrl(feedPath)} target="_blank" rel="noopener noreferrer" className={primary}>
           {L.subGoogle} ↗
         </a>
-        <a href={webcalUrl(feedPath)} className={secondary}>
-          {L.subOther}
-        </a>
+        {!native && (
+          <a href={webcalUrl(feedPath)} className={secondary}>
+            {L.subOther}
+          </a>
+        )}
         <button type="button" onClick={copy} className={secondary}>
           {copied ? L.copied : L.copy}
         </button>

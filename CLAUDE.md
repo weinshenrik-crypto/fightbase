@@ -59,10 +59,13 @@ app/
   api/cron/import/      Vercel-Cron: Termine aus den Verbandskalendern
   api/cron/results/     Vercel-Cron: Ergebnisse aus Wikipedia
   api/revalidate/       Wirft den Event-Cache weg (Bearer CRON_SECRET)
+  api/calendar/         Kalenderdateien und Abos (siehe "Kalender")
   api/account/delete/   Kontolöschung
 lib/
   events.ts             Typ FightEvent, Sportarten und reine Helfer — keine Daten
   eventsDb.ts           Die einzige Stelle, die Events liest
+  ics.ts                Kalenderdateien (RFC 5545) aus Events
+  favorites.ts          Welche Events zu einem Favoriten passen
   eventSources/         Quellen des automatischen Imports, eine Datei je Quelle
   resultsSource.ts      Ergebnisse aus Wikipedia-Wikitext
   sportGuides.ts        Redaktionstexte der Sport-Landingpages
@@ -286,6 +289,47 @@ Parameter übergeben.
 mit "no fabricated fights". Termine gehören belegt, und im Zweifel lieber weggelassen.
 Kampftermine verschieben sich häufig — vor dem Eintragen gegen die Promotion selbst
 prüfen, nicht gegen einen Sammel-Kalender.
+
+## Kalender
+
+Drei Wege in den Kalender, alle aus `lib/ics.ts` (RFC 5545, ohne Bibliothek):
+
+```
+/api/calendar/event/<slug>.ics       ein Event, als Download
+/api/calendar/sport/<slug>.ics       Abo je Sportart (Slugs wie /sport/)
+/api/calendar/promotion/<slug>.ics   Abo je Promotion, nur mit Landingpage
+/api/calendar/u/<token>.ics          persönlicher Feed der eigenen Favoriten
+```
+
+Dazu der Google-Link (`googleEventUrl`), den die Knöpfe in
+`components/CalendarButtons.tsx` direkt bauen.
+
+- **Keine geratene Uhrzeit.** Ohne `starts_at` ist ein Termin ganztägig. Mit
+  Uhrzeit endet er nach drei Stunden — die einzige Schätzung, und sie steht
+  im Termin ("End time estimated"). Erinnerung eine Stunde vorher, nur bei
+  Terminen mit Uhrzeit.
+- **`UID` ist `<slug>@fightbase.io`.** Der Slug muss stabil bleiben, sonst
+  verdoppeln Kalender die Termine — ein Grund mehr, warum der Import über
+  `(source, source_key)` abgleicht und nicht über den Slug.
+- **Welche Events zu Favoriten passen, entscheidet `lib/favorites.ts`** — für
+  E-Mail-Erinnerung und Kalender-Feed dieselbe Funktion.
+- **Der Token des persönlichen Feeds liegt in `calendar_tokens`, nicht in
+  `profiles`** — `profiles` ist zeilenweise für alle lesbar (siehe "RLS ist
+  zeilenweise"). Vor dem ersten Einsatz `supabase/migration-calendar-tokens.sql`
+  im SQL-Editor ausführen; bis dahin antwortet `POST /api/calendar/token` mit
+  503 `migration_missing`, und der Knopf sagt "Noch nicht verfügbar".
+  `scripts/check-profile-privacy.ts` prüft, dass `anon` keine Tokens liest.
+- **Google Kalender aktualisiert Abos nur etwa alle 12 bis 24 Stunden** und
+  ignoriert `REFRESH-INTERVAL` und mitgeschickte Erinnerungen. Daran lässt sich
+  nichts ändern; die Knöpfe sagen es.
+- **In der Android-App gibt es nur den Google-Knopf und "Link kopieren".**
+  Capacitor 8 setzt keinen `DownloadListener`, ein `.ics`-Download bleibt in
+  der WebView stumm, und `webcal://` verpufft ohne passende App. Der
+  Google-Link geht über `Bridge.launchIntent` als Intent nach draußen.
+  Erkannt wird die App über `useIsNativeApp()` in `lib/clientStore.ts`.
+
+`scripts/check-ics.ts` prüft Escaping, Faltung nach Bytes (nicht Zeichen —
+Umlaute und Emoji), CRLF, `UID`-Stabilität und die Regeln oben, ohne Netz.
 
 ## Linkvorschau (Open Graph)
 

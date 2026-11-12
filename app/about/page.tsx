@@ -118,7 +118,9 @@ export default function About() {
       <P>
         No ads, no paywall, no sponsored listings, and nothing to buy. An
         account is optional and only exists so you can favourite sports and
-        fighters and get an email reminder before an event you care about.
+        fighters, get an email reminder before an event you care about, and
+        subscribe to your favourites in your own calendar. Single events and
+        whole sports or promotions go into your calendar without an account.
       </P>
       <P>
         To be precise rather than flattering: the site does count page views,
@@ -222,8 +224,10 @@ export default function About() {
       <P>
         Keine Werbung, keine Bezahlschranke, keine bezahlten Einträge, nichts
         zu kaufen. Ein Konto ist freiwillig und existiert nur, damit du
-        Sportarten und Kämpfer als Favoriten speichern und vor einem Event eine
-        Erinnerung per E-Mail bekommen kannst.
+        Sportarten und Kämpfer als Favoriten speichern, vor einem Event eine
+        Erinnerung per E-Mail bekommen und deine Favoriten im eigenen Kalender
+        abonnieren kannst. Einzelne Events und ganze Sportarten oder
+        Promotions kommen auch ohne Konto in den Kalender.
       </P>
       <P>
         Der Genauigkeit halber, statt es schöner zu machen, als es ist: Die
