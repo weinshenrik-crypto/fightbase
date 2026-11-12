@@ -325,8 +325,11 @@ Dazu der Google-Link (`googleEventUrl`), den die Knöpfe in
   nächsten Abruf. Vor der Migration heißt das auch: jeder Token gibt 503.
 - **Für den persönlichen Feed gibt es kein `webcal://`.** Kalenderdienste
   machen daraus meist `http://` und kennen das HSTS des Browsers nicht; der
-  Token ginge im Klartext raus. Google bekommt die `https`-Adresse, Apple und
-  Outlook den kopierten https-Link. Die öffentlichen Feeds behalten webcal.
+  Token ginge im Klartext raus. Apple und Outlook bekommen den kopierten
+  https-Link. Die öffentlichen Feeds behalten webcal für Apple/Outlook.
+- **Google bekommt immer die `https`-Adresse, auch bei öffentlichen Feeds.**
+  Mit `cid=webcal://…` ruft Google per `http://` ab, Vercel antwortet mit 308,
+  und Google folgt dem nicht — die Meldung lautet dann "URL überprüfen".
 - **Google Kalender aktualisiert Abos nur etwa alle 12 bis 24 Stunden** und
   ignoriert `REFRESH-INTERVAL` und mitgeschickte Erinnerungen. Daran lässt sich
   nichts ändern; die Knöpfe sagen es.

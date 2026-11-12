@@ -98,8 +98,8 @@ export function EventCalendarButtons({
  * `feedPath`: Pfad ohne Host, z.B. "/api/calendar/sport/jiu-jitsu.ics".
  *
  * `personal`: Der Feed traegt einen geheimen Token. Dann kein webcal://
- * (wird meist zu http://, der Token ginge im Klartext raus), und Google
- * bekommt die https-Adresse. Apple und Outlook bleibt "Link kopieren".
+ * (wird meist zu http://, der Token ginge im Klartext raus). Apple und
+ * Outlook bleibt "Link kopieren". Google bekommt ohnehin immer https.
  */
 export function FeedCalendarButtons({
   feedPath,
@@ -126,7 +126,7 @@ export function FeedCalendarButtons({
   return (
     <div>
       <div className="flex flex-wrap gap-2">
-        <a href={googleSubscribeUrl(feedPath, { https: personal })} target="_blank" rel="noopener noreferrer" className={primary}>
+        <a href={googleSubscribeUrl(feedPath)} target="_blank" rel="noopener noreferrer" className={primary}>
           {L.subGoogle} ↗
         </a>
         {!native && !personal && (
