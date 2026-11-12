@@ -174,12 +174,12 @@ check("escapeText", escapeText("a,b;c\\d\ne") === "a\\,b\\;c\\\\d\\ne");
 {
   const pub = "/api/calendar/sport/judo.ics";
   check("webcal oeffentlich", webcalUrl(pub) === "webcal://fightbase.io/api/calendar/sport/judo.ics");
-  // Google macht aus webcal:// ein http://, Vercel antwortet darauf mit 308,
-  // und Googles Abrufdienst folgt der Umleitung nicht ("URL ueberpruefen").
-  // Deshalb bekommt Google immer die https-Adresse.
+  // Google nimmt ueber ?cid= nur webcal:// an. Eine https-Adresse wird dort
+  // kommentarlos ignoriert, es erscheint nicht einmal der Dialog
+  // "Kalender hinzufuegen" (am 12.11.2026 in Google Kalender ausprobiert).
   for (const path of [pub, "/api/calendar/u/abc.ics"]) {
     const cid = new URL(googleSubscribeUrl(path)).searchParams.get("cid");
-    check(`Google-Abo ueber https (${path})`, cid === `https://fightbase.io${path}`);
+    check(`Google-Abo ueber webcal (${path})`, cid === `webcal://fightbase.io${path}`);
   }
 }
 

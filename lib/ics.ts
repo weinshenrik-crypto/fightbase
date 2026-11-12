@@ -191,13 +191,13 @@ export function webcalUrl(path: string): string {
 }
 
 /**
- * Abo-Link fuer Google Kalender — immer mit der https-Adresse.
+ * Abo-Link fuer Google Kalender.
  *
- * Mit webcal:// ruft Google den Feed per http:// ab, Vercel antwortet mit 308
- * auf https, und Googles Abrufdienst folgt der Umleitung nicht: Google meldet
- * dann "URL ueberpruefen". Fuer den persoenlichen Feed kommt hinzu, dass der
- * Token bei http:// im Klartext unterwegs waere.
+ * Google nimmt ueber ?cid= nur webcal:// an. Eine https-Adresse ignoriert es
+ * kommentarlos — kein Dialog, kein Fehler (am 12.11.2026 ausprobiert). Den
+ * webcal-Feed holt Google per http:// und folgt der 308-Umleitung von Vercel
+ * auf https; das Abo funktioniert damit.
  */
 export function googleSubscribeUrl(path: string): string {
-  return `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(`https://fightbase.io${path}`)}`;
+  return `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl(path))}`;
 }

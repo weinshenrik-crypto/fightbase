@@ -99,7 +99,9 @@ export function EventCalendarButtons({
  *
  * `personal`: Der Feed traegt einen geheimen Token. Dann kein webcal://
  * (wird meist zu http://, der Token ginge im Klartext raus). Apple und
- * Outlook bleibt "Link kopieren". Google bekommt ohnehin immer https.
+ * Outlook bleibt "Link kopieren". Google laesst sich nur per webcal
+ * abonnieren; dort laeuft der erste Abruf zwischen Googles Servern und
+ * Vercel, nicht ueber das WLAN des Nutzers.
  */
 export function FeedCalendarButtons({
   feedPath,

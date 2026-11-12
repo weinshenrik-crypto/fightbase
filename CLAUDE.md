@@ -323,13 +323,14 @@ Dazu der Google-Link (`googleEventUrl`), den die Knöpfe in
   einem leeren Kalender** (`lib/personalFeed.ts`). Kalender ersetzen ein Abo
   beim Abruf komplett — ein leerer 200-Feed löschte alle Termine, bis zum
   nächsten Abruf. Vor der Migration heißt das auch: jeder Token gibt 503.
-- **Für den persönlichen Feed gibt es kein `webcal://`.** Kalenderdienste
-  machen daraus meist `http://` und kennen das HSTS des Browsers nicht; der
-  Token ginge im Klartext raus. Apple und Outlook bekommen den kopierten
-  https-Link. Die öffentlichen Feeds behalten webcal für Apple/Outlook.
-- **Google bekommt immer die `https`-Adresse, auch bei öffentlichen Feeds.**
-  Mit `cid=webcal://…` ruft Google per `http://` ab, Vercel antwortet mit 308,
-  und Google folgt dem nicht — die Meldung lautet dann "URL überprüfen".
+- **Für Apple und Outlook gibt es beim persönlichen Feed kein `webcal://`.**
+  Die Clients machen daraus `http://` und kennen das HSTS des Browsers nicht;
+  der Token ginge im WLAN im Klartext raus. Sie bekommen den kopierten
+  https-Link.
+- **Google lässt sich nur mit `cid=webcal://…` abonnieren.** Eine
+  `https`-Adresse ignoriert Google kommentarlos, nicht einmal der Dialog
+  erscheint (am 12. November 2026 ausprobiert, eine Annahme darüber war
+  falsch). Google holt den Feed dann per `http://` und folgt Vercels 308.
 - **Google Kalender aktualisiert Abos nur etwa alle 12 bis 24 Stunden** und
   ignoriert `REFRESH-INTERVAL` und mitgeschickte Erinnerungen. Daran lässt sich
   nichts ändern; die Knöpfe sagen es.
