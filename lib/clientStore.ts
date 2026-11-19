@@ -179,22 +179,6 @@ export function useIsNativeApp(): boolean {
 
 // ---------------------------------------------------------------------------
 
-/**
- * Ob der Browser auf Android laeuft.
- *
- * Nur fuer den Hinweis auf den Android-Test: Auf iPhone und Desktop gibt es
- * nichts zu installieren, dort waere das Banner Laerm. Die Erkennung ueber den
- * User-Agent ist grob, reicht aber — im schlimmsten Fall sieht jemand den
- * Hinweis, der ihn nicht braucht, und klickt ihn weg.
- */
-export function useIsAndroid(): boolean {
-  return useSyncExternalStore(
-    neverChanges,
-    () => /android/i.test(navigator.userAgent),
-    () => false
-  );
-}
-
 const APP_BANNER_KEY = "fightbase:app-banner-dismissed";
 const APP_BANNER_EVENT = "fightbase:app-banner-changed";
 

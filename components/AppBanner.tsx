@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   useStoredLang,
-  useIsAndroid,
   useIsNativeApp,
   useAppBannerDismissed,
   dismissAppBanner,
@@ -14,7 +13,8 @@ import {
 // Google Play: Der Play-Link allein gibt Nichtmitgliedern der Testergruppe nur
 // eine Fehlermeldung — die beiden Schritte erklaert die Seite.
 //
-// Nur auf Android-Browsern, nie in der App selbst und nicht auf /beta. Wie die
+// Ueberall ausser in der App selbst und auf /beta — auch auf Desktop und
+// iPhone, damit Leute den Link an Bekannte mit Android weitergeben. Wie die
 // Seite ohne Zahlen (Begruendung in app/beta/page.tsx) und offen darueber, dass
 // hier der Entwickler um Hilfe bittet.
 //
@@ -36,12 +36,11 @@ const TEXT = {
 
 export default function AppBanner() {
   const lang = useStoredLang();
-  const android = useIsAndroid();
   const native = useIsNativeApp();
   const dismissed = useAppBannerDismissed();
   const pathname = usePathname();
 
-  if (!android || native || dismissed || pathname === "/beta") return null;
+  if (native || dismissed || pathname === "/beta") return null;
 
   const t = TEXT[lang];
 
