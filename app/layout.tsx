@@ -3,6 +3,7 @@ import { jsonLdHtml } from "@/lib/jsonLd";
 import { Oswald, Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
+import AppBanner from "@/components/AppBanner";
 import CookieBanner from "@/components/CookieBanner";
 import NativeAppBridge from "@/components/NativeAppBridge";
 
@@ -81,6 +82,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
         />
+        <AppBanner />
         {children}
         <CookieBanner />
         <NativeAppBridge />

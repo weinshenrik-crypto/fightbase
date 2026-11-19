@@ -176,3 +176,73 @@ export function useIsNativeApp(): boolean {
     () => false
   );
 }
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Ob der Browser auf Android laeuft.
+ *
+ * Nur fuer den Hinweis auf den Android-Test: Auf iPhone und Desktop gibt es
+ * nichts zu installieren, dort waere das Banner Laerm. Die Erkennung ueber den
+ * User-Agent ist grob, reicht aber — im schlimmsten Fall sieht jemand den
+ * Hinweis, der ihn nicht braucht, und klickt ihn weg.
+ */
+export function useIsAndroid(): boolean {
+  return useSyncExternalStore(
+    neverChanges,
+    () => /android/i.test(navigator.userAgent),
+    () => false
+  );
+}
+
+const APP_BANNER_KEY = "fightbase:app-banner-dismissed";
+const APP_BANNER_EVENT = "fightbase:app-banner-changed";
+
+function readAppBannerDismissed(): boolean {
+  try {
+    return !!localStorage.getItem(APP_BANNER_KEY);
+  } catch {
+    // Nicht lesbar: Hinweis zeigen. Wegklicken wirkt dann nur fuer die Sitzung.
+    return false;
+  }
+}
+
+let appBannerCache: boolean | null = null;
+
+function subscribeAppBanner(onChange: () => void): () => void {
+  const handle = () => {
+    appBannerCache = readAppBannerDismissed();
+    onChange();
+  };
+  window.addEventListener("storage", handle);
+  window.addEventListener(APP_BANNER_EVENT, handle);
+  return () => {
+    window.removeEventListener("storage", handle);
+    window.removeEventListener(APP_BANNER_EVENT, handle);
+  };
+}
+
+/**
+ * Ob der App-Hinweis weggeklickt wurde. Serverseitig `true`, damit er nicht im
+ * vorgerenderten HTML steht und bei allen kurz aufblitzt.
+ */
+export function useAppBannerDismissed(): boolean {
+  return useSyncExternalStore(
+    subscribeAppBanner,
+    () => {
+      if (appBannerCache === null) appBannerCache = readAppBannerDismissed();
+      return appBannerCache;
+    },
+    () => true
+  );
+}
+
+export function dismissAppBanner(): void {
+  appBannerCache = true;
+  try {
+    localStorage.setItem(APP_BANNER_KEY, "1");
+  } catch {
+    // Nicht speicherbar: gilt trotzdem fuer diese Sitzung.
+  }
+  window.dispatchEvent(new Event(APP_BANNER_EVENT));
+}
