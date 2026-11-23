@@ -47,6 +47,11 @@ jobs:
       - name: Event-Lookup pruefen
         run: npx tsx scripts/check-event-lookup.ts
 
+      # Bildunterschriften fuer /admin/social: keine Uhrzeit ohne startsAt,
+      # keine Einzelposts fuer Turniere, Wochenende von jedem Tag aus gleich.
+      - name: Social-Posts pruefen
+        run: npx tsx scripts/check-social-posts.ts
+
       # Die UWW-Quelle liest den ld+json-Block der Seite, weil deren Tabelle
       # erst im Browser gefuellt wird. Der Test laeuft gegen eine gestubbte
       # Seite, braucht also kein Netz.
