@@ -26,7 +26,12 @@ const nextConfig = {
         "/sport/[sport]/opengraph-image",
         "/promotion/[promotion]/opengraph-image",
         "/fighters/[slug]/opengraph-image",
-      ].map((route) => [route, files])
+        "/api/social/weekend",
+      ]
+        .map((route) => [route, files])
+        // Die Social-Karte eines Events liest zusaetzlich die Fighter-Fotos
+        // von der Platte (lib/socialCard.tsx).
+        .concat([["/api/social/event/[slug]", [...files, "./public/fighters/**"]]])
     );
   })(),
 

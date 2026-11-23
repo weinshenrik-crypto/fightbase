@@ -55,9 +55,12 @@ app/
   about/                Was Fightbase ist, woher die Termine kommen, was
                         fehlt — die Seite, auf die Marketing-Posts verlinken
   admin/events/         Pflegemaske für die events-Tabelle
+  admin/social/         Bilder + Bildunterschriften für Instagram/TikTok
+                        (siehe "Social Media")
   api/cron/notify/      Vercel-Cron: Event-Erinnerungen via Resend
   api/cron/import/      Vercel-Cron: Termine aus den Verbandskalendern
   api/cron/results/     Vercel-Cron: Ergebnisse aus Wikipedia
+  api/social/           Social-Bilder: event/<slug> (1080×1920), weekend (1080×1350)
   api/revalidate/       Wirft den Event-Cache weg (Bearer CRON_SECRET)
   api/calendar/         Kalenderdateien und Abos (siehe "Kalender")
   api/account/delete/   Kontolöschung
@@ -342,6 +345,27 @@ Dazu der Google-Link (`googleEventUrl`), den die Knöpfe in
 
 `scripts/check-ics.ts` prüft Escaping, Faltung nach Bytes (nicht Zeichen —
 Umlaute und Emoji), CRLF, `UID`-Stabilität und die Regeln oben, ohne Netz.
+
+## Social Media
+
+`/admin/social` sammelt, was auf Instagram und TikTok geht: das Bild des
+kommenden Wochenendes (Fr–So, alle Sportarten) und je ein Hochformat-Bild für
+Kämpfe mit Paarung, jeweils mit fertiger Bildunterschrift auf Englisch und
+Deutsch. Gezeichnet wird mit denselben Schriften wie die Linkvorschau
+(`lib/socialCard.tsx`), die Regeln stehen in `lib/socialPosts.ts` und werden von
+`scripts/check-social-posts.ts` in der CI geprüft.
+
+- **Einzelposts nur für Kämpfe.** Ein Event zählt als Kampf, wenn es ein
+  Kämpferpaar hat oder "vs" im Hauptkampf steht (Matchroom füllt keine
+  `fighter_a`/`fighter_b`). Turniere laufen über den Wochenend-Post — ein Post
+  je IBJJF-Open wäre Spam.
+- **Fotos nur aus der fighters-Tabelle**, also nur frei lizenzierte
+  Commons-Bilder (`scripts/find-fighter-photos.ts`). Die Nennung steht
+  ungekürzt unten auf dem Bild, weil ein geteiltes Bild ohne Bildunterschrift
+  weiterwandert. Fotos von Promotions oder Agenturen werden hier **nicht**
+  automatisch geholt.
+- Fotos liest die Route von der Platte, nur Pfade der Form
+  `/fighters/<name>.(jpg|png)` — die Spalte ist von Admins beschreibbar.
 
 ## Linkvorschau (Open Graph)
 
